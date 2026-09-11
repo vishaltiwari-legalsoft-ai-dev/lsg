@@ -1,0 +1,268 @@
+{
+  "top_proof": {
+    "id": "lead-atlinjurylawgroup",
+    "firm": {
+      "id": "firm-atlinjurylawgroup",
+      "name": "Atlanta Personal Injury Law Group",
+      "domain": "atlinjurylawgroup.com",
+      "city": "Atlanta",
+      "state": "GA",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": null
+    },
+    "state": "CONTACT_PENDING",
+    "state_display": "Contact pending — no owner or office manager found yet",
+    "band": "STRIKE",
+    "fit": 44,
+    "intent": 62,
+    "contest": "LOW",
+    "grade": null,
+    "proof": {
+      "signal_id": 90121,
+      "kind": "fee_language",
+      "headline": "Contingency-fee practice with Spanish-language intake",
+      "quote": "The attorneys at Atlanta Personal Injury Law Group work on a contingency fee basis.",
+      "source_label": "Firm website (fee language)",
+      "source_url": null,
+      "first_seen": "2026-09-09T14:22:00Z",
+      "board_posted_date": null,
+      "days_open": 2,
+      "repost_count": 0,
+      "sources": [
+        "Firm website (fee language)",
+        "Firm website (page code)"
+      ],
+      "closed_at": null,
+      "weight": 0.6,
+      "decay": 1,
+      "contest": "LOW"
+    },
+    "contact": null,
+    "scored_at": "2026-09-11T02:10:00Z"
+  },
+  "first_draft": {
+    "subject": "Spanish-language intake",
+    "body": "Your site runs a Spanish version, so Spanish-speaking clients are finding you. The work behind that — records requests, follow-ups, status calls in both languages — is usually the part that strains first.\n\nWe place dedicated remote legal staff with PI firms, bilingual where it matters. One person, assigned to your cases, working in your systems — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?"
+  },
+  "strike": [
+    {
+      "id": "lead-fx-harbor",
+      "firm": {
+        "id": "firm-fx-harbor",
+        "name": "Harbor Street Injury Law",
+        "domain": "harborstreetinjury.example",
+        "city": "Savannah",
+        "state": "GA",
+        "tier": "1A",
+        "tier_display": "Tier 1A",
+        "practice_display": "Personal injury",
+        "fee_display": "Contingency",
+        "cms_display": null
+      },
+      "state": "RESOLVED",
+      "state_display": "Resolved — ready to write",
+      "band": "STRIKE",
+      "fit": 46,
+      "intent": 58,
+      "contest": "LOW",
+      "grade": "A",
+      "proof": {
+        "signal_id": 90200,
+        "kind": "job_posting_open",
+        "headline": "Paralegal role open 26 days",
+        "quote": "We are seeking an experienced personal injury paralegal to manage medical records requests and client communication.",
+        "source_label": "Careers page",
+        "source_url": "https://harborstreetinjury.example/careers",
+        "first_seen": "2026-08-16T09:10:00Z",
+        "board_posted_date": "2026-08-12",
+        "days_open": 26,
+        "repost_count": 0,
+        "sources": [
+          "Careers page",
+          "Indeed"
+        ],
+        "closed_at": null,
+        "weight": 0.9,
+        "decay": 0.82,
+        "contest": "LOW"
+      },
+      "contact": {
+        "id": "contact-fx-harbor-1",
+        "full_name": "Dana Whitfield",
+        "title": "Managing Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "dana@harborstreetinjury.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      },
+      "scored_at": "2026-09-11T02:10:00Z"
+    },
+    {
+      "id": "lead-fx-calloway",
+      "firm": {
+        "id": "firm-fx-calloway",
+        "name": "Calloway & Reyes Immigration",
+        "domain": "callowayreyes.example",
+        "city": "Houston",
+        "state": "TX",
+        "tier": "1B",
+        "tier_display": "Tier 1B",
+        "practice_display": "Immigration",
+        "fee_display": "Flat fee",
+        "cms_display": "Docketwise"
+      },
+      "state": "RESOLVED",
+      "state_display": "Resolved — waiting on email verification",
+      "band": "STRIKE",
+      "fit": 43,
+      "intent": 55,
+      "contest": "LOW",
+      "grade": "A",
+      "proof": {
+        "signal_id": 90201,
+        "kind": "job_posting_open",
+        "headline": "Bilingual legal assistant role, reposted once",
+        "quote": "Now hiring a bilingual (Spanish and English) legal assistant for our family-based immigration practice.",
+        "source_label": "Careers page",
+        "source_url": "https://callowayreyes.example/join-our-team",
+        "first_seen": "2026-08-28T15:40:00Z",
+        "board_posted_date": "2026-08-02",
+        "days_open": 14,
+        "repost_count": 1,
+        "sources": [
+          "Careers page"
+        ],
+        "closed_at": null,
+        "weight": 0.95,
+        "decay": 0.9,
+        "contest": "LOW"
+      },
+      "contact": {
+        "id": "contact-fx-calloway-1",
+        "full_name": "Marisol Reyes",
+        "title": "Founding Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "mreyes@callowayreyes.example",
+        "email_status": "unverified",
+        "email_status_display": "Unverified — vendor says verified",
+        "phone": null
+      },
+      "scored_at": "2026-09-11T02:10:00Z"
+    },
+    {
+      "id": "lead-fx-pineridge",
+      "firm": {
+        "id": "firm-fx-pineridge",
+        "name": "Pine Ridge Trial Lawyers",
+        "domain": "pineridgetrial.example",
+        "city": "Charlotte",
+        "state": "NC",
+        "tier": "1A",
+        "tier_display": "Tier 1A",
+        "practice_display": "Personal injury",
+        "fee_display": "Contingency",
+        "cms_display": "Filevine"
+      },
+      "state": "RESOLVED",
+      "state_display": "Resolved — ready to write",
+      "band": "STRIKE",
+      "fit": 44,
+      "intent": 52,
+      "contest": "LOW",
+      "grade": "A",
+      "proof": {
+        "signal_id": 90202,
+        "kind": "multi_opening",
+        "headline": "Case manager and intake specialist both open",
+        "quote": "We currently have openings for a Case Manager and an Intake Specialist in our Charlotte office.",
+        "source_label": "Careers page",
+        "source_url": "https://pineridgetrial.example/careers",
+        "first_seen": "2026-09-04T11:05:00Z",
+        "board_posted_date": null,
+        "days_open": 7,
+        "repost_count": 0,
+        "sources": [
+          "Careers page"
+        ],
+        "closed_at": null,
+        "weight": 1,
+        "decay": 0.95,
+        "contest": "LOW"
+      },
+      "contact": {
+        "id": "contact-fx-pineridge-1",
+        "full_name": "Keisha Lott",
+        "title": "Office Manager",
+        "role": "admin",
+        "source_label": "Firm website",
+        "email": "klott@pineridgetrial.example",
+        "email_status": "catch_all",
+        "email_status_display": "Catch-all — failure",
+        "phone": null
+      },
+      "scored_at": "2026-09-11T02:10:00Z"
+    }
+  ],
+  "attention": {
+    "alerts": [
+      {
+        "name": "signal_to_contact_latency",
+        "label": "Signal to contact",
+        "state": "firing",
+        "detail": "STRIKE leads are waiting 71 hours for a contact, against a 48-hour target."
+      },
+      {
+        "name": "bench_starvation",
+        "label": "Bench starvation",
+        "state": "firing",
+        "detail": "The bench has had no available people for 9 days."
+      },
+      {
+        "name": "bounce_rate",
+        "label": "Bounce rate",
+        "state": "no_data",
+        "detail": "No sends recorded yet, so there is nothing to measure."
+      },
+      {
+        "name": "extraction_confidence_drop",
+        "label": "Extraction confidence",
+        "state": "no_data",
+        "detail": "Needs a snapshot from 5 to 9 days ago to compare against."
+      },
+      {
+        "name": "watcher_silence",
+        "label": "Careers sweep",
+        "state": "ok",
+        "detail": "The last sweep found 38 new postings."
+      },
+      {
+        "name": "dedupe_drift",
+        "label": "Duplicate firms",
+        "state": "ok",
+        "detail": "No duplicate domains or phone numbers."
+      }
+    ],
+    "queues": {
+      "handcheck": 44,
+      "conflicts": 7,
+      "identity": 3,
+      "agency": 12,
+      "discovery": 21
+    },
+    "bench": {
+      "skus_available": 0,
+      "stale": true,
+      "message": "Bench is empty — leads can't be armed"
+    },
+    "providers_inert": [
+      "AI extraction",
+      "Email verification"
+    ]
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "items": [
+    {
+      "id": "firm-atlinjurylawgroup",
+      "name": "Atlanta Personal Injury Law Group",
+      "domain": "atlinjurylawgroup.com",
+      "city": "Atlanta",
+      "state": "GA",
+      "tier_display": "Tier 1A",
+      "state_display": "Contact pending — no owner or office manager found yet",
+      "fit": 44
+    },
+    {
+      "id": "firm-fx-brightwater",
+      "name": "Brightwater Mass Tort Group",
+      "domain": "brightwatertort.example",
+      "city": "Tampa",
+      "state": "FL",
+      "tier_display": "Tier 1A",
+      "state_display": "Resolved — ready to write",
+      "fit": 45
+    },
+    {
+      "id": "firm-fx-calloway",
+      "name": "Calloway & Reyes Immigration",
+      "domain": "callowayreyes.example",
+      "city": "Houston",
+      "state": "TX",
+      "tier_display": "Tier 1B",
+      "state_display": "Resolved — waiting on email verification",
+      "fit": 43
+    },
+    {
+      "id": "firm-fx-coastal",
+      "name": "Coastal Immigration Law Office",
+      "domain": "coastalimmigration.example",
+      "city": "Miami",
+      "state": "FL",
+      "tier_display": "Tier 1B",
+      "state_display": "Resolved — named owner, no verifiable email",
+      "fit": 37
+    },
+    {
+      "id": "firm-fx-delgado",
+      "name": "Delgado Immigration Partners",
+      "domain": "delgadoimmigration.example",
+      "city": "Phoenix",
+      "state": "AZ",
+      "tier_display": "Tier 1B",
+      "state_display": "Resolved — ready to write",
+      "fit": 40
+    },
+    {
+      "id": "firm-fx-granite",
+      "name": "Granite State Injury Firm",
+      "domain": "granitestateinjury.example",
+      "city": "Manchester",
+      "state": "NH",
+      "tier_display": "Tier 1A",
+      "state_display": "Suppressed — on the customer list",
+      "fit": 44
+    },
+    {
+      "id": "firm-fx-harbor",
+      "name": "Harbor Street Injury Law",
+      "domain": "harborstreetinjury.example",
+      "city": "Savannah",
+      "state": "GA",
+      "tier_display": "Tier 1A",
+      "state_display": "Resolved — ready to write",
+      "fit": 46
+    },
+    {
+      "id": "firm-fx-lakeshore",
+      "name": "Lakeshore Accident Attorneys",
+      "domain": "lakeshoreaccident.example",
+      "city": "Chicago",
+      "state": "IL",
+      "tier_display": "Tier 1A",
+      "state_display": "Resolved — ready to write",
+      "fit": 42
+    },
+    {
+      "id": "firm-fx-magnolia",
+      "name": "Magnolia Law Collective",
+      "domain": "magnolialaw.example",
+      "city": "Jackson",
+      "state": "MS",
+      "tier_display": "Unclassified",
+      "state_display": "Discovered — site not read yet",
+      "fit": null
+    },
+    {
+      "id": "firm-fx-meridian",
+      "name": "Meridian Employment Counsel",
+      "domain": "meridianemployment.example",
+      "city": "Seattle",
+      "state": "WA",
+      "tier_display": "Tier 2",
+      "state_display": "Resolved — ready to write",
+      "fit": 35
+    },
+    {
+      "id": "firm-fx-northgate",
+      "name": "Northgate Workers' Comp Counsel",
+      "domain": "northgatecomp.example",
+      "city": "Columbus",
+      "state": "OH",
+      "tier_display": "Tier 2",
+      "state_display": "Resolved — ready to write",
+      "fit": 38
+    },
+    {
+      "id": "firm-fx-oakiron",
+      "name": "Oak & Iron Estate Law",
+      "domain": "oakironestate.example",
+      "city": "Denver",
+      "state": "CO",
+      "tier_display": "Tier 3",
+      "state_display": "Resolved — ready to write",
+      "fit": 30
+    },
+    {
+      "id": "firm-fx-pineridge",
+      "name": "Pine Ridge Trial Lawyers",
+      "domain": "pineridgetrial.example",
+      "city": "Charlotte",
+      "state": "NC",
+      "tier_display": "Tier 1A",
+      "state_display": "Resolved — ready to write",
+      "fit": 44
+    },
+    {
+      "id": "firm-fx-prairie",
+      "name": "Prairie Wind Law Office",
+      "domain": "prairiewindlaw.example",
+      "city": "Omaha",
+      "state": "NE",
+      "tier_display": "Unclassified",
+      "state_display": "Profiling — reading the firm's site",
+      "fit": null
+    },
+    {
+      "id": "firm-fx-riverbend",
+      "name": "Riverbend Injury Lawyers",
+      "domain": "riverbendinjury.example",
+      "city": "Birmingham",
+      "state": "AL",
+      "tier_display": "Tier 1A",
+      "state_display": "Resolved — named owner, no verifiable email",
+      "fit": 41
+    },
+    {
+      "id": "firm-fx-summit",
+      "name": "Summit Legal Aid Society",
+      "domain": "summitlegalaid.example",
+      "city": "Denver",
+      "state": "CO",
+      "tier_display": "Disqualified — legal aid",
+      "state_display": "Disqualified — not a private firm",
+      "fit": 0
+    },
+    {
+      "id": "firm-fx-sunbelt",
+      "name": "Sunbelt Family Law",
+      "domain": "sunbeltfamily.example",
+      "city": "Dallas",
+      "state": "TX",
+      "tier_display": "Tier 3",
+      "state_display": "Resolved — ready to write",
+      "fit": 33
+    }
+  ],
+  "next_cursor": null,
+  "total": 17
+}

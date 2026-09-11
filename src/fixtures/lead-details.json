@@ -1,0 +1,2132 @@
+{
+  "lead-atlinjurylawgroup": {
+    "id": "lead-atlinjurylawgroup",
+    "firm": {
+      "id": "firm-atlinjurylawgroup",
+      "name": "Atlanta Personal Injury Law Group",
+      "domain": "atlinjurylawgroup.com",
+      "city": "Atlanta",
+      "state": "GA",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": null
+    },
+    "state": "CONTACT_PENDING",
+    "state_display": "Contact pending — no owner or office manager found yet",
+    "band": "STRIKE",
+    "fit": 44,
+    "intent": 62,
+    "contest": "LOW",
+    "grade": null,
+    "proof": {
+      "signal_id": 90121,
+      "kind": "fee_language",
+      "headline": "Contingency-fee practice with Spanish-language intake",
+      "quote": "The attorneys at Atlanta Personal Injury Law Group work on a contingency fee basis.",
+      "source_label": "Firm website (fee language)",
+      "source_url": null,
+      "first_seen": "2026-09-09T14:22:00Z",
+      "board_posted_date": null,
+      "days_open": 2,
+      "repost_count": 0,
+      "sources": [
+        "Firm website (fee language)",
+        "Firm website (page code)"
+      ],
+      "closed_at": null,
+      "weight": 0.6,
+      "decay": 1,
+      "contest": "LOW"
+    },
+    "contact": null,
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-mats-rosen",
+        "full_name": "Mats Rosen",
+        "title": "Associate Attorney",
+        "role": "attorney",
+        "source_label": "Firm website",
+        "email": null,
+        "email_status": null,
+        "email_status_display": null,
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "owner",
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Spanish-language intake",
+          "points": 8
+        },
+        {
+          "label": "Metro: Atlanta",
+          "points": 6
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Contingency fee language on the firm's own site",
+          "weight": 0.6,
+          "decay": 1,
+          "points": 62
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [
+      "No owner or office manager with an email address yet, so it can't go on an email list."
+    ],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-09T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-09T14:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-09T14:22:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-10T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-harbor": {
+    "id": "lead-fx-harbor",
+    "firm": {
+      "id": "firm-fx-harbor",
+      "name": "Harbor Street Injury Law",
+      "domain": "harborstreetinjury.example",
+      "city": "Savannah",
+      "state": "GA",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "STRIKE",
+    "fit": 46,
+    "intent": 58,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90200,
+      "kind": "job_posting_open",
+      "headline": "Paralegal role open 26 days",
+      "quote": "We are seeking an experienced personal injury paralegal to manage medical records requests and client communication.",
+      "source_label": "Careers page",
+      "source_url": "https://harborstreetinjury.example/careers",
+      "first_seen": "2026-08-16T09:10:00Z",
+      "board_posted_date": "2026-08-12",
+      "days_open": 26,
+      "repost_count": 0,
+      "sources": [
+        "Careers page",
+        "Indeed"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.82,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-harbor-1",
+      "full_name": "Dana Whitfield",
+      "title": "Managing Partner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "dana@harborstreetinjury.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-harbor-1",
+        "full_name": "Dana Whitfield",
+        "title": "Managing Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "dana@harborstreetinjury.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      },
+      {
+        "id": "contact-fx-harbor-2",
+        "full_name": "Luis Ortega",
+        "title": "Office Manager",
+        "role": "admin",
+        "source_label": "Firm website (read by AI)",
+        "email": "office@harborstreetinjury.example",
+        "email_status": "unverified",
+        "email_status_display": "Unverified — vendor says verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 12
+        },
+        {
+          "label": "Metro: Savannah",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Paralegal role open 26 days",
+          "weight": 0.9,
+          "decay": 0.82,
+          "points": 58
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-calloway": {
+    "id": "lead-fx-calloway",
+    "firm": {
+      "id": "firm-fx-calloway",
+      "name": "Calloway & Reyes Immigration",
+      "domain": "callowayreyes.example",
+      "city": "Houston",
+      "state": "TX",
+      "tier": "1B",
+      "tier_display": "Tier 1B",
+      "practice_display": "Immigration",
+      "fee_display": "Flat fee",
+      "cms_display": "Docketwise"
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — waiting on email verification",
+    "band": "STRIKE",
+    "fit": 43,
+    "intent": 55,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90201,
+      "kind": "job_posting_open",
+      "headline": "Bilingual legal assistant role, reposted once",
+      "quote": "Now hiring a bilingual (Spanish and English) legal assistant for our family-based immigration practice.",
+      "source_label": "Careers page",
+      "source_url": "https://callowayreyes.example/join-our-team",
+      "first_seen": "2026-08-28T15:40:00Z",
+      "board_posted_date": "2026-08-02",
+      "days_open": 14,
+      "repost_count": 1,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 0.95,
+      "decay": 0.9,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-calloway-1",
+      "full_name": "Marisol Reyes",
+      "title": "Founding Partner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "mreyes@callowayreyes.example",
+      "email_status": "unverified",
+      "email_status_display": "Unverified — vendor says verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-calloway-1",
+        "full_name": "Marisol Reyes",
+        "title": "Founding Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "mreyes@callowayreyes.example",
+        "email_status": "unverified",
+        "email_status_display": "Unverified — vendor says verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1B — flat-fee immigration",
+          "points": 28
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 11
+        },
+        {
+          "label": "Metro: Houston",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Bilingual legal assistant role, reposted once",
+          "weight": 0.95,
+          "decay": 0.9,
+          "points": 55
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1B",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-pineridge": {
+    "id": "lead-fx-pineridge",
+    "firm": {
+      "id": "firm-fx-pineridge",
+      "name": "Pine Ridge Trial Lawyers",
+      "domain": "pineridgetrial.example",
+      "city": "Charlotte",
+      "state": "NC",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": "Filevine"
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "STRIKE",
+    "fit": 44,
+    "intent": 52,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90202,
+      "kind": "multi_opening",
+      "headline": "Case manager and intake specialist both open",
+      "quote": "We currently have openings for a Case Manager and an Intake Specialist in our Charlotte office.",
+      "source_label": "Careers page",
+      "source_url": "https://pineridgetrial.example/careers",
+      "first_seen": "2026-09-04T11:05:00Z",
+      "board_posted_date": null,
+      "days_open": 7,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 1,
+      "decay": 0.95,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-pineridge-1",
+      "full_name": "Keisha Lott",
+      "title": "Office Manager",
+      "role": "admin",
+      "source_label": "Firm website",
+      "email": "klott@pineridgetrial.example",
+      "email_status": "catch_all",
+      "email_status_display": "Catch-all — failure",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-pineridge-1",
+        "full_name": "Keisha Lott",
+        "title": "Office Manager",
+        "role": "admin",
+        "source_label": "Firm website",
+        "email": "klott@pineridgetrial.example",
+        "email_status": "catch_all",
+        "email_status_display": "Catch-all — failure",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "owner"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 10
+        },
+        {
+          "label": "Metro: Charlotte",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Case manager and intake specialist both open",
+          "weight": 1,
+          "decay": 0.95,
+          "points": 52
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-brightwater": {
+    "id": "lead-fx-brightwater",
+    "firm": {
+      "id": "firm-fx-brightwater",
+      "name": "Brightwater Mass Tort Group",
+      "domain": "brightwatertort.example",
+      "city": "Tampa",
+      "state": "FL",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Mass tort",
+      "fee_display": "Contingency",
+      "cms_display": "Litify"
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "SEQUENCE",
+    "fit": 45,
+    "intent": 47,
+    "contest": "MED",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90203,
+      "kind": "mass_tort_campaign",
+      "headline": "Running Camp Lejeune intake",
+      "quote": "If you or a loved one lived at Camp Lejeune between 1953 and 1987, call our intake team today.",
+      "source_label": "Firm website",
+      "source_url": "https://brightwatertort.example/camp-lejeune",
+      "first_seen": "2026-08-21T08:00:00Z",
+      "board_posted_date": null,
+      "days_open": 21,
+      "repost_count": 0,
+      "sources": [
+        "Firm website"
+      ],
+      "closed_at": null,
+      "weight": 0.8,
+      "decay": 0.85,
+      "contest": "MED"
+    },
+    "contact": {
+      "id": "contact-fx-brightwater-1",
+      "full_name": "Grant Albee",
+      "title": "Partner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "galbee@brightwatertort.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-brightwater-1",
+        "full_name": "Grant Albee",
+        "title": "Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "galbee@brightwatertort.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 11
+        },
+        {
+          "label": "Metro: Tampa",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Running Camp Lejeune intake",
+          "weight": 0.8,
+          "decay": 0.85,
+          "points": 47
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-delgado": {
+    "id": "lead-fx-delgado",
+    "firm": {
+      "id": "firm-fx-delgado",
+      "name": "Delgado Immigration Partners",
+      "domain": "delgadoimmigration.example",
+      "city": "Phoenix",
+      "state": "AZ",
+      "tier": "1B",
+      "tier_display": "Tier 1B",
+      "practice_display": "Immigration",
+      "fee_display": "Flat fee",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "SEQUENCE",
+    "fit": 40,
+    "intent": 41,
+    "contest": "MED",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90204,
+      "kind": "review_unreturned_call",
+      "headline": "Reviews mention unreturned calls",
+      "quote": "Called three times about my case and never got a call back.",
+      "source_label": "Google reviews",
+      "source_url": null,
+      "first_seen": "2026-08-30T19:20:00Z",
+      "board_posted_date": null,
+      "days_open": 12,
+      "repost_count": 0,
+      "sources": [
+        "Google reviews"
+      ],
+      "closed_at": null,
+      "weight": 0.5,
+      "decay": 0.9,
+      "contest": "MED"
+    },
+    "contact": {
+      "id": "contact-fx-delgado-1",
+      "full_name": "Ana Delgado",
+      "title": "Principal Attorney",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "ana@delgadoimmigration.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-delgado-1",
+        "full_name": "Ana Delgado",
+        "title": "Principal Attorney",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "ana@delgadoimmigration.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      },
+      {
+        "id": "contact-fx-delgado-2",
+        "full_name": "Rosa Quintero",
+        "title": "Office Administrator",
+        "role": "admin",
+        "source_label": "Firm website",
+        "email": "rosa@delgadoimmigration.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1B — flat-fee immigration",
+          "points": 28
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 8
+        },
+        {
+          "label": "Metro: Phoenix",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Reviews mention unreturned calls",
+          "weight": 0.5,
+          "decay": 0.9,
+          "points": 41
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [
+      {
+        "id": 1,
+        "action": "sent",
+        "until": null,
+        "note": null,
+        "actor": "SDR",
+        "at": "2026-09-08T15:12:00Z",
+        "transition_applied": false
+      }
+    ],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1B",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-northgate": {
+    "id": "lead-fx-northgate",
+    "firm": {
+      "id": "firm-fx-northgate",
+      "name": "Northgate Workers' Comp Counsel",
+      "domain": "northgatecomp.example",
+      "city": "Columbus",
+      "state": "OH",
+      "tier": "2",
+      "tier_display": "Tier 2",
+      "practice_display": "Workers' compensation",
+      "fee_display": "Fee-shifting",
+      "cms_display": "Filevine"
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "SEQUENCE",
+    "fit": 38,
+    "intent": 39,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90205,
+      "kind": "cms_implemented",
+      "headline": "Moved to Filevine this summer",
+      "quote": "Our clients can now check case status any time through our new Filevine client portal.",
+      "source_label": "Firm website (page code)",
+      "source_url": "https://northgatecomp.example/client-portal",
+      "first_seen": "2026-08-19T13:00:00Z",
+      "board_posted_date": null,
+      "days_open": 23,
+      "repost_count": 0,
+      "sources": [
+        "Firm website (page code)"
+      ],
+      "closed_at": null,
+      "weight": 0.6,
+      "decay": 0.8,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-northgate-1",
+      "full_name": "Owen Pratt",
+      "title": "Senior Partner",
+      "role": "owner",
+      "source_label": "Purchased firm list",
+      "email": "opratt@northgatecomp.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-northgate-1",
+        "full_name": "Owen Pratt",
+        "title": "Senior Partner",
+        "role": "owner",
+        "source_label": "Purchased firm list",
+        "email": "opratt@northgatecomp.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 2 — fee-shifting litigation",
+          "points": 24
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 10
+        },
+        {
+          "label": "Metro: Columbus",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Moved to Filevine this summer",
+          "weight": 0.6,
+          "decay": 0.8,
+          "points": 39
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 2",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-lakeshore": {
+    "id": "lead-fx-lakeshore",
+    "firm": {
+      "id": "firm-fx-lakeshore",
+      "name": "Lakeshore Accident Attorneys",
+      "domain": "lakeshoreaccident.example",
+      "city": "Chicago",
+      "state": "IL",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "SEQUENCE",
+    "fit": 42,
+    "intent": 36,
+    "contest": "HIGH",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90206,
+      "kind": "job_posting_open",
+      "headline": "Legal assistant role open 41 days",
+      "quote": "Busy plaintiff's firm seeks a detail-oriented legal assistant to support our litigation team.",
+      "source_label": "Careers page",
+      "source_url": "https://lakeshoreaccident.example/careers/legal-assistant",
+      "first_seen": "2026-08-01T10:00:00Z",
+      "board_posted_date": "2026-07-24",
+      "days_open": 41,
+      "repost_count": 0,
+      "sources": [
+        "Careers page",
+        "ZipRecruiter",
+        "Indeed"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.6,
+      "contest": "HIGH"
+    },
+    "contact": {
+      "id": "contact-fx-lakeshore-1",
+      "full_name": "Priya Natarajan",
+      "title": "Partner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "pnatarajan@lakeshoreaccident.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-lakeshore-1",
+        "full_name": "Priya Natarajan",
+        "title": "Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "pnatarajan@lakeshoreaccident.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 8
+        },
+        {
+          "label": "Metro: Chicago",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Legal assistant role open 41 days",
+          "weight": 0.9,
+          "decay": 0.6,
+          "points": 36
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-sunbelt": {
+    "id": "lead-fx-sunbelt",
+    "firm": {
+      "id": "firm-fx-sunbelt",
+      "name": "Sunbelt Family Law",
+      "domain": "sunbeltfamily.example",
+      "city": "Dallas",
+      "state": "TX",
+      "tier": "3",
+      "tier_display": "Tier 3",
+      "practice_display": "Family law",
+      "fee_display": "Flat fee",
+      "cms_display": "Clio"
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "SEQUENCE",
+    "fit": 33,
+    "intent": 34,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90207,
+      "kind": "job_posting_open",
+      "headline": "Legal assistant role open 12 days",
+      "quote": "We're adding a full-time legal assistant to help with document preparation and client scheduling.",
+      "source_label": "Careers page",
+      "source_url": "https://sunbeltfamily.example/careers",
+      "first_seen": "2026-08-30T09:00:00Z",
+      "board_posted_date": null,
+      "days_open": 12,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.9,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-sunbelt-1",
+      "full_name": "Cole Brandt",
+      "title": "Owner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "cole@sunbeltfamily.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-sunbelt-1",
+        "full_name": "Cole Brandt",
+        "title": "Owner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "cole@sunbeltfamily.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 3 — flat-fee volume",
+          "points": 20
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 9
+        },
+        {
+          "label": "Metro: Dallas",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Legal assistant role open 12 days",
+          "weight": 0.9,
+          "decay": 0.9,
+          "points": 34
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 3",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-oakiron": {
+    "id": "lead-fx-oakiron",
+    "firm": {
+      "id": "firm-fx-oakiron",
+      "name": "Oak & Iron Estate Law",
+      "domain": "oakironestate.example",
+      "city": "Denver",
+      "state": "CO",
+      "tier": "3",
+      "tier_display": "Tier 3",
+      "practice_display": "Estate planning",
+      "fee_display": "Flat fee",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "NURTURE",
+    "fit": 30,
+    "intent": 8,
+    "contest": "NONE",
+    "grade": "A",
+    "proof": null,
+    "contact": {
+      "id": "contact-fx-oakiron-1",
+      "full_name": "Hannah Oakes",
+      "title": "Founding Attorney",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "hannah@oakironestate.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-oakiron-1",
+        "full_name": "Hannah Oakes",
+        "title": "Founding Attorney",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "hannah@oakironestate.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 3 — flat-fee volume",
+          "points": 20
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 6
+        },
+        {
+          "label": "Metro: Denver",
+          "points": 4
+        }
+      ],
+      "intent_terms": [],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 3",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-meridian": {
+    "id": "lead-fx-meridian",
+    "firm": {
+      "id": "firm-fx-meridian",
+      "name": "Meridian Employment Counsel",
+      "domain": "meridianemployment.example",
+      "city": "Seattle",
+      "state": "WA",
+      "tier": "2",
+      "tier_display": "Tier 2",
+      "practice_display": "Employment",
+      "fee_display": "Fee-shifting",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — ready to write",
+    "band": "NURTURE",
+    "fit": 35,
+    "intent": 14,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90208,
+      "kind": "job_posting_open",
+      "headline": "Paralegal role, closed after 9 days",
+      "quote": "Meridian is hiring a litigation paralegal with employment-law experience.",
+      "source_label": "Careers page",
+      "source_url": "https://meridianemployment.example/careers",
+      "first_seen": "2026-07-14T12:00:00Z",
+      "board_posted_date": null,
+      "days_open": 9,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": "2026-07-23T12:00:00Z",
+      "weight": 0.9,
+      "decay": 0.3,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-meridian-1",
+      "full_name": "Theo Marsh",
+      "title": "Managing Attorney",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "tmarsh@meridianemployment.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-meridian-1",
+        "full_name": "Theo Marsh",
+        "title": "Managing Attorney",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "tmarsh@meridianemployment.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 2 — fee-shifting litigation",
+          "points": 24
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 7
+        },
+        {
+          "label": "Metro: Seattle",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Paralegal role, closed after 9 days",
+          "weight": 0.9,
+          "decay": 0.3,
+          "points": 14
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 2",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-riverbend": {
+    "id": "lead-fx-riverbend",
+    "firm": {
+      "id": "firm-fx-riverbend",
+      "name": "Riverbend Injury Lawyers",
+      "domain": "riverbendinjury.example",
+      "city": "Birmingham",
+      "state": "AL",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — named owner, no verifiable email",
+    "band": "SEQUENCE",
+    "fit": 41,
+    "intent": 38,
+    "contest": "LOW",
+    "grade": "B",
+    "proof": {
+      "signal_id": 90209,
+      "kind": "job_posting_open",
+      "headline": "Case manager role open 19 days",
+      "quote": "Riverbend Injury Lawyers is looking for a case manager to guide clients from intake to settlement.",
+      "source_label": "Careers page",
+      "source_url": "https://riverbendinjury.example/careers",
+      "first_seen": "2026-08-23T10:30:00Z",
+      "board_posted_date": null,
+      "days_open": 19,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.85,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-riverbend-1",
+      "full_name": "Wes Calder",
+      "title": "Owner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": null,
+      "email_status": null,
+      "email_status_display": null,
+      "phone": "+1 205-555-0142"
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-riverbend-1",
+        "full_name": "Wes Calder",
+        "title": "Owner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": null,
+        "email_status": null,
+        "email_status_display": null,
+        "phone": "+1 205-555-0142"
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 7
+        },
+        {
+          "label": "Metro: Birmingham",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Case manager role open 19 days",
+          "weight": 0.9,
+          "decay": 0.85,
+          "points": 38
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [
+      "Phone list only: no email address could be verified for the owner."
+    ],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-coastal": {
+    "id": "lead-fx-coastal",
+    "firm": {
+      "id": "firm-fx-coastal",
+      "name": "Coastal Immigration Law Office",
+      "domain": "coastalimmigration.example",
+      "city": "Miami",
+      "state": "FL",
+      "tier": "1B",
+      "tier_display": "Tier 1B",
+      "practice_display": "Immigration",
+      "fee_display": "Flat fee",
+      "cms_display": null
+    },
+    "state": "RESOLVED",
+    "state_display": "Resolved — named owner, no verifiable email",
+    "band": "NURTURE",
+    "fit": 37,
+    "intent": 20,
+    "contest": "LOW",
+    "grade": "B",
+    "proof": null,
+    "contact": {
+      "id": "contact-fx-coastal-1",
+      "full_name": "Ines Marchetti",
+      "title": "Attorney and Owner",
+      "role": "owner",
+      "source_label": "Purchased firm list",
+      "email": "ines@coastalimmigration.example",
+      "email_status": "invalid",
+      "email_status_display": "Invalid — failure",
+      "phone": "+1 305-555-0187"
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-coastal-1",
+        "full_name": "Ines Marchetti",
+        "title": "Attorney and Owner",
+        "role": "owner",
+        "source_label": "Purchased firm list",
+        "email": "ines@coastalimmigration.example",
+        "email_status": "invalid",
+        "email_status_display": "Invalid — failure",
+        "phone": "+1 305-555-0187"
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1B — flat-fee immigration",
+          "points": 28
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 5
+        },
+        {
+          "label": "Metro: Miami",
+          "points": 4
+        }
+      ],
+      "intent_terms": [],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [
+      "Phone list only: the owner's email address is invalid."
+    ],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1B",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-summit": {
+    "id": "lead-fx-summit",
+    "firm": {
+      "id": "firm-fx-summit",
+      "name": "Summit Legal Aid Society",
+      "domain": "summitlegalaid.example",
+      "city": "Denver",
+      "state": "CO",
+      "tier": "DQ",
+      "tier_display": "Disqualified — legal aid",
+      "practice_display": "General practice",
+      "fee_display": "Unknown — not guessed",
+      "cms_display": null
+    },
+    "state": "DISQUALIFIED",
+    "state_display": "Disqualified — not a private firm",
+    "band": "HOLD",
+    "fit": 0,
+    "intent": 22,
+    "contest": "LOW",
+    "grade": null,
+    "proof": {
+      "signal_id": 90210,
+      "kind": "job_posting_open",
+      "headline": "Paralegal role open 16 days",
+      "quote": "Summit Legal Aid Society seeks a bilingual paralegal for our housing unit.",
+      "source_label": "Careers page",
+      "source_url": "https://summitlegalaid.example/jobs",
+      "first_seen": "2026-08-26T10:00:00Z",
+      "board_posted_date": null,
+      "days_open": 16,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.85,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-summit-1",
+      "full_name": "Robin Adair",
+      "title": "Executive Director",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "radair@summitlegalaid.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-summit-1",
+        "full_name": "Robin Adair",
+        "title": "Executive Director",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "radair@summitlegalaid.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Disqualified — scored at zero",
+          "points": 0
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Paralegal role open 16 days",
+          "weight": 0.9,
+          "decay": 0.85,
+          "points": 22
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [
+      "Disqualified: a legal aid organisation, not a private firm."
+    ],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Disqualified — legal aid",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      }
+    ]
+  },
+  "lead-fx-granite": {
+    "id": "lead-fx-granite",
+    "firm": {
+      "id": "firm-fx-granite",
+      "name": "Granite State Injury Firm",
+      "domain": "granitestateinjury.example",
+      "city": "Manchester",
+      "state": "NH",
+      "tier": "1A",
+      "tier_display": "Tier 1A",
+      "practice_display": "Personal injury",
+      "fee_display": "Contingency",
+      "cms_display": "Filevine"
+    },
+    "state": "SUPPRESSED",
+    "state_display": "Suppressed — on the customer list",
+    "band": "SEQUENCE",
+    "fit": 44,
+    "intent": 40,
+    "contest": "LOW",
+    "grade": "A",
+    "proof": {
+      "signal_id": 90211,
+      "kind": "job_posting_open",
+      "headline": "Paralegal role open 30 days",
+      "quote": "Granite State Injury Firm has an opening for a pre-litigation paralegal.",
+      "source_label": "Careers page",
+      "source_url": "https://granitestateinjury.example/careers",
+      "first_seen": "2026-08-12T10:00:00Z",
+      "board_posted_date": null,
+      "days_open": 30,
+      "repost_count": 0,
+      "sources": [
+        "Careers page"
+      ],
+      "closed_at": null,
+      "weight": 0.9,
+      "decay": 0.75,
+      "contest": "LOW"
+    },
+    "contact": {
+      "id": "contact-fx-granite-1",
+      "full_name": "Martin Cobb",
+      "title": "Partner",
+      "role": "owner",
+      "source_label": "Firm website",
+      "email": "mcobb@granitestateinjury.example",
+      "email_status": "valid",
+      "email_status_display": "Verified",
+      "phone": null
+    },
+    "scored_at": "2026-09-11T02:10:00Z",
+    "contacts": [
+      {
+        "id": "contact-fx-granite-1",
+        "full_name": "Martin Cobb",
+        "title": "Partner",
+        "role": "owner",
+        "source_label": "Firm website",
+        "email": "mcobb@granitestateinjury.example",
+        "email_status": "valid",
+        "email_status_display": "Verified",
+        "phone": null
+      }
+    ],
+    "missing_roles": [
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [
+        {
+          "label": "Tier 1A — contingency personal injury",
+          "points": 30
+        },
+        {
+          "label": "Firm size in the 2–25 attorney range",
+          "points": 10
+        },
+        {
+          "label": "Metro: Manchester",
+          "points": 4
+        }
+      ],
+      "intent_terms": [
+        {
+          "label": "Paralegal role open 30 days",
+          "weight": 0.9,
+          "decay": 0.75,
+          "points": 40
+        }
+      ],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [
+      "On the customer list: the domain is suppressed.",
+      "The last email to this firm was opted out in June."
+    ],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      },
+      {
+        "from_state": "PROFILING",
+        "to_state": "CLASSIFIED",
+        "label": "Classified as tier 1A",
+        "trigger": "Fee language and practice pages",
+        "actor": "engine",
+        "at": "2026-09-03T10:40:00Z"
+      },
+      {
+        "from_state": "CLASSIFIED",
+        "to_state": "CONTACT_PENDING",
+        "label": "Looking for an owner or office manager",
+        "trigger": "Contact resolution",
+        "actor": "engine",
+        "at": "2026-09-04T02:40:00Z"
+      },
+      {
+        "from_state": "CONTACT_PENDING",
+        "to_state": "RESOLVED",
+        "label": "Resolved — a named contact was found",
+        "trigger": "Firm website",
+        "actor": "engine",
+        "at": "2026-09-05T02:40:00Z"
+      },
+      {
+        "from_state": "RESOLVED",
+        "to_state": "SUPPRESSED",
+        "label": "Suppressed — on the customer list",
+        "trigger": "Customer list upload",
+        "actor": "ops",
+        "at": "2026-09-08T16:00:00Z"
+      }
+    ]
+  },
+  "lead-fx-magnolia": {
+    "id": "lead-fx-magnolia",
+    "firm": {
+      "id": "firm-fx-magnolia",
+      "name": "Magnolia Law Collective",
+      "domain": "magnolialaw.example",
+      "city": "Jackson",
+      "state": "MS",
+      "tier": null,
+      "tier_display": "Unclassified",
+      "practice_display": null,
+      "fee_display": null,
+      "cms_display": null
+    },
+    "state": "DISCOVERED",
+    "state_display": "Discovered — site not read yet",
+    "band": null,
+    "fit": null,
+    "intent": null,
+    "contest": null,
+    "grade": null,
+    "proof": null,
+    "contact": null,
+    "scored_at": null,
+    "contacts": [],
+    "missing_roles": [
+      "owner",
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [],
+      "intent_terms": [],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      }
+    ]
+  },
+  "lead-fx-prairie": {
+    "id": "lead-fx-prairie",
+    "firm": {
+      "id": "firm-fx-prairie",
+      "name": "Prairie Wind Law Office",
+      "domain": "prairiewindlaw.example",
+      "city": "Omaha",
+      "state": "NE",
+      "tier": null,
+      "tier_display": "Unclassified",
+      "practice_display": null,
+      "fee_display": null,
+      "cms_display": null
+    },
+    "state": "PROFILING",
+    "state_display": "Profiling — reading the firm's site",
+    "band": null,
+    "fit": null,
+    "intent": null,
+    "contest": null,
+    "grade": null,
+    "proof": null,
+    "contact": null,
+    "scored_at": null,
+    "contacts": [],
+    "missing_roles": [
+      "owner",
+      "admin"
+    ],
+    "score": {
+      "fit_terms": [],
+      "intent_terms": [],
+      "note": "Scores use seeded weights until outcomes are recorded."
+    },
+    "exclusion_reasons": [],
+    "outcomes": [],
+    "timeline": [
+      {
+        "from_state": null,
+        "to_state": "DISCOVERED",
+        "label": "Discovered",
+        "trigger": "Purchased firm list",
+        "actor": "engine",
+        "at": "2026-09-02T03:12:00Z"
+      },
+      {
+        "from_state": "DISCOVERED",
+        "to_state": "PROFILING",
+        "label": "Profiling — reading the firm's site",
+        "trigger": "Probe crawl",
+        "actor": "engine",
+        "at": "2026-09-03T10:05:00Z"
+      }
+    ]
+  }
+}

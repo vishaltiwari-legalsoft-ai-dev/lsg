@@ -1,0 +1,700 @@
+{
+  "lead-atlinjurylawgroup": {
+    "band": "STRIKE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "Spanish-language intake",
+        "body": "Your site runs a Spanish version, so Spanish-speaking clients are finding you. The work behind that — records requests, follow-ups, status calls in both languages — is usually the part that strains first.\n\nWe place dedicated remote legal staff with PI firms, bilingual where it matters. One person, assigned to your cases, working in your systems — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: the proof isn't a job posting, so there's no role to follow up on."
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the unbilled hours",
+        "body": "On contingency, every hour your team spends chasing records is unbilled, and it sits between you and the fee.\n\nA demand writer isn't a cost saving. It shortens the gap to settlement — which is a different thing entirely, and the reason PI firms are usually the easiest version of this conversation.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "A six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "The question I usually get around now is about client information.\n\nStraight answer: your person works inside your case management system under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "It's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: there's no open posting to ask about."
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "I'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-harbor": {
+    "band": "STRIKE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "your paralegal opening",
+        "body": "Dana — the paralegal role on your careers page has been up since 12 Aug. Still looking?\n\nWe place dedicated remote legal staff with personal injury firms. One person, your cases, working inside your systems — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "re: your paralegal opening",
+        "body": "Dana — following up on the above.\n\nThe part most PI firms hand over first isn't the paralegal seat itself. It's the records chase — provider requests, follow-ups, calling the same clinic a fourth time.\n\nThat's the work sitting between a case and the demand going out. Want to see what it looks like as a dedicated person?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the unbilled hours",
+        "body": "Dana —\n\nOn contingency, every hour your team spends chasing records is unbilled, and it sits between you and the fee.\n\nA demand writer isn't a cost saving. It shortens the gap to settlement — which is a different thing entirely, and the reason PI firms are usually the easiest version of this conversation.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Dana —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Dana —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside your case management system under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Dana —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Dana — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "still open?",
+        "body": "Dana — the paralegal posting is still up as of this week.\n\nIf you've filled it, congratulations, ignore me. If it's still open 26 days on, that's usually the market telling you the candidate isn't there locally.\n\nThat's the specific gap we fill.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Dana —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-calloway": {
+    "band": "STRIKE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "the bilingual legal assistant role, second time",
+        "body": "Marisol — saw the bilingual legal assistant posting go back up this week. Second time since August, if I'm reading it right.\n\nThat usually means the local market isn't producing the candidate, not that the need went away.\n\nWe staff that seat remotely — dedicated, not shared. Want the details?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "re: your bilingual legal assistant opening",
+        "body": "Marisol — following up on the above.\n\nThe part most PI firms hand over first isn't the paralegal seat itself. It's the records chase — provider requests, follow-ups, calling the same clinic a fourth time.\n\nThat's the work sitting between a case and the demand going out. Want to see what it looks like as a dedicated person?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the flat-fee arithmetic",
+        "body": "Marisol —\n\nOn a flat fee, every hour past the estimate comes out of your margin. Form prep and evidence collection are where those hours go.\n\nA dedicated legal assistant takes that work off the attorneys, so the fee covers the case again.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Marisol —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Marisol —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside Docketwise under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Marisol —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Marisol — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "still open?",
+        "body": "Marisol — the bilingual legal assistant posting is still up as of this week.\n\nIf you've filled it, congratulations, ignore me. If it's still open 14 days on, that's usually the market telling you the candidate isn't there locally.\n\nThat's the specific gap we fill.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Marisol —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-pineridge": {
+    "band": "STRIKE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "both roles still open?",
+        "body": "Keisha — you have case manager and intake specialist both posted. Still open?\n\nTwo seats at once usually means case volume moved before payroll could. That gap is what we fill — dedicated remote staff, working your matters inside Filevine.\n\nWhich of the two is hurting more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "re: your case manager opening",
+        "body": "Keisha — following up on the above.\n\nThe part most PI firms hand over first isn't the paralegal seat itself. It's the records chase — provider requests, follow-ups, calling the same clinic a fourth time.\n\nThat's the work sitting between a case and the demand going out. Want to see what it looks like as a dedicated person?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the unbilled hours",
+        "body": "Keisha —\n\nOn contingency, every hour your team spends chasing records is unbilled, and it sits between you and the fee.\n\nA demand writer isn't a cost saving. It shortens the gap to settlement — which is a different thing entirely, and the reason PI firms are usually the easiest version of this conversation.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Keisha —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Keisha —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside Filevine under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Keisha —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Keisha — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "still open?",
+        "body": "Keisha — the case manager posting is still up as of this week.\n\nIf you've filled it, congratulations, ignore me. If it's still open 7 days on, that's usually the market telling you the candidate isn't there locally.\n\nThat's the specific gap we fill.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Keisha —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-brightwater": {
+    "band": "SEQUENCE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "Camp Lejeune — records volume",
+        "body": "Grant — noticed you're running Camp Lejeune intake.\n\nFour to six provider requests per claimant, thousands of claimants, all against a filing deadline. None of it billable, and it's usually the part that breaks first.\n\nWe staff exactly that work. Worth a conversation before the volume lands?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: the proof isn't a job posting, so there's no role to follow up on."
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the unbilled hours",
+        "body": "Grant —\n\nOn contingency, every hour your team spends chasing records is unbilled, and it sits between you and the fee.\n\nA demand writer isn't a cost saving. It shortens the gap to settlement — which is a different thing entirely, and the reason PI firms are usually the easiest version of this conversation.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Grant —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Grant —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside Litify under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Grant —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Grant — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: there's no open posting to ask about."
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Grant —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-delgado": {
+    "band": "SEQUENCE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "intake coverage",
+        "body": "Ana — firms doing immigration at your volume usually hit the same wall: calls arriving faster than anyone can return them, and the signed case going to whoever picked up first.\n\nIs that a live problem for you right now, or have you got it covered?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: the proof isn't a job posting, so there's no role to follow up on."
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the flat-fee arithmetic",
+        "body": "Ana —\n\nOn a flat fee, every hour past the estimate comes out of your margin. Form prep and evidence collection are where those hours go.\n\nA dedicated legal assistant takes that work off the attorneys, so the fee covers the case again.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Ana —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Ana —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside your case management system under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Ana —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Ana — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: there's no open posting to ask about."
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Ana —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-northgate": {
+    "band": "SEQUENCE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "you moved to Filevine",
+        "body": "Owen — looks like you moved onto Filevine recently.\n\nThe thing most firms find about a month in is that the workflow needed a person, not a feature. Someone to actually run the records requests the system is now tracking.\n\nWe place people who already work inside Filevine. Useful, or too early?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: the proof isn't a job posting, so there's no role to follow up on."
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the fee-shifting arithmetic",
+        "body": "Owen —\n\nOn fee-shifting matters the hours are recoverable, but only the ones someone records properly. Records and agency forms are where they get lost.\n\nA case manager keeps that work moving and documented, so it comes back in the fee petition.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Owen —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Owen —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside Filevine under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Owen —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Owen — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "",
+        "body": "",
+        "skipped_reason": "Skipped: there's no open posting to ask about."
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Owen —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-lakeshore": {
+    "band": "SEQUENCE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "your legal assistant opening",
+        "body": "Priya — the legal assistant role on your careers page has been up since 24 Jul. Still looking?\n\nWe place dedicated remote legal staff with personal injury firms. One person, your cases, working inside your systems — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "re: your legal assistant opening",
+        "body": "Priya — following up on the above.\n\nThe part most PI firms hand over first isn't the paralegal seat itself. It's the records chase — provider requests, follow-ups, calling the same clinic a fourth time.\n\nThat's the work sitting between a case and the demand going out. Want to see what it looks like as a dedicated person?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the unbilled hours",
+        "body": "Priya —\n\nOn contingency, every hour your team spends chasing records is unbilled, and it sits between you and the fee.\n\nA demand writer isn't a cost saving. It shortens the gap to settlement — which is a different thing entirely, and the reason PI firms are usually the easiest version of this conversation.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Priya —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Priya —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside your case management system under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Priya —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Priya — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "still open?",
+        "body": "Priya — the legal assistant posting is still up as of this week.\n\nIf you've filled it, congratulations, ignore me. If it's still open 41 days on, that's usually the market telling you the candidate isn't there locally.\n\nThat's the specific gap we fill.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Priya —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-sunbelt": {
+    "band": "SEQUENCE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "your legal assistant opening",
+        "body": "Cole — the legal assistant role on your careers page has been up since 30 Aug. Still looking?\n\nWe place dedicated remote legal staff with family law firms. One person, your cases, working inside Clio — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?",
+        "skipped_reason": null
+      },
+      {
+        "step": 2,
+        "day": 3,
+        "subject": "re: your legal assistant opening",
+        "body": "Cole — following up on the above.\n\nThe part most PI firms hand over first isn't the paralegal seat itself. It's the records chase — provider requests, follow-ups, calling the same clinic a fourth time.\n\nThat's the work sitting between a case and the demand going out. Want to see what it looks like as a dedicated person?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 7,
+        "subject": "the flat-fee arithmetic",
+        "body": "Cole —\n\nOn a flat fee, every hour past the estimate comes out of your margin. Form prep and evidence collection are where those hours go.\n\nA dedicated legal assistant takes that work off the attorneys, so the fee covers the case again.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 4,
+        "day": 10,
+        "subject": "a firm about your size",
+        "body": "Cole —\n\nA six-attorney PI firm we work with had the same shape of problem: ad spend bringing in cases faster than two paralegals could process them.\n\nThey started with one demand writer. Their paralegals stopped doing records entirely and went back to actual case work.\n\nNot saying that's you — but the pattern is common enough to mention.",
+        "skipped_reason": null
+      },
+      {
+        "step": 5,
+        "day": 14,
+        "subject": "the part people ask about",
+        "body": "Cole —\n\nThe question I usually get around now is about client information.\n\nStraight answer: your person works inside Clio under permissions you set, same as an in-house hire. NDA and confidentiality agreement signed before day one. You supervise the work the way you'd supervise anyone's.\n\nHappy to send the agreement over to read before we ever speak.",
+        "skipped_reason": null
+      },
+      {
+        "step": 6,
+        "day": 18,
+        "subject": "maybe the wrong end",
+        "body": "Cole —\n\nIt's possible I've been aiming at the wrong end of this.\n\nIf the bottleneck isn't the demand side but the front — requests going out, chasing providers, the clinic that never responds — that's a document collector, and it's a smaller thing to start with.\n\nWhich end hurts more?",
+        "skipped_reason": null
+      },
+      {
+        "step": 7,
+        "day": 21,
+        "subject": "right person?",
+        "body": "Cole — I may be writing to the wrong person entirely.\n\nIf someone else handles hiring and case workflow — office manager, firm administrator — I'm happy to talk to them instead and leave you out of it.\n\nOtherwise I'll assume the timing isn't right.",
+        "skipped_reason": null
+      },
+      {
+        "step": 8,
+        "day": 25,
+        "subject": "still open?",
+        "body": "Cole — the legal assistant posting is still up as of this week.\n\nIf you've filled it, congratulations, ignore me. If it's still open 12 days on, that's usually the market telling you the candidate isn't there locally.\n\nThat's the specific gap we fill.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 28,
+        "subject": "closing the loop",
+        "body": "Cole —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-oakiron": {
+    "band": "NURTURE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 3,
+        "day": 14,
+        "subject": "the flat-fee arithmetic",
+        "body": "Hannah —\n\nOn a flat fee, every hour past the estimate comes out of your margin. Form prep and evidence collection are where those hours go.\n\nA dedicated legal assistant takes that work off the attorneys, so the fee covers the case again.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 56,
+        "subject": "closing the loop",
+        "body": "Hannah —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-meridian": {
+    "band": "NURTURE",
+    "excluded_reason": null,
+    "touches": [
+      {
+        "step": 1,
+        "day": 0,
+        "subject": "your paralegal opening",
+        "body": "Theo — the paralegal role on your careers page has been up since 14 Jul. Still looking?\n\nWe place dedicated remote legal staff with employment firms. One person, your cases, working inside your systems — not a pooled service desk.\n\nWorth a short call, or should I put it in writing first?",
+        "skipped_reason": null
+      },
+      {
+        "step": 3,
+        "day": 14,
+        "subject": "the fee-shifting arithmetic",
+        "body": "Theo —\n\nOn fee-shifting matters the hours are recoverable, but only the ones someone records properly. Records and agency forms are where they get lost.\n\nA case manager keeps that work moving and documented, so it comes back in the fee petition.\n\nHappy to walk through the numbers on a call.",
+        "skipped_reason": null
+      },
+      {
+        "step": 9,
+        "day": 56,
+        "subject": "closing the loop",
+        "body": "Theo —\n\nI'll stop here.\n\nIf the records backlog becomes a bigger problem later, we're easy to find. No hard feelings either way.\n\nGood luck with the hire.",
+        "skipped_reason": null
+      }
+    ]
+  },
+  "lead-fx-riverbend": {
+    "band": "SEQUENCE",
+    "excluded_reason": "Phone list leads aren't emailed: there's no verifiable address.",
+    "touches": []
+  },
+  "lead-fx-coastal": {
+    "band": "NURTURE",
+    "excluded_reason": "Phone list leads aren't emailed: there's no verifiable address.",
+    "touches": []
+  },
+  "lead-fx-summit": {
+    "band": "HOLD",
+    "excluded_reason": "Disqualified: a legal aid organisation, not a private firm.",
+    "touches": []
+  },
+  "lead-fx-granite": {
+    "band": "SEQUENCE",
+    "excluded_reason": "On the customer list: the domain is suppressed.",
+    "touches": []
+  },
+  "lead-fx-magnolia": {
+    "band": null,
+    "excluded_reason": "Not scored yet, so no sequence has been chosen.",
+    "touches": []
+  },
+  "lead-fx-prairie": {
+    "band": null,
+    "excluded_reason": "Not scored yet, so no sequence has been chosen.",
+    "touches": []
+  }
+}
