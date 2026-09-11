@@ -1,0 +1,60 @@
+# P8 (extractor) / P9 (escalator) LLM config. See
+# context/40-pipeline/03-extraction-contract.md.
+#
+# Both components share ONE schema (lge/llm/schema.py) and ONE prompt
+# template (lge/llm/prompt.py) — only the model and prompt_rev differ per
+# tier. Bumping prompt_rev here re-runs cleanly from stored document_text;
+# it never requires a re-crawl (source becomes 'llm:p8:<prompt_rev>').
+#
+# Model slugs are OpenRouter identifiers for the OpenAI-compatible chat
+# completions endpoint (POST https://openrouter.ai/api/v1/chat/completions),
+# NOT Anthropic API model IDs — this project calls Claude through OpenRouter
+# because the user holds an OpenRouter key, not an Anthropic key.
+#
+# Prices are USD per 1,000,000 tokens, first-party Anthropic rates (the
+# skill's cached pricing table) — used only for the --opt max_usd budget
+# guard and the --opt dry_run=1 cost estimate when a response carries no
+# `usage` block. Real cost is read from response.usage when present.
+# *_batch variants are Anthropic's Message Batches equivalent on OpenRouter,
+# priced at half the non-batch rate; use_batch selects it. Default is
+# non-batch (synchronous) for both tiers.
+
+p8:
+  model: anthropic/claude-haiku-4.5
+  model_batch: anthropic/claude-haiku-4.5:batch
+  use_batch: false
+  # v2: attorney_count grounding (attorney_names / stated-method evidence),
+  # entity_kind gains 'nonprofit', unscored fields no longer written at 1.0.
+  prompt_rev: v2
+  price_per_mtok_input: 1.00
+  price_per_mtok_output: 5.00
+
+p9:
+  model: anthropic/claude-opus-5
+  model_batch: anthropic/claude-opus-5:batch
+  use_batch: false
+  prompt_rev: v2
+  price_per_mtok_input: 5.00
+  price_per_mtok_output: 25.00
+
+request:
+  # Total character budget for the page-text blocks in the user message.
+  # Trimmed to this before the call; attorneys/team pages are never trimmed
+  # first (see lge/llm/prompt.py:select_and_trim).
+  char_budget: 24000
+  # Output cap. The schema is small (a handful of scalars + short lists), so
+  # this comfortably bounds a single structured-output response.
+  max_output_tokens: 2000
+  timeout_s: 120
+  concurrency: 4
+  max_retries: 3
+  backoff_base_s: 1.0
+  backoff_max_s: 30.0
+  # Confidence written for claims the contract gives no per-field confidence
+  # (practice_areas, languages, entity_kind, and spanish_intake/
+  # has_inhouse_recruiter when their evidence grounds) -- an asserted-but-
+  # unscored value is not the same thing as a 1.0-confidence one.
+  default_field_confidence: 0.7
+
+referer: https://legalsoft.com
+title: "Legal Soft Lead Engine"

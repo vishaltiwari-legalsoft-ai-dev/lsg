@@ -1,0 +1,173 @@
+# norm_practice pattern config.
+#
+# Closed vocabulary — exactly these 15 slugs. Do not add or rename: norm_practice's
+# output is consumed directly by icp_tier(). See
+# context/30-data-model/02-normalization-contracts.md and
+# context/10-icp/02-practice-areas.md.
+#
+#   personal_injury, mass_tort, immigration, ssdi, workers_comp, lemon_law,
+#   employment, consumer, bankruptcy, family, criminal, estate, appellate,
+#   patent_prosecution, complex_commercial
+#
+# Tier-4 hourly practices (business, real estate, tax, IP litigation) are
+# intentionally NOT slugs here — tier 4 is decided by fee model alone, never by a
+# practice-area match, because there is no volume signal on this axis for them.
+#
+# All patterns are case-insensitive, word-bounded regex, matched with re.search
+# against page text. `labels` maps free-text category labels from other sources
+# (e.g. a directory's category chip) onto the same slugs, or explicitly to null
+# where the label is too broad to map (e.g. "Litigation").
+
+practices:
+  personal_injury:
+    - '\bpersonal injury\b'
+    - '\b(?:car|auto|automobile|truck|motorcycle|pedestrian|bicycle|bike|rideshare)\s+accidents?\b'
+    - '\bslip\s+and\s+fall\b'
+    - '\bpremises liability\b'
+    - '\bwrongful death\b'
+    - '\bdog bites?\b'
+    - '\bcatastrophic injur(?:y|ies)\b'
+    - '\b(?:traumatic\s+)?brain injur(?:y|ies)\b'
+    - '\bmedical malpractice\b'
+    - '\bnursing home abuse\b'
+
+  # "class action" is deliberately NOT a pattern here — a class action is not a mass
+  # tort, and the two are commonly confused on small-firm marketing pages.
+  mass_tort:
+    - '\bmass torts?\b'
+    - '\bcamp lejeune\b'
+    # NOT bare roundup: "weekly news roundup" is a blog staple.
+    - '\broundup\s+(?:weed\s*killer|lawsuits?|cancer|litigation|herbicide)\b'
+    - '\bparaquat\b'
+    - '\bhair relaxer\b'
+    - '\btalc(?:um)?\b'
+    - '\bozempic\b'
+    - '\bglp-1\b'
+    - '\b3m earplugs?\b'
+    - '\bhernia mesh\b'
+    - '\bcpap\b'
+    - '\bphilips\s+(?:cpap|recall)\b'
+    - '\bnec\b.{0,20}\bbaby formula\b'
+    - '\bbaby formula\b'
+    - '\bdepo-provera\b'
+    - '\bsuboxone\b'
+    - '\bsocial media addiction\b'
+    - '\bafff\b'
+    - '\bfirefighting foam\b'
+
+  immigration:
+    - '\bimmigration\b'
+    - '\bgreen cards?\b'
+    # NOT bare visa: "we accept Visa, MasterCard" sits in many payment footers.
+    - '\b(?:work|student|family|fianc[eé]e?|tourist|investor|employment|immigrant|spous(?:e|al)|l-1|o-1|e-2|eb-5)[\s-]+visas?\b'
+    - '\bvisa\s+(?:applications?|petitions?|interviews?)\b'
+    - '\bh-1b\b'
+    - '\bk-1\s+visa\b'
+    - '\bu\s+visa\b'
+    - '\bt\s+visa\b'
+    - '\bdeportation\b'
+    - '\bremoval defense\b'
+    - '\basylum\b'
+    - '\bnaturalization\b'
+    - '\bcitizenship\b'
+    - '\bdaca\b'
+    - '\buscis\b'
+
+  ssdi:
+    - '\bsocial security disability\b'
+    - '\bssdi\b'
+    - '\bssi\b'
+    - '\bdisability benefits\b'
+
+  workers_comp:
+    - "\\bworkers[\u2019']?\\s*comp(?:ensation)?\\b"
+    - '\bwork(?:place)?\s+injur(?:y|ies)\b'
+
+  lemon_law:
+    - '\blemon laws?\b'
+
+  employment:
+    - '\bemployment law\b'
+    - '\bwrongful termination\b'
+    - '\bworkplace discrimination\b'
+    - '\bsexual harassment\b'
+    - '\bwage and hour\b'
+    - '\bunpaid overtime\b'
+    - '\bflsa\b'
+    - '\bretaliation\b'
+    - '\bwhistleblowers?\b'
+
+  consumer:
+    - '\bconsumer protection\b'
+    - '\bfdcpa\b'
+    - '\bfcra\b'
+    - '\bdebt collection harassment\b'
+    - '\bcredit report errors?\b'
+    - '\btcpa\b'
+
+  bankruptcy:
+    - '\bbankruptcy\b'
+    - '\bchapter 7\b'
+    - '\bchapter 13\b'
+    - '\bdebt relief\b'
+
+  family:
+    - '\bfamily law\b'
+    - '\bdivorce\b'
+    - '\bchild custody\b'
+    - '\bchild support\b'
+    - '\balimony\b'
+    - '\bspousal support\b'
+    - '\badoptions?\b'
+    - '\bprenuptial\b'
+
+  criminal:
+    - '\bcriminal defense\b'
+    - '\bdui\b'
+    - '\bdwi\b'
+    - '\bdrug charges\b'
+    - '\bdomestic violence defense\b'
+    - '\btheft\b'
+    - '\bassault\b'
+    - '\bexpungement\b'
+    - '\bfederal crimes?\b'
+
+  estate:
+    - '\bestate planning\b'
+    # NOT bare will/trust: "we will fight", "you can trust us" are the commonest words
+    # in legal marketing copy, and tagged PI firms as estate in the live probe.
+    - '\bwills\b'
+    - '\bwills?\s+(?:and|&)\s+trusts?\b'
+    - '\blast\s+will(?:\s+and\s+testament)?\b'
+    - '\bliving\s+wills?\b'
+    - '\b(?:revocable|irrevocable|living|family|special\s+needs|asset\s+protection)\s+trusts?\b'
+    - '\btrust\s+administration\b'
+    - '\bprobate\b'
+    - '\bestate administration\b'
+    - '\belder law\b'
+    - '\bguardianship\b'
+
+  appellate:
+    - '\bappellate\b'
+    - '\bappeals? court\b'
+    - '\bappellate practice\b'
+
+  patent_prosecution:
+    - '\bpatent prosecution\b'
+    - '\bpatent applications?\b'
+    - '\buspto\b'
+
+  complex_commercial:
+    - '\bcomplex commercial litigation\b'
+    - '\bcommercial litigation\b'
+
+labels:
+  Litigation: null
+  IP: null
+  Immigration: immigration
+  Employment: employment
+  Family: family
+  Criminal: criminal
+  Personal Injury: personal_injury
+  Bankruptcy: bankruptcy
+  Workers Compensation: workers_comp

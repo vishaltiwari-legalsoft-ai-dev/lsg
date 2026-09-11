@@ -1,0 +1,58 @@
+# Plane R (resolvers) configuration. See
+# context/40-pipeline/02-component-register.md (Plane R) and
+# context/10-icp/07-decision-makers-and-lead-record.md.
+#
+# Run order is R2 -> R1 -> R3 -> R4 (free authoritative bar names first, then
+# paid enrichment, then pattern inference, then verification of whatever
+# owner/admin emails exist) -- see the component register's "Run order" note.
+
+r3_email_pattern:
+  # "Require >= 2 agreeing examples, or 1 when the firm has exactly one known
+  # email" -- literal from the task brief. min_support_multi guards the first
+  # case; a firm with exactly one known contact_email on its domain uses
+  # min_support_single instead, regardless of what min_support_multi says.
+  min_support_multi: 2
+  min_support_single: 1
+  # A pattern learned from >=2 agreeing addresses is materially more certain
+  # than one learned from the firm's only known email -- confidence reflects
+  # that gap. Neither is 1.0: a learned pattern is not a verified address (R4
+  # still has to run on anything inferred from it).
+  confidence_multi: 0.85
+  confidence_single: 0.6
+
+r4_verify:
+  # none (inert default) | zerobounce | neverbounce. Selecting a provider with
+  # no matching API key still runs inert -- see r4_verify.py's docstring.
+  provider: none
+  timeout_s: 10.0
+  max_retries: 2
+  backoff_base_s: 1.0
+  backoff_max_s: 10.0
+  # USD per single-email lookup, used only for the --opt max_usd budget guard
+  # (no real contract exists yet -- these are placeholder list-price figures,
+  # not a negotiated rate).
+  price_per_email_usd:
+    zerobounce: 0.007
+    neverbounce: 0.008
+
+r5_phone:
+  # DNC scrub adapter selection. 'none' is the only implementation today --
+  # a registry scrub needs a subscription this project does not have yet.
+  # Built as an adapter interface so a provider can be dropped in later
+  # without touching the normalization path.
+  dnc_provider: none
+
+r2_bar_join:
+  # addr_hash equal AND similarity(name_stem) > this -> match. Same
+  # rationale as identity.yml's r3_addr_name_similarity: address equality is
+  # already strong evidence, so the name check only needs to rule out two
+  # unrelated firms sharing a building.
+  addr_name_similarity: 0.55
+  # No address match: same city AND similarity(name_stem) > this -> match.
+  # Literal figure from the task brief -- deliberately higher than the
+  # addr_hash path since city alone is much weaker evidence.
+  city_name_similarity: 0.82
+
+r1_enrich:
+  # none (inert default). No vendor is contracted yet -- see r1_enrich.py.
+  provider: none

@@ -1,0 +1,97 @@
+# Thresholds for every alert in context/40-pipeline/07-observability.md, and
+# for the g3_tier_distribution gate (context/60-execution/03-hard-gates.md
+# G3). Read by lge/ops/config.py -- never hardcoded in lge/ops/alerts.py or
+# lge/ops/gates.py, mirroring config/identity.yml's pattern for g1_identity.
+#
+# Every alert function returns one of three states: ok | firing | no_data.
+# no_data is not ok and not firing -- it means the alert could not be
+# evaluated at all (the source table/snapshot history it needs is empty),
+# which is itself information worth surfacing distinctly.
+
+alerts:
+  watcher_silence:
+    # "0 new postings across all qualified firms" in the last JA1 sweep.
+    # No threshold to tune -- across thousands of firms, any count > 0 is ok
+    # and 0 is a defect. `sweep_window_hours` only defines which
+    # careers_sweep rows count as "the last sweep" (same run).
+    sweep_window_hours: 6
+
+  platform_parser_silence:
+    # A bar-board platform (source_registry.platform) with zero raw_posting
+    # yield across every one of its hosts in this trailing window.
+    window_days: 7
+
+  dedupe_drift:
+    # No threshold -- reuses g1_identity's duplicate-domain/duplicate-phone
+    # queries verbatim (context/70-decisions/01-decision-log.md D-014: those
+    # two queries are hard, always, regardless of the collapse-ratio band).
+
+  extraction_confidence_drop:
+    # Median fee_model.confidence, per source family (regex:p6, llm:p8:*),
+    # from observe_snapshot. "Week over week" compares today's snapshot
+    # against the most recent snapshot 5-9 days back (a tolerance band, not
+    # exactly 7, so a nightly run that slipped a day still finds its
+    # comparator).
+    drop_threshold: 0.1
+    lookback_days_min: 5
+    lookback_days_max: 9
+
+  tier_distribution_shift:
+    shift_threshold: 0.15
+    lookback_days_min: 5
+    lookback_days_max: 9
+
+  bounce_rate:
+    # Delivery is out of scope for M10 (see build brief) -- outreach_touch
+    # rows with a delivery outcome don't exist yet, so this reports
+    # no_data until they do. Kept registered rather than omitted: an alert
+    # that doesn't exist can't fire the day it's needed.
+    threshold: 0.02
+
+  signal_to_contact_latency:
+    band: STRIKE
+    p50_hours_threshold: 48
+
+  bench_starvation:
+    zero_days_threshold: 7
+
+  bench_staleness:
+    hours_threshold: 48
+
+  stale_share:
+    freshness_days: 90
+    share_threshold: 0.20
+
+  source_yield_zero:
+    # A registered, checked source (source_registry.robots_checked IS NOT
+    # NULL) with zero documents/postings referencing its host in this
+    # window is presumed blocked or redesigned, not merely quiet.
+    window_days: 14
+
+  robots_diff:
+    # A change between the two most recent robots_snapshot rows for a host
+    # only fires if it touches one of these keywords (case-insensitive) or
+    # a Crawl-delay/User-agent line -- a diff elsewhere on the page (a
+    # sitemap URL, a comment) is not the kind of change this alert exists
+    # to catch.
+    job_path_keywords: [career, careers, job, jobs, apply, employment]
+
+  agency_rule3_spike:
+    # geographic_spread rejects this week vs the trailing 4-week average.
+    multiplier_threshold: 3.0
+    week_days: 7
+    trailing_weeks: 4
+
+# g3_tier_distribution (context/60-execution/03-hard-gates.md G3). Explicit
+# per the build brief: this gate must NOT fail merely because most firms are
+# UNCLASSIFIED before any crawl has run -- UNCLASSIFIED is excluded from the
+# "did everything land in one tier" uniformity check below.
+gates:
+  g3_tier_distribution:
+    shift_threshold: 0.15
+    exempt_tiers: [UNCLASSIFIED]
+    # The uniformity check ("all firms in one tier") only runs once at
+    # least this many classified (non-exempt-tier) firms exist -- avoids a
+    # false FAIL on a two- or three-firm fixture where "all classified"
+    # trivially equals "one tier" without meaning anything.
+    min_firms_for_uniformity_check: 2

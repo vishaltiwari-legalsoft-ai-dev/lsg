@@ -1,0 +1,161 @@
+# journey/sequences.yml
+# The nine touches, the per-tier table, band rules and the pain -> touch-1
+# variant map, transcribed from plan/outreach-journey.md and
+# plan/email-drafts.md. This file is config the renderer (lge/journey/*)
+# reads -- it is not logic, so tuning a day offset or a variant mapping
+# never needs a code change. See lge/journey/build.py for how it is
+# consumed and for the decisions noted inline below.
+
+touches:
+  - step: 1
+    day: 0
+    angle: "the pain"
+    driven_by: signal.kind
+  - step: 2
+    day: 3
+    angle: "the specific work"
+    driven_by: tier
+  - step: 3
+    day: 7
+    angle: "the arithmetic"
+    driven_by: firm.fee_model
+  - step: 4
+    day: 10
+    angle: "a comparable firm"
+    driven_by: tier
+  - step: 5
+    day: 14
+    angle: "pre-empt the blocker"
+    driven_by: firm.cms_detected
+  - step: 6
+    day: 18
+    angle: "the second sku"
+    driven_by: wedge_sku_2
+  - step: 7
+    day: 21
+    angle: "the other person"
+    driven_by: contact.role
+  - step: 8
+    day: 25
+    angle: "still open?"
+    driven_by: "signal.closed_at IS NULL"
+  - step: 9
+    day: 28
+    angle: "close the loop"
+    driven_by: null
+
+# Opening SKU, touch-6 SKU and the "never lead with" ban, per tier. Mirrors
+# sql/001_schema.sql's tier_wedge_sku seed data (context/10-icp/05-tiers-
+# and-wedge-skus.md) -- duplicated here, not read from the DB, because the
+# renderer is a pure-config consumer and the copy file selected for touch 1
+# / touch 6 needs this at render time regardless of which agent's migration
+# owns the DB table.
+tiers:
+  "1A":
+    segment: "PI & mass tort · contingency"
+    opening_sku: demand_writer
+    touch6_sku: document_collector
+    never_lead_with: []
+  "1B":
+    segment: "Immigration · flat fee"
+    opening_sku: legal_assistant_es
+    touch6_sku: document_collector
+    never_lead_with: []
+  "2":
+    segment: "Fee-shifting litigation"
+    opening_sku: case_manager
+    touch6_sku: legal_assistant
+    never_lead_with: []
+  "3":
+    segment: "Flat-fee volume"
+    opening_sku: legal_assistant
+    touch6_sku: bookkeeper
+    never_lead_with: []
+  "4_NONBILLABLE":
+    segment: "Hourly · the holdout"
+    opening_sku: bookkeeper
+    touch6_sku: marketing_specialist
+    # The falsification-test tier: never pitch a paralegal, full stop --
+    # tier 4's touch 1 and touch 3 are dedicated copy that never selects a
+    # role-based pain variant, which is what structurally guarantees this.
+    never_lead_with: [paralegal]
+
+# STRIKE is a human-written email the same day -- never rendered by this
+# module. HOLD is never contacted. SEQUENCE gets all 9; NURTURE gets 1, 3, 9
+# at "half cadence".
+#
+# DECISION: "half cadence" is implemented as doubling each touch's day
+# offset relative to SEQUENCE (day 0 -> 0, day 7 -> 14, day 28 -> 56) --
+# half the frequency of the full sequence, not half the elapsed time.
+#
+# DECISION: the pain->angle table's last row ("No signal -- fit only ->
+# NURTURE track, touch 3 first") is read as a genuine second NURTURE shape:
+# a NURTURE lead with an arming signal that carries evidence gets touches
+# [1, 3, 9]; a NURTURE lead with no such signal (or a signal kind this copy
+# set has no touch-1 variant for) skips touch 1 entirely and gets [3, 9].
+# This does not relax the top-level "Who enters" signal.evidence requirement
+# for SEQUENCE, which stays a hard requirement -- see fee_model_gate below
+# and lge/journey/build.py.
+band_rules:
+  STRIKE:
+    rendered: false
+  SEQUENCE:
+    touches: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    requires_signal_evidence: true
+  NURTURE:
+    touches_with_signal: [1, 3, 9]
+    touches_without_signal: [3, 9]
+    day_multiplier: 2
+  HOLD:
+    rendered: false
+
+# Touch 1 variant, chosen by which pain signal fired.
+# "no signal" / an unmapped kind is not a key here on purpose -- see
+# select_touch1_variant() in lge/journey/select.py, which returns None and
+# lets build.py apply the SEQUENCE-exclude / NURTURE-skip-touch-1 rule above.
+pain_map:
+  job_posting_open:
+    no_repost: "1A"
+    repost: "1B" # repost_count >= 1
+  multi_opening: "1C"
+  mass_tort_campaign: "1D"
+  review_unreturned_call: "1E"
+  cms_implemented: "1F"
+
+# Touch 3's variant always equals firm.fee_model -- never genericised, never
+# picked by tier. The one exception is the tier-3 closing-paragraph swap
+# plan/email-drafts.md gives explicitly for the "flat" variant.
+#
+# DECISION: fee_model NOT IN (contingency, fee_shifting, flat, hourly) --
+# i.e. 'mixed', 'unknown', or NULL -- excludes the lead outright rather than
+# downgrading it to a NURTURE-minus-touch-3 shape. There is no fee-model-
+# agnostic touch-3 copy in plan/email-drafts.md to fall back to, and
+# "Never genericise this" (outreach-journey.md) rules out writing one here.
+touch3_variants:
+  contingency: { file: contingency }
+  fee_shifting: { file: fee_shifting }
+  flat: { file: flat_1b, tier_overrides: { "3": flat_tier3 } }
+  hourly: { file: hourly }
+
+# Touch 8 ("still open?") only fires while the arming signal is still open.
+#
+# DECISION: touch 2 ("re: your {role} opening") and touch 8 ("the {role}
+# posting is still up") are, as drafted, specifically about a job-posting
+# pain -- neither has copy that makes sense for a 1D/1E/1F-driven lead
+# (mass tort / review / cms-implemented signals carry no {role}). Rather
+# than invent copy plan/email-drafts.md does not provide, or exclude the
+# whole lead over two of nine touches, these two touches are SKIPPED
+# (same as touch 8's existing closed-signal skip) whenever {role} does not
+# resolve. See lge/journey/build.py's _render_touch2 / _render_touch8.
+touch8_condition: "signal.closed_at IS NULL"
+
+# Banned framing -- must never appear in any template or rendered email.
+# Substring match is deliberate: "replace" also catches "replacement",
+# "replacing", etc., which is the stricter (safer) direction.
+banned_phrases:
+  - replace
+  - "cheaper than hiring"
+  - "cut costs"
+  - "reduce headcount"
+  - offshore
+  - "virtual assistant"

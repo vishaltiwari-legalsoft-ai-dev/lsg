@@ -1,0 +1,98 @@
+# Flow definitions -- context/40-pipeline/06-orchestration.md's one-shot
+# shapes and nightly cron, run by `lge flow <name>` (lge/cli_ops.py) via
+# lge/ops/flowrunner.py. Prefect is deferred (see the M10 build report) --
+# a flow here is an ordered list of ALREADY-REGISTERED component/gate names;
+# the runner is the only thing that walks this list, and Prefect can later
+# wrap the same callables unchanged.
+#
+# Each step is either `{component: <name>}` or `{gate: <name>}`. A gate
+# step's `passed=False` STOPS the flow -- "the gate that must not be
+# advisory" (context/40-pipeline/06-orchestration.md). A component step
+# whose RunResult.failed > 0 also stops the flow unless the step carries
+# `continue_on_fail: true`. A step name not found in
+# lge.registry.registered_components()/registered_gates() raises loudly,
+# naming the step and the flow -- never silently skipped.
+#
+# `opts:` on a step are that step's own default options (e.g. a fixed
+# --limit). `lge flow <name> --opt k=v` opts apply to every step and are
+# merged over these per-step defaults (CLI wins). Every step drops any opt
+# its component function does not accept -- see
+# lge/ops/flowrunner.py:_filtered_opts.
+
+flows:
+  # context/40-pipeline/06-orchestration.md's first one-shot stage.
+  # resolve_identity sits between discovery and profiling on purpose:
+  # dedupe before the expensive per-firm stage, not after. G1 is hard --
+  # a broken dedupe multiplies its cost by every stage that follows.
+  load_first_party:
+    steps:
+      - component: i1_load
+      - component: i1_rekey
+      - component: resolve_identity
+      - gate: g1_identity
+      - component: i1_claims
+      - component: i1_contacts
+      - component: i2_job_history_load
+      - component: ja6_normalise
+      - component: reconcile
+      - component: coverage_report
+      - gate: g7_coverage
+
+  # profile_firms -> extract_attributes -> reconcile_and_class ->
+  # resolve_contacts -> emit_leads, chained as one flow. G3 sits between
+  # classification and contact resolution because R1 is a paid enricher --
+  # a drifted classifier must not spend enrichment budget on the wrong
+  # firms (context/60-execution/03-hard-gates.md G3).
+  #
+  # r_site_contacts / r3_email_pattern / r4_verify / r5_phone / r2_bar_join
+  # / r1_enrich are being built in parallel (migration 070) and are not
+  # registered components yet in this checkout -- running this flow before
+  # they land fails loudly on the first missing name, which is the correct
+  # behaviour, not a bug in the flow definition.
+  profile_probe:
+    steps:
+      - component: p1_site_map
+      - component: p2_fetch
+      - component: p3_render
+      - component: p4_text
+      - component: p5_jsonld
+      - component: p6_fee
+      - component: p7_tech
+      - component: px_site_rules
+      - component: p8_llm
+      - component: reconcile
+      - component: p9_escalate
+      - component: reconcile
+      - gate: g3_tier_distribution
+      - component: r_site_contacts
+      - component: r3_email_pattern
+      - component: r4_verify
+      - component: classify
+      - component: ja1_careers
+      - component: ja6_normalise
+      - component: ja6_closure
+      - component: score
+      - component: build_list
+
+  # The nightly cron chain (context/40-pipeline/06-orchestration.md "Cron --
+  # never terminate"). No gates between steps -- G1/G3 belong to the
+  # one-shot build, not the nightly signal sweep, which runs against an
+  # already-resolved, already-classified universe every night. Collapses
+  # the doc's four separate cron times (02:00/02:45/03:00/03:30) into one
+  # chained flow starting at 02:00 -- see config/schedule.yml for why.
+  # observe_snapshot + alerts (spec: "daily") are appended at the end so
+  # every alert evaluation sees a same-run, same-night snapshot rather than
+  # racing a separately-scheduled snapshot job. `alerts` is deliberately
+  # NOT continue_on_fail: its RunResult.failed is the count of FIRING
+  # alerts, and a firing alert is a defect (context/40-pipeline/
+  # 07-observability.md) -- the nightly job's own exit code should say so,
+  # for whatever runs the schedule (schtasks history) to notice.
+  nightly:
+    steps:
+      - component: ja1_careers
+      - component: ja6_normalise
+      - component: ja6_closure
+      - component: score
+      - component: build_list
+      - component: observe_snapshot
+      - component: alerts

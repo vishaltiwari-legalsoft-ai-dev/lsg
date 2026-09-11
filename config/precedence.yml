@@ -1,0 +1,173 @@
+# Source precedence for attribute reconciliation (lge/score/reconcile.py).
+#
+# context/30-data-model/04-attribute-reconciliation.md is the algorithm;
+# context/50-first-party/02-one-door-rule.md is why internal data ranks where
+# it does (directory tier, below Places -- vendor_firms_37k.csv is PURCHASED,
+# same staleness profile as Justia/Avvo). Tag mapping onto the spec's source
+# categories, confirmed against what other builders' components actually
+# write (lge/planes/p/p5_jsonld.py, p6_fee.py, p7_tech.py, config/llm.yml):
+#
+#   "site"        -> site:jsonld (P5, confidence 0.95), rules:site (other
+#                     deterministic site rules -- not yet built this
+#                     milestone, but the tag is reserved so precedence
+#                     doesn't need editing when it lands)
+#   "llm(site)"    -> llm:p9:v1 (escalation tier) > llm:p8:v1 (cheap tier)
+#   "regex(site)"  -> regex:p6 (P6 fee-model detector)
+#   "directory"    -> internal_firms (purchased dataset) -- later:
+#                     directory:<name> ranks alongside it, unlisted
+#   later sources (not yet emitting claims): places, bar:<state>,
+#   directory:<name> -- included in the lists below so this file does not
+#   need editing the day they start writing.
+#
+# `reconcile()`'s generic rule: a source not named for a given attribute
+# still counts (its claim is considered), it just ranks after every named
+# source ("unlisted sources rank last") -- UNLESS the attribute is listed
+# under `exclusive_attrs` below, in which case a source not named for it is
+# ignored outright (e.g. a `regex:p6` claim on `attorney_count` never counts
+# for anything -- "no other source is even approximately right").
+
+defaults:
+  freshness_days: 90
+
+# Conflicts on these three are NEVER resolved silently -- they decide the
+# tier. A disagreement whose precedence winner has confidence < 0.6 emits
+# reconcile_conflict + NULL instead of a best guess.
+tier_determining: [fee_model, primary_practice, attorney_count]
+
+# "ONLY" in the source doc, not just "ranked highest": a claim from any
+# source not in this attribute's precedence list is excluded before
+# resolution even begins, not merely deprioritized.
+exclusive_attrs:
+  - attorney_count          # llm(team page) ONLY
+  - staff_ratio              # llm only
+  - has_hired_support_roles  # internal_jobs only (doc-02 job-history additions)
+  - support_roles_posted     # internal_jobs only
+  - last_known_hiring_attempt # internal_jobs only
+  - repeat_role_count        # internal_jobs only
+
+# Attributes where the literal string "unknown" is itself a resolved value
+# (confidence 0, first-class -- context/40-pipeline/03-extraction-contract.md
+# "making unknown reachable"), not an absence. A claim whose value is
+# "unknown" (or JSON null) never outranks a real value from ANY source, no
+# matter how low that source's own precedence -- but when every surviving
+# claim is unknown/null, the resolved value is "unknown" for these two
+# attributes specifically, NULL for everything else.
+unknown_capable: [fee_model, primary_practice]
+
+precedence:
+  # ---- identity columns reconcile() is also permitted to write (I7) ------
+  canonical_name:
+    - site:jsonld
+    - rules:site
+    - bar
+    - places
+    - internal_firms
+
+  phone_e164:
+    - site:jsonld
+    - rules:site
+    - places
+    - bar
+
+  # Fans out to street_norm / addr_unit / addr_hash / zip5 / state / city.
+  # The `city` sub-field is a genuine exception among the fan-out columns:
+  # see reconcile.py's `combine_firm_columns` -- it is COALESCEd against the
+  # dedicated `city` attribute below (and against whatever is already on the
+  # row) rather than nulled on a stale/empty run, because internal_firms
+  # supplies `city` directly today without ever supplying a full `address`
+  # claim (confirmed in lge/planes/i/i1_firms.py) -- address's own
+  # precedence has no internal_firms entry to fall back to.
+  address:
+    - places
+    - site:jsonld
+    - rules:site
+    - bar
+
+  # Standalone, not merely address's city sub-field: site:jsonld and
+  # internal_firms both emit bare `city` claims (no full postal address).
+  city:
+    - site:jsonld
+    - places
+    - internal_firms
+
+  # ---- qualification columns -----------------------------------------
+  primary_practice:
+    - llm:p9:v1
+    - llm:p8:v1
+    - rules:practice
+    - internal_firms
+
+  practice_areas:
+    - llm:p9:v1
+    - llm:p8:v1
+    - rules:practice
+    - internal_firms
+
+  attorney_count:
+    - llm:p9:v1
+    - llm:p8:v1
+
+  # regex(site) > llm(site). Disagreement has its own escalation rule
+  # (reconcile.py: regex vs. any llm claim, before an llm:p9:v1 claim exists
+  # -> conflict + NULL + P9, "disagreement -> escalate"; once a p9 claim
+  # exists for this firm/attr, apply the standard precedence rule below --
+  # which still has regex:p6 on top, so a confident regex match keeps
+  # winning; p9's role is to break the escalation loop, not to outvote a
+  # deterministic match).
+  fee_model:
+    - regex:p6
+    - llm:p9:v1
+    - llm:p8:v1
+
+  cms_detected:
+    - rules:p7
+    - internal_firms
+
+  entity_kind:
+    - rules:site
+    - site:jsonld
+    - llm:p9:v1
+    - llm:p8:v1
+    - internal_firms
+
+  spanish_intake:
+    - llm:p9:v1
+    - llm:p8:v1
+    - rules:site
+    - site:jsonld
+
+  has_inhouse_recruiter:
+    - llm:p9:v1
+    - llm:p8:v1
+    - rules:site
+
+  staff_ratio:
+    - llm:p9:v1
+    - llm:p8:v1
+
+  country:
+    - site:jsonld
+    - internal_firms
+
+  has_hired_support_roles:
+    - internal_jobs
+
+  support_roles_posted:
+    - internal_jobs
+
+  last_known_hiring_attempt:
+    - internal_jobs
+
+  repeat_role_count:
+    - internal_jobs
+
+  # first_seen_bar_admission, review_count, paid_ads_active: not given an
+  # explicit precedence by context/30-data-model/04-attribute-reconciliation.md
+  # or the task brief's mapping (no source yet emits claims for them --
+  # review_count/paid_ads_active await a Places/ad-tracker integration,
+  # first_seen_bar_admission awaits bar:<state>). Deliberately left out of
+  # this map: reconcile() falls back to its documented default for an attr
+  # with no configured precedence -- agree/one-source resolve normally,
+  # disagreement is broken by most-recently-observed claim (no escalation,
+  # since none of the three is tier-determining). Add a list here the day a
+  # real source shows up rather than guessing an order now.

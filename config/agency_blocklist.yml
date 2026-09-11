@@ -1,0 +1,56 @@
+# JA6 agency filter -- named lists. See
+# context/20-signals/03-agency-filter-and-resolution.md ("It is the single
+# highest-value transform in this whole lane").
+#
+# MAINTAINED, NOT STATIC. `job_posting_rejected` keeps every rejected posting with
+# the rule that fired -- that reject stream is how this file grows. A spike in the
+# `geographic_spread`/`volume` behavioural rules (lge/planes/ja/ja6_agency.py) almost
+# always means a new agency belongs here, not that the market changed.
+#
+# Matching: every name below (and every `company_name` on a raw_posting) is run
+# through lge.norm.name.norm_name() before comparison, so punctuation and legal-entity
+# suffixes ("Legal", "Group", "Inc", "LLC", ...) are already stripped -- "Robert Half"
+# and "Robert Half Legal" both normalize to "robert half" and compare equal without
+# needing every surface variant spelled out here.
+
+# Legal-staffing / recruiting agencies. These place candidates AT a firm; the posting
+# names the agency, not the firm that actually needs the person.
+agencies:
+  - Robert Half Legal
+  - Robert Half
+  - Beacon Hill Legal
+  - Adams & Martin
+  - Adams & Martin Group
+  - Special Counsel
+  - Adecco
+  - Vaco
+  - Lateral Link
+  - Kforce Legal
+  - Marina Sirras
+  - Latitude
+  - Latitude Legal
+  - Hire Counsel
+  # seen in data/in/job_history_2026-08-27.csv, not in the spec's seed list --
+  # volume (22 postings) is consistent with a staffing agency, not a 2-25 attorney
+  # firm. Added here rather than left to the volume rule alone so it is caught even
+  # on a run where its posting count happens to sit under threshold.
+  - Direct Counsel
+
+# Job boards / marketplaces / aggregators. The listed "company" is the platform
+# itself, not the employer -- distinct from `agencies` (a staffing firm placing
+# candidates) but the same practical effect: the real employer is hidden.
+marketplaces:
+  - Upwork
+  - VirtualVocations
+  - Virtual Vocations
+  - Virtual Vocations Inc
+  - Indeed
+  - ZipRecruiter
+  - LinkedIn
+  - Glassdoor
+
+# company_name values (after norm_name) that name no employer at all.
+blind_names:
+  - Confidential
+  - Stealth
+  - Our Client

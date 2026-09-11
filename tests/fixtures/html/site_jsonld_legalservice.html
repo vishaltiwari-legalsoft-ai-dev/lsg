@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <title>Acme Law Group</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "LegalService",
+        "name": "Acme Law Group",
+        "telephone": "(212) 555-1212",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "123 Main Street Suite 400",
+          "addressLocality": "New York",
+          "addressRegion": "NY",
+          "postalCode": "10001",
+          "addressCountry": "US"
+        },
+        "knowsLanguage": ["English", "Spanish"]
+      },
+      {
+        "@type": "Person",
+        "name": "Jane Doe",
+        "jobTitle": "Managing Partner"
+      },
+      {
+        "@type": "Attorney",
+        "name": "Bob Roe",
+        "jobTitle": "Associate Attorney"
+      },
+      {
+        "@type": "JobPosting",
+        "title": "Intake Coordinator",
+        "hiringOrganization": {
+          "@type": "Organization",
+          "name": "Should Not Be Read By P5"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <h1>Acme Law Group</h1>
+  <p>Personal injury and family law attorneys serving New York.</p>
+</body>
+</html>

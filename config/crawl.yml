@@ -1,0 +1,72 @@
+# config/crawl.yml — P1 site-mapper: page-kind classification and path
+# probes, plus the rate-discipline defaults the per-host token bucket falls
+# back to when a host declares no Crawl-delay.
+#
+# max_concurrent_hosts bounds how many DIFFERENT hosts P1/P2/P4/JA1 fetch
+# concurrently in one run (a semaphore over per-host worker tasks) — it does
+# NOT relax the per-host interval below, which is what keeps any single site
+# to <=1 request per interval no matter how many hosts run at once.
+
+rate:
+  default_interval_s: 2.0
+  max_concurrent_hosts: 12
+
+# page_kind -> regexes matched case-insensitively against the URL path only
+# (never the query string or fragment). Checked in this order; the first
+# kind whose pattern matches wins. A path matching none of these is 'other'.
+page_kinds:
+  home:
+    - '^/$'
+  careers:
+    - '/careers?(?:/|$)'
+    - '/jobs(?:/|$)'
+    - '/employment(?:/|$)'
+    - '/join-our-team'
+  attorneys:
+    - '/attorneys?(?:/|$)'
+    - '/our-attorneys'
+    - '/lawyers?(?:/|$)'
+  team:
+    - '/our-team'
+    - '/(?:the-)?team(?:/|$)'
+    - '/staff(?:/|$)'
+  practice:
+    - '/practice-areas?'
+    - '/practice(?:/|$)'
+    - '/services(?:/|$)'
+    - '/what-we-do'
+  about:
+    - '/about-us'
+    - '/about(?:/|$)'
+  contact:
+    - '/contact-us'
+    - '/contact(?:/|$)'
+  fees:
+    - '/fees(?:/|$)'
+    - '/pricing'
+
+# P1's own path probes: candidate URLs added as site_map rows
+# (discovered_via='probe') for any page_kind with zero sitemap-discovered
+# URLs. P2 fetches these exactly like any other site_map URL — a probe that
+# 404s is simply recorded that way, not treated as an error. Exactly the
+# thirteen paths named in context/40-pipeline/02-component-register.md.
+probe_paths:
+  about:     ['/about', '/about-us']
+  attorneys: ['/attorneys', '/our-attorneys']
+  team:      ['/our-team', '/team']
+  practice:  ['/practice-areas']
+  contact:   ['/contact', '/contact-us']
+  careers:   ['/careers', '/jobs', '/employment']
+  fees:      ['/fees']
+
+# Per-firm caps on the final site_map, applied in this order (home first,
+# then practice, then the remaining "other" kinds each capped individually)
+# until `total` is reached.
+caps:
+  home: 1
+  practice: 4
+  other: 2     # about, attorneys, team, contact, careers, fees — each
+  total: 14
+
+sitemap:
+  max_urls_read: 2000

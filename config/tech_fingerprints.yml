@@ -1,0 +1,103 @@
+# P7 tech-fingerprint config. Matched against script src, link href, iframe src,
+# form action, and inline <script> text. `category` is "cms" (case-management
+# system) or "intake" (intake/lead-routing tooling). Order here is the tie-break
+# order used by detect_tech()'s output and by primary_cms() (first "cms" hit wins).
+#
+# EVERY pattern is anchored to a HOSTNAME, never a bare word. The spec detects these
+# from "script hosts, chat widgets, form endpoints" — a bare-word match on "prevail"
+# or "needles" would fire on a link to /how-we-prevail or a malpractice page about
+# needles, and report a case system the firm does not run. {host} below means: the
+# brand appears inside a domain label followed by a TLD.
+#
+# Brands whose vendor domains could not be verified offline (needles/neos, prevail)
+# carry domain-shaped patterns only, and are the first to spot-check against real
+# firm sites during the probe. The purchased firm dataset's own Technology column is
+# a second, independent claim for cross-checking (filevine 107, mycase 33,
+# smartadvocate 19 firms at load time).
+
+tools:
+  - name: filevine
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*filevine[\w-]*\.(?:com|io|app|net)\b'
+
+  - name: clio
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*(?:go)?clio\.com\b'
+
+  - name: casepeer
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*casepeer[\w-]*\.(?:com|io|app|net)\b'
+
+  - name: mycase
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*mycase\.com\b'
+
+  - name: litify
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*litify[\w-]*\.(?:com|io|app|net)\b'
+
+  - name: smartadvocate
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*smartadvocate[\w-]*\.(?:com|io|app|net)\b'
+
+  - name: lawmatics
+    category: intake
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*lawmatics\.com\b'
+
+  - name: practicepanther
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*practicepanther\.com\b'
+
+  - name: cosmolex
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*cosmolex\.com\b'
+
+  - name: smokeball
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*smokeball\.com\b'
+
+  - name: rocket_matter
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*rocketmatter\.(?:com|net)\b'
+
+  - name: leap
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*leap\.us\b'
+      - '(?<![\w-])(?:[\w-]+\.)*leaplegalsoftware\.com\b'
+
+  - name: needles
+    category: cms
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*(?:needles|neos)[\w-]*\.(?:com|net|cloud|io)\b'
+
+  - name: prevail
+    category: intake
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*prevail[\w-]*\.(?:com|ai|io|net)\b'
+
+  - name: lead_docket
+    category: intake
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*leaddocket\.com\b'
+
+  - name: law_ruler
+    category: intake
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*lawruler\.com\b'
+
+  - name: captorra
+    category: intake
+    patterns:
+      - '(?<![\w-])(?:[\w-]+\.)*captorra\.com\b'

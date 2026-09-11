@@ -1,0 +1,33 @@
+# px_site_rules config: deterministic, non-fee/non-tech signals read straight off
+# stored page text and raw HTML. All patterns are case-insensitive, word-bounded
+# regex, matched with re.search. See lge/planes/p/px_site_rules.py.
+
+# spanish_intake: matched against document_text.main_text on ANY page. The
+# accented and unaccented spellings of "español" are folded into one pattern via
+# the [nñ] class rather than listed as two literal phrases.
+spanish_phrases:
+  - 'hablamos\s+espa[nñ]ol'
+  - 'se\s+habla\s+espa[nñ]ol'
+  - '\babogados\b'
+  - '\bconsulta\s+gratis\b'
+  - 'll[aá]menos\b'
+
+# has_inhouse_recruiter: matched against document_text.main_text on team/careers/
+# about pages only.
+recruiter_roles:
+  - '\blegal\s+recruiters?\b'
+  - '\brecruiting\s+managers?\b'
+  - '\brecruiting\s+coordinators?\b'
+  - '\btalent\s+acquisition\b'
+  - '\bdirector\s+of\s+recruiting\b'
+  - '\brecruiters?\b'
+
+# entity_kind = 'gov': firm.domain suffix check. Plain suffixes first, then a
+# regex for the "state.XX.us" shape many state-government sites still use
+# alongside (or instead of) a .gov domain.
+gov_domain_suffixes:
+  - '.gov'
+  - '.mil'
+
+gov_domain_patterns:
+  - '\.state\.[a-z]{2}\.us$'

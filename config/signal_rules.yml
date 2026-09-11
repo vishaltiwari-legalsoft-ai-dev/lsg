@@ -1,0 +1,88 @@
+# JA6 tunable thresholds -- everything numeric/structural that isn't a named list
+# (named lists live in config/agency_blocklist.yml). See
+# context/20-signals/03-agency-filter-and-resolution.md and
+# context/20-signals/04-dedupe-dates-and-closure.md.
+#
+# JA6 is a pure function over stored raw_posting rows (context/40-pipeline/
+# 02-component-register.md, "Why JA6 is separate") -- every value below is meant to
+# be retuned repeatedly and re-run over what is already on disk, never a re-crawl.
+
+agency_filter:
+  # Rule 3 -- geographic spread. "A real 2-25 attorney firm does not hire paralegals
+  # in five cities at once." Computed per normalised company name, over its
+  # SUPPORT-ROLE postings only, as a sliding 90-day window (not a fixed calendar
+  # bucket) -- if any 90-day window contains postings across this many distinct
+  # metros, every support-role posting from that company is rejected.
+  geographic_spread:
+    min_distinct_metros: 5
+    window_days: 90
+
+  # Rule 4 -- volume. Same sliding-window logic, counting postings instead of metros.
+  volume:
+    min_postings: 20
+    window_days: 90
+
+resolution:
+  # Rung 5 -- company name + street address. Both conditions required (R3):
+  # addr_hash equality alone merges every firm in an office tower.
+  addr_name_similarity_threshold: 0.55
+
+  # Rung 6 -- company name + city. Accept ONLY when exactly one firm clears this
+  # threshold among firms in the same city (same state too, when both the posting
+  # and the candidate firm have one -- see lge/planes/ja/ja6_resolve.py for how a
+  # firm with a city but no state, which is common in this dataset today, is
+  # handled).
+  city_similarity_threshold: 0.82
+
+  # Rung 7 guard -- a raw_posting.city value that names no real place. Compared
+  # case-insensitively. I2 already leaves city NULL for these (it only parses
+  # "City, ST"), but live sources (JA1-JA5) are not guaranteed to, so JA6 checks
+  # this itself rather than trusting every upstream writer.
+  non_city_values:
+    - united states
+    - usa
+    - us
+    - remote
+    - nationwide
+    - multiple locations
+    - various
+    - anywhere
+
+  # Rung 2 -- outbound link domain. Hosts excluded because a link to one of these
+  # identifies the board or the ATS platform, never the firm. Maintained, not
+  # exhaustive -- extend it the same way the agency blocklist grows: watch what
+  # keeps landing raw_posting_id rows at 'unresolved' with an outbound link that is
+  # obviously a board, not a firm.
+  excluded_link_hosts:
+    - indeed.com
+    - ziprecruiter.com
+    - linkedin.com
+    - glassdoor.com
+    - monster.com
+    - careerbuilder.com
+    - simplyhired.com
+    - dice.com
+    - craigslist.org
+    - greenhouse.io
+    - lever.co
+    - icims.com
+    - workday.com
+    - myworkdayjobs.com
+    - bamboohr.com
+    - smartrecruiters.com
+    - jobvite.com
+    - ashbyhq.com
+    - breezy.hr
+    - recruitee.com
+    - taleo.net
+    - ultipro.com
+    - paylocity.com
+    - paycomonline.com
+    - applytojob.com
+    - jazzhr.com
+    - upwork.com
+    - virtualvocations.com
+
+signals:
+  # ">= 2 distinct open support-role job signals for one firm" -- doc-01 signal 4.
+  multi_opening_min_open_roles: 2

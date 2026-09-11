@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/</loc></url>
+  <url><loc>https://example.com/about</loc></url>
+  <url><loc>https://example.com/attorneys</loc></url>
+  <url><loc>https://example.com/practice-areas/personal-injury</loc></url>
+  <url><loc>https://example.com/practice-areas/workers-comp</loc></url>
+  <url><loc>https://example.com/practice-areas/immigration</loc></url>
+  <url><loc>https://example.com/practice-areas/family-law</loc></url>
+  <url><loc>https://example.com/practice-areas/bankruptcy</loc></url>
+  <url><loc>https://example.com/practice-areas/criminal</loc></url>
+  <url><loc>https://example.com/contact</loc></url>
+  <url><loc>https://example.com/careers</loc></url>
+  <url><loc>https://example.com/fees</loc></url>
+  <url><loc>https://example.com/blog/some-post</loc></url>
+  <url><loc>https://example.com/blog/another-post</loc></url>
+</urlset>

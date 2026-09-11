@@ -1,0 +1,69 @@
+# classify_role config — owner / admin / attorney / unknown.
+# See context/10-icp/07-decision-makers-and-lead-record.md.
+#
+# Evaluation order: owner (strong), owner_weak, admin, attorney, else unknown 0.0.
+# owner and owner_weak are both evaluated before admin/attorney so "Managing
+# Attorney" and "Attorney/Partner" resolve to owner, never attorney.
+#
+# owner_weak: plain "partner" (with no other owner-signalling word) is a weaker
+# signal than "managing partner" or "founding partner" — in a 1-25 attorney firm a
+# partner is USUALLY an equity holder who can sign, but bare "partner" alone doesn't
+# guarantee it the way a named title does, so it is scored at reduced confidence
+# (0.6) rather than the 0.9 given to the unambiguous owner titles.
+
+owner:
+  confidence: 0.9
+  patterns:
+    - '\bowner\b'
+    - '\bfounder\b'
+    - '\bfounding partner\b'
+    - '\bfounding attorney\b'
+    - '\bmanaging partner\b'
+    - '\bmanaging attorney\b'
+    - '\bmanaging member\b'
+    - '\bprincipal attorney\b'
+    - '\bprincipal\b'
+    - '\bpresident\b'
+    - '\bceo\b'
+    - '\bname partner\b'
+    - '\bsenior partner\b'
+    - '\bshareholder\b'
+
+owner_weak:
+  confidence: 0.6
+  patterns:
+    - '\bpartner\b'
+    - '\battorney\s*/\s*partner\b'
+    - '\bpartner\s*/\s*attorney\b'
+
+admin:
+  confidence: 0.9
+  patterns:
+    - '\boffice manager\b'
+    - '\bfirm administrator\b'
+    - '\blegal administrator\b'
+    - '\bdirector of operations\b'
+    - '\boperations manager\b'
+    - '\boperations director\b'
+    - '\bpractice manager\b'
+    - '\bchief operating officer\b'
+    - '\bcoo\b'
+    - '\bexecutive director\b'
+    - '\bfirm manager\b'
+    - '\bbusiness manager\b'
+    - '\bdirector of administration\b'
+
+attorney:
+  confidence: 0.9
+  patterns:
+    - '\battorney\b'
+    - '\bassociate\b'
+    - '\blawyer\b'
+    - '\bof counsel\b'
+    - '\bcounsel\b'
+    - '\bstaff attorney\b'
+    - '\btrial attorney\b'
+    - '\blitigation attorney\b'
+    - '\bsenior attorney\b'
+    - '\bimmigration attorney\b'
+    - '\bpatent attorney\b'

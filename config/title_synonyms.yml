@@ -1,0 +1,85 @@
+# normalize_title (JA6) synonym map. See
+# context/20-signals/04-dedupe-dates-and-closure.md, section "normalize_title".
+#
+# Role order below is significant: normalize_title finds the LEFTMOST matching
+# synonym phrase in the cleaned title text (after seniority/employment/location
+# stripping). Where two roles' synonyms could both start matching at the exact same
+# position, the role listed earlier here wins — see lge/classify/titles.py.
+#
+# `support_role: false` marks the one canonical role that is not delegable support
+# work — attorney is a normalize_title output like any other, but downstream must
+# not treat it as bench/support inventory.
+
+roles:
+  legal_assistant:
+    support_role: true
+    synonyms:
+      - legal assistant
+      - legal secretary
+      - admin assistant legal
+      - legal administrative assistant
+
+  paralegal:
+    support_role: true
+    synonyms:
+      - paralegal
+      - certified paralegal
+      - litigation paralegal
+      - senior paralegal
+      - corporate paralegal
+      - paralegal specialist
+
+  intake_specialist:
+    support_role: true
+    synonyms:
+      - intake specialist
+      - client intake
+      - intake coordinator
+      - legal intake specialist
+      - client intake specialist
+
+  case_manager:
+    support_role: true
+    synonyms:
+      - case manager
+      - case coordinator
+
+  document_collector:
+    support_role: true
+    synonyms:
+      - records clerk
+      - medical records
+      - records specialist
+
+  legal_receptionist:
+    support_role: true
+    synonyms:
+      - legal receptionist
+      - receptionist
+
+  demand_writer:
+    support_role: true
+    synonyms:
+      - demand writer
+      - demand letter writer
+
+  lien_negotiator:
+    support_role: true
+    synonyms:
+      - lien negotiator
+      - lien specialist
+
+  bookkeeper:
+    support_role: true
+    synonyms:
+      - bookkeeper
+      - legal bookkeeper
+      - accounting clerk
+
+  attorney:
+    support_role: false
+    synonyms:
+      - attorney
+      - associate attorney
+      - lawyer
+      - counsel

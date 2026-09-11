@@ -1,0 +1,27 @@
+# P6 fee-model detector patterns, precedence order: contingency, fee_shifting, flat,
+# hourly. Copied verbatim from context/10-icp/03-fee-model.md ("Detection — P6 regex,
+# precedence-ordered, first match wins"). Within one sentence, the first family in
+# this order whose pattern matches wins that sentence.
+#
+# See lge/classify/fee.py for how site-level ambiguity across families is resolved
+# (page real estate, tie -> mixed). Never guess this field — see the source doc's
+# "Why `unknown` must be reachable" section.
+
+contingency:
+  - '\bno\s+(?:fee|win|recovery)\b.{0,24}\b(?:unless|until|if)\b'
+  - '\bcontingen(?:cy|t)[\s-]?fee\b'
+  - '\byou\s+(?:pay|owe)\s+nothing\s+unless\b'
+
+fee_shifting:
+  - '\bfees?\b.{0,20}\bpaid\s+by\s+(?:the\s+)?(?:defendant|employer|manufacturer)\b'
+  - '\bfee[\s-]shifting\b'
+  - '\b(?:they|the\s+other\s+side)\s+pay(?:s)?\s+(?:my|our|your)\s+fees\b'
+
+flat:
+  - '\bflat[\s-](?:fee|rate)\b'
+  - '\$[\d,]+\s+(?:flat|total|all[\s-]inclusive)\b'
+
+hourly:
+  - '\bhourly\s+rate\b'
+  - '\bbilled\s+(?:hourly|by\s+the\s+hour)\b'
+  - '\bper\s+hour\b'

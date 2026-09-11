@@ -1,0 +1,119 @@
+# The OS-scheduler mirror of context/40-pipeline/06-orchestration.md's cron
+# table. Prefect-on-Cloud-Run is deferred (see the M10 build report) -- this
+# is what `lge schedule` prints and what scripts/schedule_windows.ps1
+# generates `schtasks /Create` commands from. Registering any of these on
+# this machine is a decision for the user, not this build -- the script only
+# prints commands.
+#
+# `kind: flow` rows name a config/flows.yml flow; `kind: component` rows
+# name one `lge run <job>` component. `placeholder: true` rows name a
+# component that is not registered in this checkout yet -- printed anyway
+# (schedule_windows.ps1 labels them clearly) so the schedule stays complete
+# and honest about what still needs building, rather than silently dropping
+# stages the spec calls for.
+
+schedule:
+  - id: nightly
+    kind: flow
+    job: nightly
+    time: "02:00"
+    cadence: daily
+    notes: >
+      Chains the spec's 02:00 ja1_careers / 02:45 ja6_normalise / 03:00
+      score (full scan) / 03:30 build_list into one flow (config/flows.yml
+      "nightly"), with observe_snapshot + alerts (spec: "daily") appended
+      at the end. Chained rather than run as four independent cron entries
+      at fixed offsets because each stage reads the previous stage's
+      output on disk (context/40-pipeline/06-orchestration.md: "no
+      component reads another component's output directly" -- everything
+      is mediated by the store, on THIS run, not last night's) -- a slow
+      ja1_careers sweep must never let ja6_normalise start against
+      yesterday's postings. If a stage fails, the flow stops there and the
+      rest of the chain does not run that night; re-run with
+      `lge flow nightly --from-step N` after the fix.
+
+  - id: bench_sync_hourly
+    kind: component
+    job: bench_sync
+    cadence: hourly
+    notes: >
+      Only meaningful once config/bench_inventory.csv carries data rows
+      beyond its header/comment lines (lge/score/bench.py) -- the portal
+      feed (I4) that is meant to keep this live is not built in this
+      milestone, so until then this is a manual-CSV sync of whatever the
+      bench owner last exported. bench_staleness (config/alerts.yml)
+      fires at 48h specifically so a missed sync is caught fast.
+
+  - id: i3_portal_demand
+    kind: component
+    job: i3
+    cadence: hourly
+    placeholder: true
+    notes: >
+      PLACEHOLDER -- I3 (portal demand -> firm_track + suppression) is not
+      registered in this build. context/60-execution/03-hard-gates.md G4:
+      "nothing outbound before I3" -- no cold sequence may ship until this
+      exists and is confirmed running hourly.
+
+  - id: i4_talent_pool
+    kind: component
+    job: i4
+    cadence: hourly
+    placeholder: true
+    notes: >
+      PLACEHOLDER -- I4 (talent pool -> bench_inventory) not registered.
+      G5 (bench inventory before arming) depends on fresh bench data;
+      bench_sync_hourly above is the manual-CSV stand-in until I4 exists.
+
+  - id: w3_review_poller
+    kind: component
+    job: w3
+    cadence: weekly
+    day: Sun
+    placeholder: true
+    notes: "PLACEHOLDER -- tier 1A/1B review poller (W3) not registered in this build."
+
+  - id: ja5_serp_discovery
+    kind: component
+    job: ja5
+    cadence: weekly
+    placeholder: true
+    notes: "PLACEHOLDER -- JA5 (rotating SERP query set) not registered in this build."
+
+  - id: observe_robots_reaudit
+    kind: component
+    job: observe_robots_reaudit
+    cadence: monthly
+    placeholder: true
+    notes: >
+      PLACEHOLDER. Monthly, per context/20-signals/05-crawl-policy-and-audit.md
+      (re-audit triggers: "Monthly, all registered sources — re-fetch robots.txt,
+      diff against the stored copy"). The component is not built yet (milestone
+      M9: robots audit as a script). Until it exists the robots_diff alert stays
+      no_data for every host — the honest state, not a bug.
+
+  - id: w4_w5_ads_mass_tort
+    kind: component
+    job: w4_w5
+    cadence: monthly
+    day: "1st"
+    placeholder: true
+    notes: "PLACEHOLDER -- W4/W5 (ads + mass tort sweep, tier 1A) not registered."
+
+  - id: w6_tech_delta
+    kind: component
+    job: w6
+    cadence: quarterly
+    placeholder: true
+    notes: "PLACEHOLDER -- W6 (tech delta, all qualified firms) not registered."
+
+  - id: w7_liveness
+    kind: component
+    job: w7
+    cadence: rolling
+    placeholder: true
+    notes: >
+      PLACEHOLDER -- W7 (1/90th of the universe per day) not registered.
+      This is the freshness sweep the stale_share alert (config/alerts.yml)
+      exists to catch the absence of -- until W7 runs, stale_share can
+      only get worse.

@@ -1,0 +1,15 @@
+# local runtime - portable postgres, object store, caches
+.local/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# business data never goes in git (test fixtures under tests/ ARE tracked)
+data/in/
+data/out/
+*.xlsx
+
+# secrets
+.env

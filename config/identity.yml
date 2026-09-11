@@ -1,0 +1,54 @@
+# resolve_identity thresholds and source precedence.
+# See context/30-data-model/03-identity-resolution.md and
+# context/30-data-model/02-normalization-contracts.md.
+#
+# R1/R2 (domain / non-shared phone) are decisive keys -- no threshold, exact
+# match on an already-normalized column. R3/R4 are the only tunable knobs;
+# everything below is read by lge/resolve/identity.py, never hardcoded there.
+
+thresholds:
+  # R3: addr_hash equal AND similarity(name_stem) > this -> MERGE.
+  # Both conditions required -- address alone merges every firm in an office
+  # tower. Lower than R4's because addr_hash equality is already strong
+  # evidence (same street + zip5); the name check only needs to rule out two
+  # unrelated firms that happen to share a building.
+  r3_addr_name_similarity: 0.55
+
+  # R4: same zip5 AND similarity(name_stem) > this -> REVIEW ONLY, never
+  # auto-merge. zip5 alone is much weaker than addr_hash, so this threshold
+  # is deliberately higher than R3's.
+  r4_zip_name_similarity: 0.82
+
+  # norm_phone.shared_numbers(): a number claimed by >= this many distinct
+  # candidates is an answering service / tracking pool, not an identity key,
+  # and is excluded from R2 entirely.
+  shared_phone_min_candidates: 4
+
+# Highest precedence first. A component's canonical_name is the most
+# frequent name_raw among observations from whichever tier here is present
+# and ranks highest. Any source not listed in source_tier below uses its own
+# name as its tier, and any tier not listed here ranks last (lowest
+# precedence) -- an unknown source never outranks a known one.
+source_precedence:
+  - site
+  - bar
+  - places
+  - directory
+
+# Maps a raw observation.source value to the precedence tier it competes at.
+# internal_firms is a purchased vendor file of contact-level rows -- it
+# carries no more authority than any other directory listing, so it ranks at
+# the 'directory' tier rather than getting its own slot.
+source_tier:
+  internal_firms: directory
+  site: site
+  bar: bar
+  places: places
+
+# g1_identity's collapse-ratio band. Calibrated for three-way discovery
+# (Places + bar + directory) per the spec -- the gate applies it only when
+# resolved observations span >= 2 distinct sources; otherwise it reports the
+# ratio as informational.
+gate:
+  collapse_ratio_min: 2.0
+  collapse_ratio_max: 3.3

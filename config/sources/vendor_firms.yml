@@ -1,0 +1,65 @@
+# Source registration for the purchased firm/contact dataset loaded by I1
+# (lge/planes/i/i1_firms.py). See context/50-first-party/04-firm-dataset.md and
+# context/50-first-party/02-one-door-rule.md -- this file records the precedence
+# decision required "before the first load, not after the first conflict".
+
+source_tag: internal_firms
+kind: purchased_vendor_dataset
+loaded_by: [i1_load, i1_claims, i1_contacts]
+file: data/in/vendor_firms_37k.csv
+grain: one row per contact (36,814 rows, 22,158 distinct company domains)
+
+# Decided by the user (task brief): purchased from a data vendor -> directory
+# tier, below Places. Same staleness profile as Justia/Avvo -- context/30-data-model
+# /04-attribute-reconciliation.md's precedence table. NOT "above Places" (that rank
+# is reserved for data the team itself built from real interactions) and NOT
+# "unknown provenance" (we know exactly where this came from and when it was
+# purchased) -- directory tier is the correct middle rank.
+precedence:
+  tier: directory
+  rank: below Places, above unknown-provenance data
+  rationale: >
+    Purchased from a third-party data vendor. Same staleness profile as a
+    directory listing (Justia, Avvo): accurate at the moment of purchase, no
+    ongoing relationship with the firm keeps it current, and vendor size fields
+    routinely conflate total headcount with attorney count (see quality notes).
+  owner: reconcile() consumes this rank per attribute -- this file documents the
+    decision, it does not enforce it. I7 (sql/001_schema.sql) makes reconcile()
+    the only writer of the firm columns this precedence governs.
+
+# What the file can and cannot replace (context/50-first-party/04-firm-dataset.md).
+covers:
+  usable_as_is: [firm name, city (contact's or firm's -- see quality notes), domain]
+  coarse_only: [Industry -> entity_kind hint, Technology -> cms_detected hint]
+  absent_from_file: [phone, street address, zip, state, fee_model, staff_ratio,
+    attorney_count, spanish_intake, review_count, paid_ads_active]
+
+quality_notes:
+  - >
+    Employees Range is ALWAYS "1 to 10" and Business Email Quality is ALWAYS
+    "verified" for every one of the 36,814 rows -- neither field discriminates
+    within this file. Country is always "United States".
+  - >
+    Vendor-headcount trap: Employees Range is total headcount, not attorney
+    count, and several large firms and one government agency are misclassified
+    into "1 to 10" -- quarles.com (58 contacts), usdoj.gov (40), mcafeetaft.com
+    (39), phelps.com (39), kilpatricktownsend.com (38). i1_claims records the
+    raw value as the informational attr `vendor_headcount_range` and flags a
+    per-firm `vendor_size_contradiction` when contacts-on-file > 10; it never
+    writes `attorney_count` from this source (that column's only source is
+    llm(team page) per context/10-icp/04-size-and-need-proxies.md).
+  - >
+    No street/zip/state column, and none embeds a state (checked: no "City" or
+    "Company City" value in the file matches a ", XX" state pattern) -- i1_load
+    leaves observation.state NULL for every row from this source.
+  - >
+    "City" is the CONTACT's city and can differ from the firm's -- e.g. a
+    Houston-based contact at a Dallas-headquartered firm. i1_load prefers
+    "Company City" (88 blank of 36,814) and falls back to "City" (511 blank)
+    only when Company City is itself blank.
+  - >
+    Company URL is blank for 29 rows and points at a shared-hosting/directory
+    platform (wixsite.com, squarespace.com, ...) for others -- norm_domain()
+    blocklists those (lge/norm/domain.py), so i1_load falls back to
+    norm_email_domain(Business Email) for identity. See i1_load's report:
+    "rows whose domain came from the email".

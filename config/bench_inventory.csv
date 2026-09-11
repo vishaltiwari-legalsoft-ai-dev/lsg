@@ -1,0 +1,20 @@
+# bench_inventory.csv -- hand-maintained until the portal (I3, context/50-first-party/
+# 03-portal-bench-and-supply.md) is live. Synced hourly by `lge run bench_sync
+# --opt path=config/bench_inventory.csv` into bench_inventory. This is the ONE
+# feed in the system that writes a table directly, not through observation/
+# firm_attribute (context/50-first-party/02-one-door-rule.md's one exception) --
+# there is no other source claiming a different number of available staff, so
+# there is nothing to reconcile.
+#
+# Columns: sku,language,practice_exp,available,replenish_rate_30d,as_of
+#   sku            demand_writer | paralegal | intake | case_manager | ...
+#   language       en | es | pt | ...
+#   practice_exp   personal_injury | immigration | family | ... | any
+#   available      int, current headcount free to staff
+#   replenish_rate_30d  int, expected new availability in the next 30 days
+#   as_of          ISO-8601 timestamp this row was last confirmed accurate
+#
+# NO INVENTED INVENTORY: portal access is pending, so this file ships as the
+# header only. A stale (or empty) bench is treated as empty by invariant I4 --
+# that is correct and intentional until Ops fills real numbers in below.
+sku,language,practice_exp,available,replenish_rate_30d,as_of
