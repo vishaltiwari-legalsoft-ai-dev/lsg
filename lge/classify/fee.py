@@ -28,7 +28,7 @@ from __future__ import annotations
 import functools
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import yaml
@@ -74,7 +74,7 @@ def _section_weight(text: str | None, weight: float) -> float:
     return float(len((text or "").split()))
 
 
-def detect_fee_model(sections: Sequence[tuple[str, float]]) -> FeeResult:
+def _detect_fee_model_raw(sections: Sequence[tuple[str, float]]) -> FeeResult:
     patterns = _compiled_patterns()
 
     # (family, sentence, section_weight) for every sentence that matched, in the
@@ -132,3 +132,36 @@ def detect_fee_model(sections: Sequence[tuple[str, float]]) -> FeeResult:
 
     evidence = all_matches[0][1]
     return FeeResult("mixed", 0.5, evidence, matches_tuple)
+
+
+# A sentence ABOUT lawyers in general is not the firm's own promise. Found in the live
+# probe: "most personal injury lawyers in New York typically work on a contingency fee
+# basis" (an FAQ) was taken as a firm's fee model at 0.95. Generic = a generic subject or
+# hedge, with no first/second person. A slogan ("No recovery, no fee.") is the firm's own
+# voice and is not generic.
+_FIRM_VOICE = re.compile(r"\b(?:we|we're|we've|our|ours|us|you|your|you'll)\b", re.IGNORECASE)
+_GENERIC = re.compile(
+    r"\b(?:most|many|typically|generally|usually|often)\b"
+    r"|\b(?:lawyers|attorneys|law\s+firms)\s+(?:typically|usually|generally|often|handle|work"
+    r"|charge|take|operate|accept)\b",
+    re.IGNORECASE,
+)
+GENERIC_CONFIDENCE_CAP = 0.6
+
+
+def _is_generic(sentence: str) -> bool:
+    return bool(_GENERIC.search(sentence)) and not _FIRM_VOICE.search(sentence)
+
+
+def detect_fee_model(sections: Sequence[tuple[str, float]]) -> FeeResult:
+    """P6. Prefers the firm's own voice as evidence; when every matching sentence for
+    the winning family is a generic statement about lawyers, the value stands but its
+    confidence is capped (GENERIC_CONFIDENCE_CAP) — classified, never "decisive"."""
+    result = _detect_fee_model_raw(sections)
+    if result.value in ("unknown", "mixed"):
+        return result
+    same = [s for f, s in result.matches if f == result.value]
+    firm_voice = [s for s in same if not _is_generic(s)]
+    if firm_voice:
+        return replace(result, evidence=firm_voice[0])
+    return replace(result, confidence=min(result.confidence, GENERIC_CONFIDENCE_CAP))

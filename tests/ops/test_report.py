@@ -98,3 +98,45 @@ def test_attribution_report_ignores_open_leads(db):
     make_lead(db, firm_id, state="QUALIFIED_A")
     rows = attribution_report(_ctx(db))
     assert rows == []
+
+
+def test_attribution_report_counts_a_ui_outcome_whose_transition_did_not_apply(db):
+    """Most leads cannot legally reach HANDOFF -> WON today (I4: no bench
+    inventory), so an SDR's "Won" click in the UI records a lead_outcome row
+    while lead.state stays wherever it was. Attribution must still count it
+    -- sql/090_ui.sql's lead_outcome is the append-only record of what the
+    UI captured, independent of whether the state machine allowed the
+    transition."""
+    firm_id = make_firm(db, tier="1A")
+    sig = make_signal(db, firm_id, kind="job_posting_open")
+    lead_id = make_lead(db, firm_id, state="QUALIFIED_A", arming_signal=sig)
+
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO lead_outcome (lead_id, action, transition_applied) "
+            "VALUES (%s, 'won', false)",
+            (lead_id,),
+        )
+
+    rows = attribution_report(_ctx(db))
+    by_key = {(r.outcome, r.signal_kind, r.tier): r.n for r in rows}
+    assert by_key[("WON", "job_posting_open", "1A")] == 1
+
+
+def test_attribution_report_does_not_double_count_when_state_and_outcome_agree(db):
+    """A lead whose transition DID apply (state == 'WON') and which also
+    carries a lead_outcome row for the same action is one deal, not two."""
+    firm_id = make_firm(db, tier="2")
+    sig = make_signal(db, firm_id, kind="job_posting_open", fingerprint="fp-agree")
+    lead_id = make_lead(db, firm_id, state="WON", arming_signal=sig, closed_at=NOW)
+
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO lead_outcome (lead_id, action, transition_applied) "
+            "VALUES (%s, 'won', true)",
+            (lead_id,),
+        )
+
+    rows = attribution_report(_ctx(db))
+    by_key = {(r.outcome, r.signal_kind, r.tier): r.n for r in rows}
+    assert by_key[("WON", "job_posting_open", "2")] == 1

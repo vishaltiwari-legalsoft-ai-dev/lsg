@@ -48,6 +48,7 @@ from psycopg.types.json import Jsonb
 from lge.classify.titles import is_support_role, normalize_title
 from lge.fetch.client import EmptyUserAgentError, Fetcher, FetchResult, HostBlockTracker
 from lge.fetch.config import rate_defaults
+from lge.fetch.decode import decode_html
 from lge.fetch.orchestrate import gather_bounded
 from lge.fetch.ratelimit import HostRateLimiter
 from lge.fetch.robots import RobotsCache
@@ -59,7 +60,14 @@ logger = logging.getLogger("lge.planes.ja1")
 
 # JA1's own probe list (order matters -- first non-404 wins), distinct from
 # P1's page-kind probes: adds /join-our-team per the task brief.
-_PROBE_PATHS = ("/careers", "/jobs", "/employment", "/join-our-team")
+# Bare "/employment" is NOT probed: on an employment-law firm it is a practice page
+# ("Employment Law — wrongful termination…"), which the probe mis-read as careers.
+_PROBE_PATHS = ("/careers", "/jobs", "/employment-opportunities", "/join-our-team")
+
+# Bump whenever parse_careers_page can produce different postings for the same HTML.
+# careers_sweep.parser_version joins the content hash in the skip-unchanged rule, so a
+# parser fix re-parses pages already swept (v2: page-level job context, soft-404s).
+PARSER_VERSION = "2"
 
 # Deliberately excluded -- context/70-decisions/02-deliberate-exclusions.md.
 # Never fetched; a link to one is recorded on whatever posting we found and
@@ -372,35 +380,90 @@ def extract_microdata_postings(html: str, url: str) -> list[dict]:
     return nodes
 
 
+# A careers page that is ACTUALLY listing jobs says so once, in a section title or
+# intro ("Employment Opportunities", "Open positions", "We're hiring") and then lists
+# the roles as plain headings. v1 demanded the job word inside each heading, which
+# missed Dressie Law Firm's three h3 roles ("Case Manager", "Front Desk Coordinator").
+_PAGE_JOB_CONTEXT_RE = re.compile(
+    r"\b(?:(?:employment|career|job)\s+opportunit\w*|open\s+positions?|current\s+"
+    r"(?:openings|opportunities|positions|vacancies)|job\s+openings|we'?re\s+hiring"
+    r"|now\s+hiring|join\s+(?:our|the)\s+team)\b",
+    re.IGNORECASE,
+)
+_SECTION_HEADINGS = ("h2", "h3", "h4", "h5")
+_SOFT_404_RE = re.compile(r"\b(?:page\s+(?:you\s+were\s+looking\s+for\s+)?(?:could\s+not|"
+                          r"cannot|can't)\s+be\s+found|page\s+not\s+found|error\s+404|404\s+error"
+                          r"|^\s*404\b)", re.IGNORECASE | re.MULTILINE)
+
+
+def is_soft_404(tree: lxml.html.HtmlElement) -> bool:
+    """A 200 response whose content is an error page. Short pages only, so a long
+    article that merely mentions a 404 is never discarded."""
+    text = " ".join((tree.text_content() or "").split())
+    return len(text.split()) < 250 and bool(_SOFT_404_RE.search(text))
+
+
+def _section_text(heading: lxml.html.HtmlElement, limit: int = 3000) -> str:
+    """The text under a heading up to the next heading of the same or higher level."""
+    level = int(heading.tag[1]) if heading.tag[1:].isdigit() else 6
+    parts: list[str] = []
+    for sib in heading.itersiblings():
+        tag = sib.tag if isinstance(sib.tag, str) else ""
+        if len(tag) == 2 and tag[0] == "h" and tag[1].isdigit() and int(tag[1]) <= level:
+            break
+        parts.append(sib.text_content() or "")
+        if sum(len(p) for p in parts) > limit:
+            break
+    return " ".join(" ".join(parts).split())[:limit]
+
+
 def html_heuristic_postings(tree: lxml.html.HtmlElement) -> list[dict]:
-    """Lowest-confidence layer: a heading or list item whose text
-    normalize_title() maps to a support role, in the presence of an
-    apply/position/opening/career word nearby (here: in the same element's
-    own text)."""
+    """Lowest-confidence layer (after JSON-LD, microdata and ATS embeds).
+
+    Page-level context: when the page itself announces openings, every section
+    heading that normalize_title() maps to a role is a posting, with the text under
+    the heading as its body (support AND attorney roles are recorded — JA6 rejects
+    non-support roles with a reason, keeping the record). Without page context, the
+    v1 rule stands: the job word must be inside the heading or list item itself.
+    """
+    page_text = " ".join((tree.text_content() or "").split())
+    page_context = bool(_PAGE_JOB_CONTEXT_RE.search(page_text))
+    page_email = _extract_apply_email(page_text)
     seen: set[str] = set()
     out: list[dict] = []
     for el in tree.iter(*_HEADING_AND_LIST_TAGS):
-        text = (el.text_content() or "").strip()
+        text = " ".join((el.text_content() or "").split())
         if not text or len(text) > 200:
             continue
         role = normalize_title(text)
-        if not role or not is_support_role(role):
+        if not role:
             continue
-        if not _JOB_CONTEXT_RE.search(text):
+        # Section headings under a page that announces openings: any role counts.
+        # List items (and headings without page context) keep the strict v1 rule —
+        # under page context a qualification bullet like "Experience as a paralegal
+        # preferred" would otherwise become a false posting.
+        by_context = page_context and el.tag in _SECTION_HEADINGS and len(text) <= 120
+        if not by_context and (not is_support_role(role) or not _JOB_CONTEXT_RE.search(text)):
             continue
         key = text.lower()
         if key in seen:
             continue
         seen.add(key)
+        body = _section_text(el) if by_context else text
         out.append(
             {
                 "title": text,
-                "body": text,
+                "body": body or text,
                 "board_posted_date": None,
                 "employment_type": None,
                 "location_raw": None,
-                "apply_email": _extract_apply_email(text),
-                "payload": {"parse_method": "html", "confidence": 0.4, "role": role},
+                "apply_email": _extract_apply_email(body) or page_email,
+                "payload": {
+                    "parse_method": "html",
+                    "confidence": 0.6 if by_context else 0.4,
+                    "role": role,
+                    "page_context": page_context,
+                },
             }
         )
     return out
@@ -427,6 +490,9 @@ def parse_careers_page(html: str, url: str) -> ParsedCareers:
         tree = lxml.html.fromstring(html)
     except (lxml.etree.ParserError, ValueError):
         tree = None
+
+    if tree is not None and is_soft_404(tree):
+        return ParsedCareers(method="soft_404")
 
     excluded_links = collect_excluded_board_links(tree) if tree is not None else []
 
@@ -488,7 +554,7 @@ def _load_careers_candidates(conn: psycopg.Connection, firm_ids: list[str]) -> d
 def _previous_successful_sweep(conn: psycopg.Connection, firm_id: str, url: str) -> dict | None:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT content_hash, postings_found FROM careers_sweep "
+            "SELECT content_hash, postings_found, parser_version FROM careers_sweep "
             "WHERE firm_id = %s AND url = %s AND fetch_ok = true "
             "ORDER BY swept_at DESC LIMIT 1",
             (firm_id, url),
@@ -511,10 +577,11 @@ def _insert_sweep(
         cur.execute(
             """
             INSERT INTO careers_sweep (firm_id, url, fetch_ok, status_code, postings_found,
-                                        content_hash, parse_method)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                                        content_hash, parse_method, parser_version)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (firm_id, url, fetch_ok, status_code, postings_found, content_hash, parse_method),
+            (firm_id, url, fetch_ok, status_code, postings_found, content_hash, parse_method,
+             PARSER_VERSION),
         )
 
 
@@ -586,14 +653,19 @@ def _write_sweep(conn: psycopg.Connection, firm_id: str, outcome: CareersOutcome
         return "not_found"
 
     prev = _previous_successful_sweep(conn, firm_id, outcome.url)
-    if prev is not None and content_hash is not None and prev["content_hash"] == content_hash:
+    if (
+        prev is not None
+        and content_hash is not None
+        and prev["content_hash"] == content_hash
+        and prev.get("parser_version") == PARSER_VERSION
+    ):
         _insert_sweep(
             conn, firm_id, outcome.url, fetch_ok=True, status_code=outcome.status,
             postings_found=prev["postings_found"], content_hash=content_hash, parse_method="none",
         )
         return "unchanged"
 
-    html = outcome.body.decode("utf-8", errors="replace") if outcome.body else ""
+    html = decode_html(outcome.body)
     parsed = (
         parse_careers_page(html, outcome.url) if outcome.content_type_ok else ParsedCareers("none")
     )

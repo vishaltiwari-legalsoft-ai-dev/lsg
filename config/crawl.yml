@@ -18,10 +18,14 @@ page_kinds:
   home:
     - '^/$'
   careers:
-    - '/careers?(?:/|$)'
+    # career-opportunities/, Careers.asp — real careers pages found in the probe
+    - '/careers?(?:[-_./]|$)'
     - '/jobs(?:/|$)'
-    - '/employment(?:/|$)'
-    - '/join-our-team'
+    # NOT bare /employment: on an employment-law firm that is a practice page
+    # ("Employment Law — wrongful termination…"); the live probe mis-read it as careers.
+    - '/employment-opportunit'
+    - '/join-(?:our-team|us)'
+    - '/work-with-us'
   attorneys:
     - '/attorneys?(?:/|$)'
     - '/our-attorneys'
@@ -56,7 +60,7 @@ probe_paths:
   team:      ['/our-team', '/team']
   practice:  ['/practice-areas']
   contact:   ['/contact', '/contact-us']
-  careers:   ['/careers', '/jobs', '/employment']
+  careers:   ['/careers', '/jobs', '/employment-opportunities']
   fees:      ['/fees']
 
 # Per-firm caps on the final site_map, applied in this order (home first,

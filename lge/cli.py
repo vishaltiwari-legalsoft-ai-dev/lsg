@@ -126,6 +126,7 @@ def gate(name: str) -> None:
         raise typer.Exit(code=1)
 
 
+import lge.api.cli  # noqa: F401,E402 -- registers `serve`/`openapi` commands
 import lge.cli_ops  # noqa: F401,E402 -- registers `alerts`/`flow`/`schedule`/`report` commands
 
 if __name__ == "__main__":

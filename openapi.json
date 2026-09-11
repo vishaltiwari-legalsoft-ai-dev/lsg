@@ -1,0 +1,2845 @@
+{
+  "components": {
+    "schemas": {
+      "AlertItem": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "ok",
+              "firing",
+              "no_data"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "state",
+          "value",
+          "detail"
+        ],
+        "title": "AlertItem",
+        "type": "object"
+      },
+      "AlertSummary": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "ok",
+              "firing",
+              "no_data"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "state",
+          "detail"
+        ],
+        "title": "AlertSummary",
+        "type": "object"
+      },
+      "AlertsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AlertsResponse",
+        "type": "object"
+      },
+      "AliasRow": {
+        "properties": {
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "merge_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merge Rule"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "domain",
+          "phone",
+          "merge_rule",
+          "source_label"
+        ],
+        "title": "AliasRow",
+        "type": "object"
+      },
+      "Attention": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertSummary"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "bench": {
+            "$ref": "#/components/schemas/BenchStatus"
+          },
+          "providers_inert": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Providers Inert",
+            "type": "array"
+          },
+          "queues": {
+            "$ref": "#/components/schemas/QueueCounts"
+          }
+        },
+        "required": [
+          "alerts",
+          "queues",
+          "bench",
+          "providers_inert"
+        ],
+        "title": "Attention",
+        "type": "object"
+      },
+      "AttributeClaim": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "won": {
+            "title": "Won",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source_label",
+          "display",
+          "confidence",
+          "evidence",
+          "observed_at",
+          "won"
+        ],
+        "title": "AttributeClaim",
+        "type": "object"
+      },
+      "AttributeRow": {
+        "properties": {
+          "attr": {
+            "title": "Attr",
+            "type": "string"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/AttributeClaim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "evidence_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Url"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
+          },
+          "state": {
+            "enum": [
+              "resolved",
+              "unknown",
+              "conflict",
+              "stale"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attr",
+          "label",
+          "display",
+          "state",
+          "source_label",
+          "confidence",
+          "evidence",
+          "evidence_url",
+          "observed_at",
+          "claims"
+        ],
+        "title": "AttributeRow",
+        "type": "object"
+      },
+      "BenchStatus": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "skus_available": {
+            "title": "Skus Available",
+            "type": "integer"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "skus_available",
+          "stale",
+          "message"
+        ],
+        "title": "BenchStatus",
+        "type": "object"
+      },
+      "ContactSummary": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "email_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "valid",
+                  "catch_all",
+                  "risky",
+                  "invalid",
+                  "unverified"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Status"
+          },
+          "email_status_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Status Display"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "admin",
+              "attorney",
+              "unknown"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "full_name",
+          "title",
+          "role",
+          "source_label",
+          "email",
+          "email_status",
+          "email_status_display",
+          "phone"
+        ],
+        "title": "ContactSummary",
+        "type": "object"
+      },
+      "DocumentRow": {
+        "properties": {
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "page_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Kind"
+          },
+          "robots_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Robots Decision"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "words": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Words"
+          }
+        },
+        "required": [
+          "url",
+          "page_kind",
+          "status_code",
+          "words",
+          "robots_decision",
+          "fetched_at"
+        ],
+        "title": "DocumentRow",
+        "type": "object"
+      },
+      "DraftsResponse": {
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "STRIKE",
+                  "SEQUENCE",
+                  "NURTURE",
+                  "HOLD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "excluded_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Reason"
+          },
+          "touches": {
+            "items": {
+              "$ref": "#/components/schemas/Touch"
+            },
+            "title": "Touches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "band",
+          "excluded_reason",
+          "touches"
+        ],
+        "title": "DraftsResponse",
+        "type": "object"
+      },
+      "FirmDetail": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "$ref": "#/components/schemas/AliasRow"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/AttributeRow"
+            },
+            "title": "Attributes",
+            "type": "array"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactSummary"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentRow"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "firm": {
+            "$ref": "#/components/schemas/FirmRef"
+          },
+          "lead": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FirmLeadRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/Proof"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "tier_reason": {
+            "title": "Tier Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "firm",
+          "tier_reason",
+          "attributes",
+          "documents",
+          "signals",
+          "contacts",
+          "aliases",
+          "lead"
+        ],
+        "title": "FirmDetail",
+        "type": "object"
+      },
+      "FirmLeadRef": {
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "STRIKE",
+                  "SEQUENCE",
+                  "NURTURE",
+                  "HOLD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "state_display": {
+            "title": "State Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "state_display",
+          "band"
+        ],
+        "title": "FirmLeadRef",
+        "type": "object"
+      },
+      "FirmListItem": {
+        "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "state_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Display"
+          },
+          "tier_display": {
+            "title": "Tier Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "domain",
+          "city",
+          "state",
+          "tier_display",
+          "state_display",
+          "fit"
+        ],
+        "title": "FirmListItem",
+        "type": "object"
+      },
+      "FirmRef": {
+        "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "cms_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cms Display"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "fee_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fee Display"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "practice_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practice Display"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          },
+          "tier_display": {
+            "title": "Tier Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "domain",
+          "city",
+          "state",
+          "tier",
+          "tier_display",
+          "practice_display",
+          "fee_display",
+          "cms_display"
+        ],
+        "title": "FirmRef",
+        "type": "object"
+      },
+      "FirmsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FirmListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "total"
+        ],
+        "title": "FirmsResponse",
+        "type": "object"
+      },
+      "FirstDraft": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "body"
+        ],
+        "title": "FirstDraft",
+        "type": "object"
+      },
+      "GateItem": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "report": {
+            "title": "Report",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "passed",
+          "report"
+        ],
+        "title": "GateItem",
+        "type": "object"
+      },
+      "GatesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GateItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "GatesResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandcheckAccuracyRow": {
+        "properties": {
+          "attr": {
+            "title": "Attr",
+            "type": "string"
+          },
+          "checked": {
+            "title": "Checked",
+            "type": "integer"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attr",
+          "label",
+          "checked",
+          "correct"
+        ],
+        "title": "HandcheckAccuracyRow",
+        "type": "object"
+      },
+      "HandcheckDecisionRequest": {
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "corrected_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Value"
+          }
+        },
+        "required": [
+          "correct"
+        ],
+        "title": "HandcheckDecisionRequest",
+        "type": "object"
+      },
+      "HandcheckGate": {
+        "properties": {
+          "needed": {
+            "title": "Needed",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "reviewed_firms": {
+            "title": "Reviewed Firms",
+            "type": "integer"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "needed",
+          "reviewed_firms",
+          "passed",
+          "rule"
+        ],
+        "title": "HandcheckGate",
+        "type": "object"
+      },
+      "HandcheckResponse": {
+        "properties": {
+          "accuracy": {
+            "items": {
+              "$ref": "#/components/schemas/HandcheckAccuracyRow"
+            },
+            "title": "Accuracy",
+            "type": "array"
+          },
+          "gate": {
+            "$ref": "#/components/schemas/HandcheckGate"
+          },
+          "sample": {
+            "items": {
+              "$ref": "#/components/schemas/HandcheckSampleFirm"
+            },
+            "title": "Sample",
+            "type": "array"
+          }
+        },
+        "required": [
+          "gate",
+          "accuracy",
+          "sample"
+        ],
+        "title": "HandcheckResponse",
+        "type": "object"
+      },
+      "HandcheckReview": {
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "corrected_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrected Value"
+          }
+        },
+        "required": [
+          "correct",
+          "corrected_value"
+        ],
+        "title": "HandcheckReview",
+        "type": "object"
+      },
+      "HandcheckSampleFirm": {
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/AttributeRow"
+            },
+            "title": "Attributes",
+            "type": "array"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "firm_id": {
+            "title": "Firm Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reviews": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/HandcheckReview"
+            },
+            "title": "Reviews",
+            "type": "object"
+          }
+        },
+        "required": [
+          "firm_id",
+          "name",
+          "domain",
+          "attributes",
+          "reviews"
+        ],
+        "title": "HandcheckSampleFirm",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "db": {
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "title": "Db",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "db",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LeadDetail": {
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "STRIKE",
+                  "SEQUENCE",
+                  "NURTURE",
+                  "HOLD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactSummary"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "contest": {
+            "anyOf": [
+              {
+                "enum": [
+                  "NONE",
+                  "LOW",
+                  "MED",
+                  "HIGH"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contest"
+          },
+          "exclusion_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Exclusion Reasons",
+            "type": "array"
+          },
+          "firm": {
+            "$ref": "#/components/schemas/FirmRef"
+          },
+          "fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "enum": [
+                  "A",
+                  "B"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "missing_roles": {
+            "items": {
+              "enum": [
+                "owner",
+                "admin"
+              ],
+              "type": "string"
+            },
+            "title": "Missing Roles",
+            "type": "array"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/LeadOutcome"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Proof"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score": {
+            "$ref": "#/components/schemas/ScoreBreakdown"
+          },
+          "scored_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scored At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "state_display": {
+            "title": "State Display",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEvent"
+            },
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "firm",
+          "state",
+          "state_display",
+          "band",
+          "fit",
+          "intent",
+          "contest",
+          "grade",
+          "proof",
+          "contact",
+          "scored_at",
+          "contacts",
+          "missing_roles",
+          "score",
+          "exclusion_reasons",
+          "outcomes",
+          "timeline"
+        ],
+        "title": "LeadDetail",
+        "type": "object"
+      },
+      "LeadOutcome": {
+        "properties": {
+          "action": {
+            "enum": [
+              "sent",
+              "replied",
+              "meeting",
+              "won",
+              "lost",
+              "not_now",
+              "opt_out"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "transition_applied": {
+            "title": "Transition Applied",
+            "type": "boolean"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "until",
+          "note",
+          "actor",
+          "transition_applied",
+          "at"
+        ],
+        "title": "LeadOutcome",
+        "type": "object"
+      },
+      "LeadRow": {
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "STRIKE",
+                  "SEQUENCE",
+                  "NURTURE",
+                  "HOLD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contest": {
+            "anyOf": [
+              {
+                "enum": [
+                  "NONE",
+                  "LOW",
+                  "MED",
+                  "HIGH"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contest"
+          },
+          "firm": {
+            "$ref": "#/components/schemas/FirmRef"
+          },
+          "fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "enum": [
+                  "A",
+                  "B"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Proof"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scored_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scored At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "state_display": {
+            "title": "State Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firm",
+          "state",
+          "state_display",
+          "band",
+          "fit",
+          "intent",
+          "contest",
+          "grade",
+          "proof",
+          "contact",
+          "scored_at"
+        ],
+        "title": "LeadRow",
+        "type": "object"
+      },
+      "LeadViewCounts": {
+        "properties": {
+          "EXCLUDED": {
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "NURTURE": {
+            "title": "Nurture",
+            "type": "integer"
+          },
+          "PHONE": {
+            "title": "Phone",
+            "type": "integer"
+          },
+          "SEQUENCE": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "STRIKE": {
+            "title": "Strike",
+            "type": "integer"
+          },
+          "UNSCORED": {
+            "title": "Unscored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "STRIKE",
+          "SEQUENCE",
+          "NURTURE",
+          "PHONE",
+          "EXCLUDED",
+          "UNSCORED"
+        ],
+        "title": "LeadViewCounts",
+        "type": "object"
+      },
+      "LeadsResponse": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/LeadViewCounts"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LeadRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "counts"
+        ],
+        "title": "LeadsResponse",
+        "type": "object"
+      },
+      "OutcomeRequest": {
+        "properties": {
+          "action": {
+            "enum": [
+              "sent",
+              "replied",
+              "meeting",
+              "won",
+              "lost",
+              "not_now",
+              "opt_out"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "OutcomeRequest",
+        "type": "object"
+      },
+      "OutcomeResponse": {
+        "properties": {
+          "lead": {
+            "$ref": "#/components/schemas/LeadDetail"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "transition_applied": {
+            "title": "Transition Applied",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lead",
+          "transition_applied",
+          "message"
+        ],
+        "title": "OutcomeResponse",
+        "type": "object"
+      },
+      "Proof": {
+        "properties": {
+          "board_posted_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Board Posted Date"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "contest": {
+            "enum": [
+              "NONE",
+              "LOW",
+              "MED",
+              "HIGH"
+            ],
+            "title": "Contest",
+            "type": "string"
+          },
+          "days_open": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Open"
+          },
+          "decay": {
+            "title": "Decay",
+            "type": "number"
+          },
+          "first_seen": {
+            "format": "date-time",
+            "title": "First Seen",
+            "type": "string"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "repost_count": {
+            "title": "Repost Count",
+            "type": "integer"
+          },
+          "signal_id": {
+            "title": "Signal Id",
+            "type": "integer"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "signal_id",
+          "kind",
+          "headline",
+          "quote",
+          "source_label",
+          "source_url",
+          "first_seen",
+          "board_posted_date",
+          "days_open",
+          "repost_count",
+          "sources",
+          "closed_at",
+          "weight",
+          "decay",
+          "contest"
+        ],
+        "title": "Proof",
+        "type": "object"
+      },
+      "ProvidersResponse": {
+        "properties": {
+          "ai_extraction": {
+            "title": "Ai Extraction",
+            "type": "boolean"
+          },
+          "crawler_identity": {
+            "title": "Crawler Identity",
+            "type": "string"
+          },
+          "email_verification": {
+            "title": "Email Verification",
+            "type": "boolean"
+          },
+          "places": {
+            "title": "Places",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ai_extraction",
+          "email_verification",
+          "places",
+          "crawler_identity"
+        ],
+        "title": "ProvidersResponse",
+        "type": "object"
+      },
+      "QueueCounts": {
+        "properties": {
+          "agency": {
+            "title": "Agency",
+            "type": "integer"
+          },
+          "conflicts": {
+            "title": "Conflicts",
+            "type": "integer"
+          },
+          "discovery": {
+            "title": "Discovery",
+            "type": "integer"
+          },
+          "handcheck": {
+            "title": "Handcheck",
+            "type": "integer"
+          },
+          "identity": {
+            "title": "Identity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handcheck",
+          "conflicts",
+          "identity",
+          "agency",
+          "discovery"
+        ],
+        "title": "QueueCounts",
+        "type": "object"
+      },
+      "ScoreBreakdown": {
+        "properties": {
+          "fit_terms": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreFitTerm"
+            },
+            "title": "Fit Terms",
+            "type": "array"
+          },
+          "intent_terms": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreIntentTerm"
+            },
+            "title": "Intent Terms",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fit_terms",
+          "intent_terms",
+          "note"
+        ],
+        "title": "ScoreBreakdown",
+        "type": "object"
+      },
+      "ScoreFitTerm": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "points"
+        ],
+        "title": "ScoreFitTerm",
+        "type": "object"
+      },
+      "ScoreIntentTerm": {
+        "properties": {
+          "decay": {
+            "title": "Decay",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "number"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "weight",
+          "decay",
+          "points"
+        ],
+        "title": "ScoreIntentTerm",
+        "type": "object"
+      },
+      "TimelineEvent": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "from_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From State"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          },
+          "trigger": {
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_state",
+          "to_state",
+          "label",
+          "trigger",
+          "actor",
+          "at"
+        ],
+        "title": "TimelineEvent",
+        "type": "object"
+      },
+      "TodayResponse": {
+        "properties": {
+          "attention": {
+            "$ref": "#/components/schemas/Attention"
+          },
+          "first_draft": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FirstDraft"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strike": {
+            "items": {
+              "$ref": "#/components/schemas/LeadRow"
+            },
+            "title": "Strike",
+            "type": "array"
+          },
+          "top_proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeadRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "top_proof",
+          "first_draft",
+          "strike",
+          "attention"
+        ],
+        "title": "TodayResponse",
+        "type": "object"
+      },
+      "Touch": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "day": {
+            "title": "Day",
+            "type": "integer"
+          },
+          "skipped_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped Reason"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "day",
+          "subject",
+          "body",
+          "skipped_reason"
+        ],
+        "title": "Touch",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Lead Gen Engine API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/firms": {
+      "get": {
+        "operationId": "list_firms_api_firms_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tier",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tier"
+            }
+          },
+          {
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lead_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lead State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Firms",
+        "tags": [
+          "firms"
+        ]
+      }
+    },
+    "/api/firms/{firm_id}": {
+      "get": {
+        "operationId": "get_firm_api_firms__firm_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firm_id",
+            "required": true,
+            "schema": {
+              "title": "Firm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Firm",
+        "tags": [
+          "firms"
+        ]
+      }
+    },
+    "/api/handcheck": {
+      "get": {
+        "operationId": "get_handcheck_api_handcheck_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandcheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Handcheck",
+        "tags": [
+          "handcheck"
+        ]
+      }
+    },
+    "/api/handcheck/{firm_id}/{attr}": {
+      "post": {
+        "operationId": "post_handcheck_decision_api_handcheck__firm_id___attr__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firm_id",
+            "required": true,
+            "schema": {
+              "title": "Firm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "title": "Attr",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandcheckDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Handcheck Decision",
+        "tags": [
+          "handcheck"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/leads": {
+      "get": {
+        "operationId": "list_leads_api_leads_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "default": "STRIKE",
+              "pattern": "^(STRIKE|SEQUENCE|NURTURE|PHONE|EXCLUDED|UNSCORED)$",
+              "title": "View",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tier",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tier"
+            }
+          },
+          {
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "in": "query",
+            "name": "signal",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Signal"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contest",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contest"
+            }
+          },
+          {
+            "in": "query",
+            "name": "verified",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verified"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Leads",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/leads/export.csv": {
+      "get": {
+        "operationId": "export_csv_api_leads_export_csv_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "default": "STRIKE",
+              "pattern": "^(STRIKE|SEQUENCE|NURTURE|PHONE)$",
+              "title": "View",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Csv",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}": {
+      "get": {
+        "operationId": "get_lead_api_leads__lead_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Lead",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}/drafts": {
+      "get": {
+        "operationId": "get_drafts_api_leads__lead_id__drafts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Drafts",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}/outcome": {
+      "post": {
+        "operationId": "post_outcome_api_leads__lead_id__outcome_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Outcome",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/meta/providers": {
+      "get": {
+        "operationId": "get_providers_api_meta_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Providers",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/pipeline/alerts": {
+      "get": {
+        "operationId": "get_alerts_api_pipeline_alerts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Alerts",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/api/pipeline/gates": {
+      "get": {
+        "operationId": "get_gates_api_pipeline_gates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Gates",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
+    "/api/today": {
+      "get": {
+        "operationId": "get_today_api_today_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Today",
+        "tags": [
+          "today"
+        ]
+      }
+    }
+  }
+}

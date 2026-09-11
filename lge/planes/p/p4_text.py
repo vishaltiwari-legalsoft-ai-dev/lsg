@@ -20,13 +20,16 @@ import logging
 import psycopg
 import trafilatura
 
+from lge.fetch.decode import decode_html
 from lge.fetch.selection import select_firm_ids
 from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 logger = logging.getLogger("lge.planes.p4")
 
-EXTRACTOR = f"trafilatura:{trafilatura.__version__}"
+# "+decode2": charset-aware decoding (lge/fetch/decode.py). Part of the version so a
+# decoding change re-extracts stored pages — the probe found "won’t" stored as "won�t".
+EXTRACTOR = f"trafilatura:{trafilatura.__version__}+decode2"
 
 
 def extract_main_text(html: str, url: str | None = None) -> str | None:
@@ -84,7 +87,7 @@ def _extract_and_write(conn: psycopg.Connection, rows: list[dict], store: Object
                     exc,
                 )
                 continue
-            html = html_bytes.decode("utf-8", errors="replace")
+            html = decode_html(html_bytes)
             main_text = extract_main_text(html, url=row["url"])
             word_count = len(main_text.split()) if main_text else 0
             cur.execute(

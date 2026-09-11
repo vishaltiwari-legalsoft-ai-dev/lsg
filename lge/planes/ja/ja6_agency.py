@@ -167,6 +167,18 @@ def classify(postings: list[Posting]) -> dict[int, tuple[str, str]]:
 
     verdicts: dict[int, tuple[str, str]] = {}
     for p in postings:
+        # A posting read from the firm's OWN careers page is, per the spec, "the one
+        # place the posting is unambiguously tied to the firm" — it cannot be an agency
+        # hiding its client. The agency rules (all keyed on a company name the careers
+        # watcher never needs to set) do not apply; the support-role filter still does.
+        # Found in the live probe: every careers posting was rejected as blind_posting.
+        if p.source == "careers" and p.firm_id:
+            if not p.is_support:
+                verdicts[p.id] = (
+                    "not_support_role",
+                    f"title {p.title!r} normalized to {p.canonical_role!r}",
+                )
+            continue
         stem = norm_name(p.company_name)
         if is_known_agency(p.company_name):
             verdicts[p.id] = ("known_agency", f"company matches blocklist: {p.company_name!r}")

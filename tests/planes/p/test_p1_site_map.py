@@ -65,7 +65,7 @@ def test_probe_urls_match_the_task_brief_exactly():
     assert probes["careers"] == [
         "https://example.com/careers",
         "https://example.com/jobs",
-        "https://example.com/employment",
+        "https://example.com/employment-opportunities",
     ]
     assert probes["fees"] == ["https://example.com/fees"]
 

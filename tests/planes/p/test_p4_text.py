@@ -31,10 +31,13 @@ def test_no_firms_selected_is_a_clean_no_op(db):
     assert "no firms selected" in " ".join(result.notes)
 
 
-def test_extractor_string_matches_installed_trafilatura_version():
+def test_extractor_string_carries_trafilatura_and_decoder_versions():
+    # Both halves re-derive stored text when they change: a trafilatura upgrade, or
+    # a decoding fix (D-022 — "won't" had been stored as "won�t").
     import trafilatura
 
-    assert p4_text.EXTRACTOR == f"trafilatura:{trafilatura.__version__}"
+    assert p4_text.EXTRACTOR.startswith(f"trafilatura:{trafilatura.__version__}")
+    assert p4_text.EXTRACTOR.endswith("+decode2")
 
 
 def test_footer_practice_area_list_is_absent_from_main_text(db, tmp_path):

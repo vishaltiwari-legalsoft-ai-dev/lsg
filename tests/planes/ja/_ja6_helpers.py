@@ -33,9 +33,9 @@ def make_posting(conn, **cols) -> int:
     cols.setdefault("source", "careers")
     cols.setdefault("source_key", uuid.uuid4().hex)
     cols.setdefault("title", "Paralegal")
-    # A real watcher records the company name even on a firm's own careers page
-    # (it already has the firm record); default non-blank so a test that isn't
-    # specifically exercising blind_posting doesn't trip it by omission.
+    # NOTE: the real careers watcher (JA1) does NOT set company_name — the firm is known
+    # from firm_id. Default non-blank here so board-posting tests don't trip
+    # blind_posting by omission; test_ja6_careers_integration.py covers the real shape.
     cols.setdefault("company_name", "Test Firm")
     cols.setdefault("fetch_ok", True)
     cols.setdefault("payload", Jsonb({}))

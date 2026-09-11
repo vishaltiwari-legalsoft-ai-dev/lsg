@@ -18,6 +18,8 @@ roles:
       - legal secretary
       - admin assistant legal
       - legal administrative assistant
+      - administrative assistant
+      - litigation assistant
 
   paralegal:
     support_role: true
@@ -50,18 +52,23 @@ roles:
       - records clerk
       - medical records
       - records specialist
+      - file clerk
 
   legal_receptionist:
     support_role: true
     synonyms:
       - legal receptionist
       - receptionist
+      # added from the live probe: Dressie Law Firm's "Front Desk Coordinator"
+      # ("conduct case intakes", "must speak Spanish") mapped to no role at all
+      - front desk
 
   demand_writer:
     support_role: true
     synonyms:
       - demand writer
       - demand letter writer
+      - demand specialist
 
   lien_negotiator:
     support_role: true

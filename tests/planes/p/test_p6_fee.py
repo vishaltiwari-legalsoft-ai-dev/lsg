@@ -80,8 +80,12 @@ def test_contingency_evidence_written(db):
     assert len(claims) == 1
     assert claims[0]["value"] == "contingency"
     assert claims[0]["source"] == "regex:p6"
-    assert float(claims[0]["confidence"]) == 0.9
-    assert "no fee unless we win" in claims[0]["evidence"].lower()
+    # 0.9 for one matching sentence, 0.95 for two or more distinct ones; the probe-
+    # measured patterns (D-020) can match a second sentence in this fixture.
+    assert float(claims[0]["confidence"]) in (0.9, 0.95)
+    # the exact sentence, whichever firm-voice promise comes first on the page
+    ev = claims[0]["evidence"].lower()
+    assert "no fee unless we win" in ev or "contingency basis" in ev
     assert claims[0]["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC)
 
 
@@ -129,9 +133,10 @@ def test_contingency_wins_by_page_real_estate(db):
 
 
 def test_page_kinds_outside_scope_are_ignored(db):
+    # careers stays out of scope: job ads use "fee" in other senses
     firm_id = make_firm(db)
     doc_id = _insert_document(
-        db, firm_id, page_kind="attorneys", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        db, firm_id, page_kind="careers", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
     )
     _insert_document_text(db, doc_id, "No fee unless we win.")
 
@@ -139,6 +144,19 @@ def test_page_kinds_outside_scope_are_ignored(db):
     assert result.skipped == 1
     assert result.processed == 0
     assert _claims(db, firm_id, "fee_model") == []
+
+
+def test_contact_page_fee_promise_is_read(db):
+    # found in the live probe: "No fee unless we win" often sits on the contact page
+    firm_id = make_firm(db)
+    doc_id = _insert_document(
+        db, firm_id, page_kind="contact", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    _insert_document_text(db, doc_id, "Call today. No fee unless we win your case.")
+
+    p6_fee.run(_ctx(db))
+    claims = _claims(db, firm_id, "fee_model")
+    assert claims and claims[0]["value"] == "contingency"
 
 
 def test_firm_with_no_documents_is_skipped(db):

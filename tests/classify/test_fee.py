@@ -164,3 +164,45 @@ def test_flat_and_hourly_tie_is_mixed():
         ]
     )
     assert result.value == "mixed"
+
+
+# Found in the live probe: generic statements about lawyers taken as the firm's promise.
+def test_generic_statement_about_lawyers_is_capped_not_decisive():
+    r = detect_fee_model(
+        [("However, most personal injury lawyers in New York typically work on a "
+          "contingency fee basis.", 5.0)]
+    )
+    assert r.value == "contingency"
+    assert r.confidence == 0.6
+
+
+def test_lawyers_handle_is_generic():
+    r = detect_fee_model([("Personal injury lawyers handle cases on a contingent fee basis.", 5.0)])
+    assert r.confidence == 0.6
+
+
+def test_firm_voice_is_preferred_as_evidence_over_a_generic_sentence():
+    r = detect_fee_model(
+        [
+            ("Most injury lawyers work on a contingency fee basis.", 5.0),
+            ("We take every case on contingency, so you pay nothing unless we win.", 5.0),
+        ]
+    )
+    assert r.value == "contingency"
+    assert r.confidence >= 0.9
+    assert r.evidence.startswith("We take every case")
+
+
+def test_a_pronoun_free_slogan_is_still_the_firms_own_voice():
+    # no we/our/you, but not a statement about lawyers in general either
+    r = detect_fee_model([("Contingency fee representation for injured workers.", 5.0)])
+    assert r.value == "contingency"
+    assert r.confidence == 0.9
+
+
+def test_hedge_with_firm_voice_is_not_generic():
+    r = detect_fee_model(
+        [("At Davis Adams, we typically structure our services on a contingency basis, "
+          "meaning you pay nothing unless we recover.", 5.0)]
+    )
+    assert r.confidence >= 0.9

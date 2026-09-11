@@ -25,7 +25,9 @@ from lge.planes.p._claims import (
 from lge.registry import RunContext, RunResult, component
 
 _VERSION = "p6:v1"
-_PAGE_KINDS = ("practice", "fees", "home", "about", "other")
+# contact / attorneys / team added after the live probe: "No fee unless we win" often
+# sits on the contact page. careers stays out (job ads use "fee" in other senses).
+_PAGE_KINDS = ("practice", "fees", "home", "about", "other", "contact", "attorneys", "team")
 _SOURCE = "regex:p6"
 # Mirrors lge/classify/fee.py's own _CONFIG_PATH -- computed independently rather
 # than importing that module's private constant, so an edit to fee_patterns.yml

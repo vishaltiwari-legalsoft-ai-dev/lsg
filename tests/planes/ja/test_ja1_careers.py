@@ -332,7 +332,7 @@ def test_all_probes_404_records_definitive_absence(db):
     respx.get("https://example.com/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\n")
     )
-    for path in ("/careers", "/jobs", "/employment", "/join-our-team"):
+    for path in ("/careers", "/jobs", "/employment-opportunities", "/join-our-team"):
         respx.get(f"https://example.com{path}").mock(return_value=httpx.Response(404))
 
     firm_id = make_firm(db, domain="example.com")

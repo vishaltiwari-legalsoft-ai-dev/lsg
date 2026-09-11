@@ -326,6 +326,58 @@ homepage-only coverage all came back `fee_model: unknown`. P1 now reads the home
 navigation (URL path, then anchor text, then the practice vocabulary for pages like "Car
 Accidents") before any blind probe. The spec lists `discovered_via: 'link'`; it had not been built.
 
+## D-020 · Contingency patterns extended from measured phrasings
+
+**Found:** 29 of 150 "unknown" personal-injury firms stated contingency plainly, in words the
+spec's three P6 patterns miss. Examples: "No **Fees** Unless We Win" (plural), "on a contingency
+**basis**", "You **won't** pay anything unless you win", "We **don't get paid** unless you are
+paid", "no **legal** fees, unless and until".
+
+**Ruling:** the spec's patterns stay first, verbatim. Five extensions follow them, each annotated
+with a real example, in `config/fee_patterns.yml`. Four traps are pinned as tests and must stay
+`unknown`: "free consultation", "percentage of fault", "we accept Visa", "contingency plans".
+Generic statements about lawyers in general ("most PI lawyers typically work on contingency") are
+capped at 0.6 and never used as proof when the firm's own voice is available. P6 now also reads
+contact, attorneys and team pages. **Effect on the probe: tier 1A grew from 48 to 71 firms, with
+zero new requests** — all re-derived from stored HTML.
+
+## D-021 · Careers parser v2, and the parser version joins the skip rule
+
+**Found:** Dressie Law Firm listed three open roles as `<h3>` headings under "Employment
+Opportunities". The v1 heuristic required the job word inside each heading, so it missed all
+three. Two more defects: soft-404 pages (a 200 status with "page not found" content), and bare
+`/employment` tagging employment-*law* practice pages as careers.
+
+**Ruling:** v2 recognises page-level job context for section headings, while list items keep v1's
+strict rule, since a qualification bullet like "experience as a paralegal" must not become a
+posting. It detects soft 404s, drops `/employment` from careers paths, and adds missing titles
+("front desk", "file clerk"). `careers_sweep.parser_version` (migration 091) now joins the
+content hash in the skip-unchanged rule; otherwise a parser fix would never re-parse a page
+already swept. **Effect: 1 posting → 7 postings at 3 firms.**
+
+## D-022 · Charset-aware decoding, visible in every downstream version
+
+**Found:** a hard-coded `decode("utf-8", errors="replace")` stored "won't" as "won�t". That
+corrupted evidence quotations and blocked fee patterns.
+
+**Ruling:** `lge/fetch/decode.py` tries the BOM, then the declared charset, then strict UTF-8, then
+Windows-1252, and replaces characters only as the last resort. It is used by P4, the claim
+readers and the careers watcher. The decoder and extractor versions are folded into P4's
+`EXTRACTOR` string and into the claim writers' fingerprint, so a text-level change re-derives
+everything downstream. Affected pages: 8 → 1.
+
+## D-023 · A posting on the firm's own careers page is exempt from the agency rules
+
+**Found (integration):** the careers watcher never sets `company_name`, because the firm is known
+from `firm_id`. The agency filter's blind-posting rule rejected all 8 real careers postings, so
+**zero signals** were created. Each builder's unit tests passed, because the test helper defaulted
+a company name the real watcher never sets.
+
+**Ruling:** per the spec, the firm's own careers page is "the one place the posting is
+unambiguously tied to the firm". It cannot be an agency hiding its client. For `source='careers'`
+with a `firm_id`, the agency rules are skipped; the support-role filter still applies. Pinned by
+three integration tests using the real record shape.
+
 ---
 
 ## Standing rulings that were never in dispute

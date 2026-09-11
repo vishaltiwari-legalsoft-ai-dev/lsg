@@ -15,6 +15,7 @@ from typing import Any
 import psycopg
 from psycopg.types.json import Jsonb
 
+from lge.fetch.decode import decode_html
 from lge.store.objects import ObjectStore
 
 # ---------------------------------------------------------------------------
@@ -89,7 +90,21 @@ def config_fingerprint(*paths: Path) -> str:
     for path in paths:
         h.update(Path(path).read_bytes())
         h.update(b"\x00")
+    # The TEXT these components read depends on the HTML decoder and P4's extractor,
+    # not only on the raw HTML hash. Found after the probe: a decoding fix re-extracted
+    # document_text, yet P5-P7 skipped every firm as "unchanged input". Folding the
+    # text pipeline's own versions in makes a text-level change invalidate them too.
+    h.update(_TEXT_PIPELINE_VERSION.encode())
     return h.hexdigest()
+
+
+def _text_pipeline_version() -> str:
+    from lge.planes.p.p4_text import EXTRACTOR  # local import: p4 imports this module
+
+    return f"decode2|{EXTRACTOR}"
+
+
+_TEXT_PIPELINE_VERSION = _text_pipeline_version()
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +213,6 @@ def read_html(store: ObjectStore, object_key: str | None) -> str:
     if not object_key:
         return ""
     try:
-        return store.get(object_key).decode("utf-8", errors="replace")
+        return decode_html(store.get(object_key))
     except FileNotFoundError:
         return ""
