@@ -110,10 +110,20 @@ class RunContext:
                 (component, entity_id, input_hash),
             )
 
+        # The body runs under a savepoint: a database error inside it aborts
+        # the transaction, and without rolling back to the savepoint the
+        # 'failed' mark below would itself fail and mask the real error
+        # (found on P3: a unique violation surfaced as InFailedSqlTransaction).
+        savepoint = not self.conn.autocommit
+        if savepoint:
+            with self.conn.cursor() as cur:
+                cur.execute("SAVEPOINT lge_once")
         try:
             yield True
         except Exception as exc:
             with self.conn.cursor() as cur:
+                if savepoint:
+                    cur.execute("ROLLBACK TO SAVEPOINT lge_once")
                 cur.execute(
                     "UPDATE task_run SET status = 'failed', finished_at = now(), error = %s "
                     "WHERE component = %s AND entity_id = %s AND input_hash = %s",
@@ -122,6 +132,8 @@ class RunContext:
             raise
         else:
             with self.conn.cursor() as cur:
+                if savepoint:
+                    cur.execute("RELEASE SAVEPOINT lge_once")
                 cur.execute(
                     "UPDATE task_run SET status = 'ok', finished_at = now(), error = NULL "
                     "WHERE component = %s AND entity_id = %s AND input_hash = %s",

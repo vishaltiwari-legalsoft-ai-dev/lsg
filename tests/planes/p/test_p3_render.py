@@ -194,6 +194,38 @@ def test_when_a_browser_is_available_and_live_it_attempts_render(db, monkeypatch
     assert doc["object_key"] is not None
 
 
+def test_a_dom_already_on_file_for_the_url_marks_the_row_rendered_without_a_clash(
+    db, monkeypatch, tmp_path
+):
+    # (url, content_hash) is unique: an earlier fetch already holds the DOM
+    # the render produces (jonaplaw.com/careers on the probe). The thin row
+    # is marked rendered and left as it was, instead of a unique violation.
+    store = ObjectStore(tmp_path)
+    dom = b"<html><body>" + b"<p>rendered words</p>" * 300 + b"</body></html>"
+    dom_key = store.put(dom)
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO document (firm_id, url, status_code, content_hash, object_key, bytes, "
+            "word_count, fetch_ok, page_kind, rendered) VALUES "
+            "(%s, 'https://example.com/careers', 200, %s, %s, 100, 600, true, 'careers', false)",
+            (firm_id, dom_key, dom_key),
+        )
+    thin_id = insert_document(db, firm_id, url="https://example.com/careers", word_count=3)
+
+    monkeypatch.setattr(p3_render, "render_available", lambda: True)
+    monkeypatch.setattr(p3_render, "_render_page_sync", lambda url, user_agent: dom)
+    result = p3_render.run(
+        ctx(db, live=True, user_agent="TestBot/1.0 (+https://x)"), limit=10, store=store
+    )
+    assert result.failed == 0 and result.processed == 1, result.notes
+
+    doc = get_document(db, thin_id)
+    assert doc["rendered"] is True
+    assert doc["content_hash"] == f"hash-{doc['url']}"  # unchanged: the DOM is already on file
+
+
 def test_render_failure_is_caught_and_logged_not_raised(db, monkeypatch):
     firm_id = make_firm(db, domain="example.com")
     make_lead(db, firm_id)

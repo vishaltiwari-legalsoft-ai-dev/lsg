@@ -148,6 +148,16 @@ def _attempt_render(
         return False
     object_key = store.put(html)
     with conn.cursor() as cur:
+        # The same DOM may already be on file for this URL (an earlier render,
+        # or a fetch that got the rendered page): (url, content_hash) is unique,
+        # so this row is marked rendered and left as it was.
+        cur.execute(
+            "SELECT 1 FROM document WHERE url = %s AND content_hash = %s AND id <> %s",
+            (row["url"], object_key, row["id"]),
+        )
+        if cur.fetchone() is not None:
+            cur.execute("UPDATE document SET rendered = true WHERE id = %s", (row["id"],))
+            return True
         # The rendered DOM is the document now: new bytes, new hash, new word
         # count -- and no extracted text, so P4 reads it again.
         cur.execute(
