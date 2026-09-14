@@ -489,6 +489,10 @@ _GENERIC_KIND_HEADLINE: dict[str, str] = {
     "partner_intro": "Warm partner introduction",
     "pricing_page_visit": "Visited the pricing page",
     "review_unreturned_call": "Reviews mention unreturned calls",
+    # ja7_pain_signals (D-033)
+    "no_intake_channel": "No way to capture a lead after hours (no intake form, no chat)",
+    "no_support_staff_listed": "Attorneys listed, no support staff",
+    "stale_site": "Website not maintained",
 }
 
 

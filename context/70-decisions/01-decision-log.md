@@ -630,6 +630,33 @@ without one, `<firm> + Location + Google business reviews`.
   outcome; a person or firm is not searched again for 90 days, a failed search is retried
   next run. The adopted URL or claim can always be traced to the result that produced it.
 
+## D-033 · Step 2, part D: pain is read into intent
+
+**Asked for (15 Sep 2026):** intent-to-buy signals from pain -- testimonials, Google reviews,
+anything lacking in the website.
+
+**Rulings:**
+- **`ja7_pain_signals`** writes ordinary `signal` rows, so the intent score, the proof panel
+  and closure need nothing new. Three kinds from the gap list (migration 096):
+  `no_intake_channel` (no intake form AND no live chat; weight 6, contest NONE),
+  `no_support_staff_listed` (people named, none with a support title; 8, LOW),
+  `stale_site` (copyright two years old OR blog a year quiet; 4, NONE). One per firm and
+  kind, first seen when the gap was first read; a gap the next crawl finds filled closes it.
+- **A closed signal of any kind weighs nothing.** Only `job_posting_open` zeroed on closure
+  before; a closed `multi_opening` kept its 10. A gap that is filled must stop counting the
+  way a filled posting does.
+- **Review pain comes from search snippets, not from the firm's own testimonials.** A
+  testimonial is praise by construction, and the complaint in "the other firm never called
+  me back, then I found X" is about the other firm. A snippet that names the firm and says
+  it was unreachable ("never called me back", "no communication", "took months to") becomes
+  `review_unreturned_call` with the sentence as the quote; "never failed to call me back"
+  and "no communication issues" do not.
+- **Growth headlines from the last year** ("opens new Marietta office", "joins the firm")
+  become `new_office_or_lateral`, first seen on the post's date. Older posts are history.
+- **Not done here:** journey copy for the new kinds. `select_touch1_variant` maps them to no
+  touch-1 variant, so they raise the intent score and show as proof but do not, on their
+  own, start a sequence -- that is Step 3's revamp.
+
 ---
 
 ## Standing rulings that were never in dispute
