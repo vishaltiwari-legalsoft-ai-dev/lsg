@@ -32,6 +32,7 @@ export const Proof = z.strictObject({
 export const ContactSummary = z.strictObject({
   id: s, full_name: s, title: ns, role: Role, source_label: s, email: ns,
   email_status: EmailStatus.nullable(), email_status_display: ns, phone: ns,
+  linkedin_url: ns.optional(),
 });
 const leadRowShape = {
   id: s, firm: FirmRef, state: s, state_display: s, band: Band.nullable(), fit: nn, intent: nn,

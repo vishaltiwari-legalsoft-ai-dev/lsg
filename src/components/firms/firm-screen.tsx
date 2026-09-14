@@ -113,6 +113,18 @@ function Contacts({ contacts }: { contacts: FirmDetail["contacts"] }) {
                   <td className="py-2.5 pr-4 pl-6">
                     <span className="block text-body text-ink">{c.full_name}</span>
                     {c.title ? <span className="block text-meta text-slate">{c.title}</span> : null}
+                    {c.linkedin_url ? (
+                      <a
+                        href={c.linkedin_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-0.5 text-meta text-cobalt hover:underline"
+                      >
+                        LinkedIn profile
+                        <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ) : null}
                   </td>
                   <td className="py-2.5 pr-4 text-ink">{ROLE_LABEL[c.role]}</td>
                   <td className="py-2.5 pr-4">
