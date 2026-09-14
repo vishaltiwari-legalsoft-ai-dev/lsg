@@ -129,7 +129,9 @@ def _fetch_unscored_page(
     cursor_id: str | None,
     limit: int,
 ) -> list[dict]:
-    where = ["l.closed_at IS NULL", "l.band IS NULL"]
+    # Never crawled counts as unscored even once the nightly scan has banded it
+    # HOLD on vendor fit alone -- see list.py's _fetch_open_scored_leads.
+    where = ["l.closed_at IS NULL", "(l.band IS NULL OR l.state = 'DISCOVERED')"]
     params: dict[str, Any] = {"limit": limit + 1}
     if tier:
         where.append("f.tier = %(tier)s")
@@ -168,7 +170,10 @@ def _view_counts(conn: psycopg.Connection, classification: LeadClassification) -
         if cl.category in counts:
             counts[cl.category] += 1
     with conn.cursor() as cur:
-        cur.execute("SELECT count(*) AS n FROM lead WHERE closed_at IS NULL AND band IS NULL")
+        cur.execute(
+            "SELECT count(*) AS n FROM lead WHERE closed_at IS NULL "
+            "AND (band IS NULL OR state = 'DISCOVERED')"
+        )
         counts["UNSCORED"] = cur.fetchone()["n"]
     return LeadViewCounts(**counts)
 

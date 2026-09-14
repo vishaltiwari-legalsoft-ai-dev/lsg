@@ -196,7 +196,7 @@ def write_multi_opening_signals(conn) -> tuple[int, int]:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT firm_id, min(first_seen) AS first_seen, max(last_seen) AS last_seen, "
-            "count(*) AS n, "
+            "count(*) AS n, array_agg(id ORDER BY id) AS role_signal_ids, "
             # The open roles themselves travel in the evidence: the 1C opener is "you
             # have {role} and {role_2} both posted", and signal evidence is immutable
             # once written, so it has to be complete at insert.
@@ -212,14 +212,29 @@ def write_multi_opening_signals(conn) -> tuple[int, int]:
 
     created = updated = 0
     for g in groups:
-        week = floor_to_week(g["last_seen"].date())
-        fp = hashlib.sha1(f"{g['firm_id']}|{week.isoformat()}".encode()).hexdigest()  # noqa: S324
-        evidence = {"open_job_posting_count": g["n"], "roles": g["roles"]}
+        # Keyed by the set of open role signals it is derived from, not by the week
+        # it was last seen: the weekly key minted a second multi_opening for the
+        # same two roles the first time a sweep crossed a week boundary, and the
+        # old one never closed (D-026). A changed set is a new signal; whatever it
+        # supersedes closes here.
+        ids = ",".join(str(i) for i in g["role_signal_ids"])
+        fp = hashlib.sha1(f"{g['firm_id']}|{ids}".encode()).hexdigest()  # noqa: S324
+        evidence = {
+            "open_job_posting_count": g["n"],
+            "roles": g["roles"],
+            "role_signal_ids": list(g["role_signal_ids"]),
+        }
         _, was_created = _upsert_signal(
             conn, g["firm_id"], "multi_opening", fp, g["first_seen"], g["last_seen"], 0, evidence
         )
         created += int(was_created)
         updated += int(not was_created)
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE signal SET closed_at = now() WHERE firm_id = %s AND kind = 'multi_opening' "
+                "AND closed_at IS NULL AND fingerprint <> %s",
+                (g["firm_id"], fp),
+            )
     return created, updated
 
 

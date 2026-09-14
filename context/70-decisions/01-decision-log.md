@@ -378,6 +378,97 @@ unambiguously tied to the firm". It cannot be an agency hiding its client. For `
 with a `firm_id`, the agency rules are skipped; the support-role filter still applies. Pinned by
 three integration tests using the real record shape.
 
+## D-024 · Duplicates found after crawling are merged by retirement
+
+**Found (gate G1):** "Seelig, Dressler, & Ochani, LLC" arrived as two vendor firms,
+`sdonylaw.com` and `dresslerlawllp.com`. The firms' own sites share a name and the phone
+`+12122391061`, identity keys the discovery sources never carried.
+
+**Ruling:** signals are immutable and carry `firm_id`, so firms are never physically merged. The
+duplicate gets `merged_into = survivor`. Its open lead closes as a duplicate, and its contacts
+move to the survivor. Its name, domain and phone become aliases, and its signals count toward
+the survivor's intent. Merged firms leave lists, scoring and G1. A person decides each merge in
+the identity review queue, and every decision is written to `review_decision`. **Status:**
+specified in `plan/api-contract.md` Revision 2; migration 093 and `merge_firms` not built yet
+(092 went to the NO_WEB re-check, D-026).
+
+## D-025 · Precedence ranks the AI tier, not the prompt revision
+
+**Found (before the first paid P8 run):** `config/precedence.yml` named `llm:p8:v1` and
+`llm:p9:v1`, while P8/P9 write `llm:p8:v2` and `llm:p9:v2` after the prompt bump. Reconcile matched
+tags exactly, so every AI attorney count would have been discarded (an exclusive attribute). AI
+practice answers would have ranked below the purchased list. And a P9 answer could never break
+the fee-model escalation loop. Every unit test used `v1` tags, so all passed.
+
+**Ruling:** precedence lists the tier (`llm:p8`, `llm:p9`), and `reconcile.source_family()` maps
+a tag onto it. Within a tier the newest observation wins; at the same observation the higher
+prompt revision wins. Pinned by four tests using `v2` tags.
+
+## D-026 · The basics audit: reach the site, find the careers page, read the fee promise
+
+**Found (14 Sep 2026, on the 242-firm probe, before anything downstream is touched):**
+
+1. **38 firms were "no website" without a single page fetch.** P1 sent a lead to NO_WEB
+   whenever robots.txt was blocked at the edge (20) or unreachable (18). No policy was read
+   in either case, and NO_WEB had no way back. One of those sites answered 200 the next day.
+2. **44 crawled firms (22%) got 403 on every page.** Cloudflare rejects Python's TLS
+   fingerprint on those hosts; plain `curl` with the identical honest User-Agent gets 301/200.
+   HTTP/2 and standard Accept headers change nothing.
+3. **Careers discovery guessed.** 191 of 205 careers URLs were blind `/careers` probes and 126
+   of those were 404s. 14 of the 31 pages that answered 200 had redirected to the homepage or
+   a "not found" page and were counted as careers pages. A real opening linked from a homepage
+   ("B|K is Hiring a Personal Injury Paralegal") was never mapped.
+4. **Fee promises live in the site chrome.** Of 57 unclassified firms, 8 said "No fees unless
+   we win" / "No Recovery, No Fee" / "Contingency-Based" only in the header, footer or title,
+   which the main-text extractor strips as boilerplate. P6 and the AI reader both saw main text
+   only.
+
+**Rulings:**
+
+- **NO_WEB is a verdict, not a network condition.** P1 assigns it only when there is no domain
+  or a published robots rule closes the site. Blocked-at-edge and unreachable hosts get no
+  verdict: nothing is written, the lead stays DISCOVERED, and the run does not mark the firm
+  done, so the next run tries again. Migration 092 adds NO_WEB → DISCOVERED for the 38 already
+  parked.
+- **We do not get around Cloudflare.** No browser impersonation and no swapping the transport
+  to dodge a fingerprint rule. Those hosts are recorded as `edge_blocked`, truthfully, and the
+  firms need another source. This keeps the standing rule "never defeat bot management".
+- **The careers page is found, not guessed, where possible.** Hiring anchors and paths read
+  off real homepages join the mapper (`MAPPER_VERSION` 2 re-maps every firm). A probe that
+  redirects to the site root or an error page is treated as 404 and the cascade continues.
+  The watcher sweeps only URLs the site published or linked (up to 3 per firm); when the map
+  holds nothing but guesses it runs the full probe cascade. Before this, the alphabetically
+  first map row — the guessed `/careers` — beat butlerfirm.com's real posting URL and a 404 on
+  it ended the search.
+- **P6 reads the whole visible page (v2):** title, meta description, nav, body and footer, one
+  line per block, from the stored HTML. Slogan patterns ("No Recovery, No Fee", "No Win No
+  Fee", "Contingency-Based", "doesn't collect a fee unless") join the config.
+
+**Found on the re-run (15 Sep 2026), same audit:**
+
+5. **A page that is itself the posting parsed to nothing.** butlerfirm.com's h1 "We are Hiring
+   a Paralegal" has no heading or list item naming a role, so the listing heuristic found no
+   openings. **Ruling:** the announcing phrase names the role when it has a subject ("we are",
+   "is", "now" hiring …) and the role is a support role; the page is that one posting. Parser
+   v3.
+6. **The same two open roles minted a second `multi_opening` signal** the first time a sweep
+   crossed a week boundary, and the first never closed. **Ruling:** a multi_opening is keyed by
+   the set of open role signals it is derived from, not by the week; a changed set is a new
+   signal and the superseded one closes in the same write.
+7. **One host held the whole batch.** cavanaghlawgroup.com declares `Crawl-delay: 600`; honouring
+   it made one firm's 13 pages a two-hour tail behind every other host. **Ruling:** the delay is
+   still honoured, never shortened, but a host gets a per-run budget: P2 fetches what fits five
+   minutes, most valuable pages first (home, careers, practice, …), and records the rest as not
+   fetched this run. Above a 60-second delay the mapper probes only and the careers watcher makes
+   one request.
+8. **"Per hour" read speed.** With the whole page in view, the spec's bare `per hour` pattern
+   matched "must slow to 10 miles per hour" and "e-bikes travel up to 28 miles per hour" on
+   accident-law articles, and put Dressie Law Firm (a personal-injury firm with two open support
+   roles) on the hourly, non-billable tier. **Ruling:** hourly needs money or a billing word next
+   to it, and a match inside a negated clause ("we never charge hourly rates", "we do not work on
+   a contingency basis") counts for nothing. The clause ends at the last comma, dash or
+   conjunction, so a promise after the dash still stands. P6 v3.
+
 ---
 
 ## Standing rulings that were never in dispute

@@ -24,6 +24,11 @@ from lge.classify.fee import detect_fee_model
         "Since we charge no legal fees, unless and until we succeed",      # willenslaw.com
         "You will receive a free consultation, and no payment is required unless you win "
         "your lawsuit",                                                    # briskmanandbriskman.com
+        # site-chrome slogans, 14 Sep 2026 (D-026): header, footer and <title> text
+        "Atlanta Personal Injury & Mass Tort Lawyers | No Recovery, No Fee",  # cssfirm.com title
+        "NO WIN NO FEE",
+        "Contingency-Based Legal Representation",                          # warlawgroup.com
+        "Doesn't collect a fee unless you win compensation",               # fltlaw.com
     ],
 )
 def test_real_contingency_phrasings_are_detected(sentence):
@@ -41,3 +46,22 @@ def test_real_contingency_phrasings_are_detected(sentence):
 )
 def test_traps_stay_unknown(sentence):
     assert detect_fee_model([(sentence, 5.0)]).value == "unknown"
+
+
+# 15 Sep 2026 (D-026): the spec's bare "per hour" read SPEED on accident pages and
+# put two personal-injury firms on the hourly tier; a negated clause is not a fee model.
+@pytest.mark.parametrize(
+    "sentence,expected",
+    [
+        ("If they cannot safely change lanes, they must slow to at least 10 miles per hour "
+         "below the posted speed limit before passing.", "unknown"),           # dressielaw.com
+        ("E-bikes can travel up to 28 miles per hour, depending on the model.", "unknown"),
+        ("Our business clients are billed at $350 per hour.", "hourly"),
+        ("Estate planning matters are billed at an hourly rate.", "hourly"),
+        ("We never charge hourly rates — you pay nothing unless we win.", "contingency"),
+        ("There is no hourly rate and no retainer at our firm.", "unknown"),
+        ("We do not work on a contingency basis; all matters are billed hourly.", "hourly"),
+    ],
+)
+def test_hourly_needs_billing_context_and_negation_does_not_count(sentence, expected):
+    assert detect_fee_model([(sentence, 5.0)]).value == expected

@@ -111,6 +111,54 @@ def test_successful_fetch_stores_object_and_writes_document(db, tmp_path):
     assert firm_row["content_hash"] == doc["content_hash"]
 
 
+def test_budgeted_keeps_the_most_valuable_pages():
+    urls = [("https://f.com/team", "team"), ("https://f.com/", "home"),
+            ("https://f.com/careers", "careers"), ("https://f.com/about", "about")]
+    # 4 pages at 2s fit easily: everything, most valuable first
+    fetch, later = p2_fetch.budgeted(urls, 2.0)
+    assert [k for _u, k in fetch] == ["home", "careers", "about", "team"] and later == []
+    # 4 pages at 600s do not: one page (the homepage), the rest left for later
+    fetch, later = p2_fetch.budgeted(urls, 600.0)
+    assert fetch == [("https://f.com/", "home")]
+    assert len(later) == 3
+    # no declared delay -> no trimming
+    assert p2_fetch.budgeted(urls, None)[1] == []
+
+
+@respx.mock
+def test_slow_host_gets_only_what_fits_the_budget(db, tmp_path, monkeypatch):
+    # cavanaghlawgroup.com's shape (D-026), scaled down so the test does not wait.
+    monkeypatch.setattr(p2_fetch, "HOST_TIME_BUDGET_S", 3.0)
+    respx.get("https://slow.example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nCrawl-delay: 2\n")
+    )
+    home = respx.get("https://slow.example.com/").mock(
+        return_value=httpx.Response(200, html="<html><body>Home page text</body></html>")
+    )
+    about = respx.get("https://slow.example.com/about").mock(
+        return_value=httpx.Response(200, html="<html><body>About</body></html>")
+    )
+    contact = respx.get("https://slow.example.com/contact").mock(
+        return_value=httpx.Response(200, html="<html><body>Contact</body></html>")
+    )
+    firm_id = make_firm(db, domain="slow.example.com")
+    make_lead(db, firm_id)
+    insert_site_map(db, firm_id, "https://slow.example.com/about", "about")
+    insert_site_map(db, firm_id, "https://slow.example.com/", "home")
+    insert_site_map(db, firm_id, "https://slow.example.com/contact", "contact")
+
+    result = p2_fetch.run(
+        ctx(db, live=True, user_agent=UA), limit=10, store=ObjectStore(tmp_path),
+        default_interval_s="0",
+    )
+    assert result.processed == 1
+    assert (home.call_count, about.call_count, contact.call_count) == (1, 0, 0)
+    docs = {d["url"]: d for d in get_documents(db, firm_id)}
+    assert docs["https://slow.example.com/"]["fetch_ok"] is True
+    assert docs["https://slow.example.com/about"]["fetch_ok"] is False
+    assert docs["https://slow.example.com/contact"]["fetch_ok"] is False
+
+
 @respx.mock
 def test_same_url_same_hash_produces_no_duplicate_row(db, tmp_path):
     body = b"<html><body>Stable content</body></html>"

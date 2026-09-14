@@ -20,7 +20,13 @@ page_kinds:
   careers:
     # career-opportunities/, Careers.asp — real careers pages found in the probe
     - '/careers?(?:[-_./]|$)'
+    # /law-careers, /legal-careers — the word as the last segment's suffix only, so a
+    # blog post about a "career academy" mid-slug is not a careers page
+    - '[-_]careers?/?$'
     - '/jobs(?:/|$)'
+    # /hiring-personal-injury-paralegal-atlanta-ga — a posting linked from the
+    # homepage. Not /hiring-a-lawyer or /hiring-an-attorney blog posts.
+    - '/(?:now-|we-are-|were-)?hiring(?!-an?-)(?:[-_/]|$)'
     # NOT bare /employment: on an employment-law firm that is a practice page
     # ("Employment Law — wrongful termination…"); the live probe mis-read it as careers.
     - '/employment-opportunit'

@@ -176,6 +176,48 @@ def test_newest_claim_wins_within_same_source():
     assert out.value == "family"
 
 
+# Found before the first paid P8 run: config named llm:p8:v1 while P8 writes
+# llm:p8:v2, so exclusive attrs dropped every AI claim and the p9 loop-breaker
+# never fired. Precedence ranks the tier; the prompt revision is not part of it.
+
+
+def test_current_prompt_revision_counts_for_exclusive_attrs():
+    claims = [rc.Claim("internal_firms", 300, 0.5, AT), rc.Claim("llm:p8:v2", 7, 0.85, AT)]
+    out = rc.resolve_claims("attorney_count", claims)
+    assert out.value == 7
+    assert out.source == "llm:p8:v2"
+
+
+def test_current_prompt_revision_keeps_its_rank():
+    claims = [
+        rc.Claim("internal_firms", "family", 0.9, AT),
+        rc.Claim("llm:p8:v2", "personal_injury", 0.8, AT),
+    ]
+    out = rc.resolve_claims("primary_practice", claims)
+    assert out.value == "personal_injury"
+
+
+def test_p9_at_current_revision_breaks_the_escalation_loop():
+    claims = [
+        rc.Claim("regex:p6", "hourly", 0.9, AT),
+        rc.Claim("llm:p8:v2", "contingency", 0.9, AT),
+        rc.Claim("llm:p9:v2", "contingency", 0.9, AT),
+    ]
+    out = rc.resolve_claims("fee_model", claims)
+    assert out.conflict is False
+    assert out.source == "regex:p6"
+
+
+def test_newer_prompt_revision_supersedes_older_at_same_observation():
+    claims = [
+        rc.Claim("llm:p8:v1", "immigration", 0.9, AT),
+        rc.Claim("llm:p8:v2", "personal_injury", 0.7, AT),
+    ]
+    out = rc.resolve_claims("primary_practice", claims)
+    assert out.value == "personal_injury"
+    assert out.conflict is False
+
+
 # =============================================================================
 # DB-facing single-firm reconcile()
 # =============================================================================
@@ -305,6 +347,22 @@ def test_reconcile_component_ignores_informational_attrs(db):
     # Must not raise, and must not attempt to write a "vendor_headcount_range"
     # column (there isn't one).
     rc._reconcile_chunk(db, [firm_id], AT, cfg)
+
+
+def test_ai_practice_areas_shape_writes_slugs(db):
+    # The real P8 claim shape. It outranks rules:practice, and a dict reaching
+    # psycopg aborted the first real reconcile run after P8.
+    firm_id = make_firm(db)
+    add_claim(db, firm_id, "practice_areas", ["criminal", "personal_injury"], "rules:practice", 0.9)
+    add_claim(
+        db, firm_id, "practice_areas",
+        [{"area": "workers_comp", "weight": 0.3}, {"area": "personal_injury", "weight": 0.6}],
+        "llm:p8:v2", 0.7,
+    )
+    rc._reconcile_chunk(db, [firm_id], AT, rc.load_precedence())
+
+    row = firm_row(db, firm_id, "practice_areas")
+    assert row["practice_areas"] == ["personal_injury", "workers_comp"]
 
 
 def test_reconcile_component_via_registry(db):

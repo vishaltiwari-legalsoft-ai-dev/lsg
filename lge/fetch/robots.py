@@ -35,6 +35,11 @@ from lge.fetch.client import Fetcher
 
 logger = logging.getLogger("lge.fetch.robots")
 
+# A declared Crawl-delay above this is honoured but cannot be mapped or swept
+# within one run: cavanaghlawgroup.com declares 600s, so robots + sitemap +
+# homepage alone would take half an hour and one firm's pages two hours (D-026).
+SLOW_HOST_DELAY_S = 60.0
+
 VALID_SOURCE_STATES = (
     "open",
     "rate_limited",
@@ -56,6 +61,11 @@ class RobotsPolicy:
 
     def crawlable(self) -> bool:
         return self.source_state in ("open", "rate_limited")
+
+    @property
+    def slow(self) -> bool:
+        """Crawlable, but only a request or two per run fits (see SLOW_HOST_DELAY_S)."""
+        return self.crawl_delay_s is not None and self.crawl_delay_s > SLOW_HOST_DELAY_S
 
     def decision(self, url: str, user_agent: str) -> str:
         """'allowed' | 'disallowed' for one specific URL under this policy.

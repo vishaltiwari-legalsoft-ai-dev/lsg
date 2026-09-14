@@ -43,6 +43,23 @@ _CHUNK_SIZE = 500
 # =============================================================================
 
 
+def source_family(source: str) -> str:
+    """The tag precedence is configured by. An LLM claim's tag carries its
+    prompt revision (`llm:p8:v2`) so a prompt bump re-derives cleanly, but
+    precedence ranks the TIER (`llm:p8`). Matching exact tags silently dropped
+    every v2 claim once prompt_rev moved past the v1 the config named. Every
+    other tag is its own family."""
+    if source.startswith("llm:"):
+        return ":".join(source.split(":")[:2])
+    return source
+
+
+def _revision(source: str) -> int:
+    """`llm:p8:v2` -> 2; 0 for any tag without a revision."""
+    tail = source.rsplit(":", 1)[-1]
+    return int(tail[1:]) if source.startswith("llm:") and tail[1:].isdigit() else 0
+
+
 @dataclass(frozen=True, slots=True)
 class PrecedenceConfig:
     default_freshness_days: int
@@ -54,8 +71,9 @@ class PrecedenceConfig:
 
     def rank_of(self, attr: str, source: str) -> int:
         order = self.precedence.get(attr, ())
-        if source in order:
-            return order.index(source)
+        family = source_family(source)
+        if family in order:
+            return order.index(family)
         return len(order)  # unlisted sources rank last
 
     def is_exclusive(self, attr: str) -> bool:
@@ -182,8 +200,17 @@ def _coerce_for_column(col: str, value: Any) -> Any:
         return dateutil_parser.parse(value)
     if col == "last_known_hiring_attempt" and isinstance(value, str):
         return dateutil_parser.parse(value).date()
-    if col in _ARRAY_COLUMNS and not isinstance(value, list):
-        return list(value)
+    if col in _ARRAY_COLUMNS:
+        items = value if isinstance(value, list) else list(value)
+        # P8/P9 write practice_areas in the extraction schema's shape,
+        # [{"area": slug, "weight": w}], while rules:practice writes bare slugs.
+        # The column holds slugs; heaviest first. A dict reaching psycopg
+        # aborted the whole reconcile run the first time AI claims won.
+        if any(isinstance(v, dict) for v in items):
+            weighted = [v for v in items if isinstance(v, dict) and v.get("area")]
+            weighted.sort(key=lambda v: -(v.get("weight") or 0))
+            items = [str(v["area"]) for v in weighted]
+        return items
     return value
 
 
@@ -238,9 +265,14 @@ def _dedupe_newest_per_source(claims: Sequence[Claim]) -> list[Claim]:
     """When several claims from the same source exist, use the newest."""
     best: dict[str, Claim] = {}
     for c in claims:
-        cur = best.get(c.source)
-        if cur is None or c.observed_at > cur.observed_at:
-            best[c.source] = c
+        family = source_family(c.source)
+        cur = best.get(family)
+        # Newest observation wins; at the same observation the newer prompt
+        # revision supersedes the older one (a v2 re-run over the same pages).
+        if cur is None or (c.observed_at, _revision(c.source)) > (
+            cur.observed_at, _revision(cur.source)
+        ):
+            best[family] = c
     return list(best.values())
 
 
@@ -275,7 +307,7 @@ def resolve_claims(
     pool: Sequence[Claim] = claims
     if cfg.is_exclusive(attr):
         allowed = set(cfg.precedence.get(attr, ()))
-        pool = [c for c in pool if c.source in allowed]
+        pool = [c for c in pool if source_family(c.source) in allowed]
 
     pool = _dedupe_newest_per_source(pool)
 
@@ -293,7 +325,7 @@ def resolve_claims(
             stale=(value is None), conflict=False, considered=tuple(blank),
         )
 
-    sources = {c.source for c in real}
+    sources = {source_family(c.source) for c in real}
     if len(sources) == 1:
         winner = real[0]
         return ReconcileOutcome(
@@ -313,12 +345,13 @@ def resolve_claims(
     if attr == "fee_model":
         regex_claim = next((c for c in real if c.source == "regex:p6"), None)
         llm_claims = [c for c in real if c.source.startswith("llm:")]
-        p9_seen = any(c.source == "llm:p9:v1" for c in pool)  # presence alone breaks the loop
+        # presence alone breaks the loop -- at any prompt revision
+        p9_seen = any(source_family(c.source) == "llm:p9" for c in pool)
         if regex_claim and llm_claims and not p9_seen:
             if any(_canon(c.value) != _canon(regex_claim.value) for c in llm_claims):
                 return _conflict(
                     attr, real,
-                    "fee_model: regex:p6 and an LLM claim disagree, no llm:p9:v1 claim "
+                    "fee_model: regex:p6 and an LLM claim disagree, no llm:p9 claim "
                     "yet -- escalate",
                 )
 

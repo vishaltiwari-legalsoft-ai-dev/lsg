@@ -199,6 +199,37 @@ def test_multi_opening_evidence_renders_the_1c_opener(db):
     assert len(rendered) == 2
 
 
+def test_multi_opening_stays_one_open_signal_across_weeks(db):
+    # The live re-sweep three days later minted a second multi_opening for the
+    # same two roles at BSL and Dressie, and the first never closed (D-026).
+    firm_id = make_firm(db, city="Denver", state="CO")
+    for day in (1, 11):
+        make_posting(
+            db, source="careers", firm_id=firm_id, title="Paralegal", city="Denver", state="CO",
+            source_url="https://smithlaw.com/careers/", fetched_at=_dt(2026, 7, day),
+        )
+        make_posting(
+            db, source="careers", firm_id=firm_id, title="Legal Assistant", city="Denver",
+            state="CO", source_url="https://smithlaw.com/careers/", fetched_at=_dt(2026, 7, day),
+        )
+        run_normalise(db)
+
+    multis = fetch_all(
+        db, "SELECT * FROM signal WHERE firm_id = %s AND kind = 'multi_opening'", (firm_id,)
+    )
+    open_multis = [m for m in multis if m["closed_at"] is None]
+    assert len(open_multis) == 1
+    assert open_multis[0]["evidence"]["open_job_posting_count"] == 2
+
+    # A pure re-run changes nothing.
+    run_normalise(db)
+    again = fetch_all(
+        db, "SELECT id, closed_at FROM signal WHERE firm_id = %s AND kind = 'multi_opening'",
+        (firm_id,),
+    )
+    assert [(m["id"], m["closed_at"]) for m in again] == [(m["id"], m["closed_at"]) for m in multis]
+
+
 def test_multi_opening_does_not_fire_for_a_single_open_role(db):
     firm_id = make_firm(db, city="Denver", state="CO")
     make_posting(

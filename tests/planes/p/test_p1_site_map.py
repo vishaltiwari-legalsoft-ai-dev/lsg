@@ -43,6 +43,12 @@ UA = "TestBot/1.0 (+https://example.com/bot)"
         ("https://example.com/contact-us", "contact"),
         ("https://example.com/careers", "careers"),
         ("https://example.com/jobs", "careers"),
+        # paths read off real homepages in the probe (D-026)
+        ("https://example.com/law-careers", "careers"),
+        ("https://example.com/hiring-personal-injury-paralegal-atlanta-ga", "careers"),
+        ("https://example.com/hiring-a-lawyer", "other"),
+        ("https://example.com/blog/cost-of-hiring-motorcycle-accident-lawyer", "other"),
+        ("https://example.com/sexual-abuse-at-farragut-career-academy-in-illinois", "other"),
         ("https://example.com/fees", "fees"),
         ("https://example.com/blog/some-post", "other"),
         ("https://example.com/random-page", "other"),
@@ -243,21 +249,45 @@ def test_practice_and_other_kind_caps_from_flat_sitemap(db):
 
 
 @respx.mock
-def test_edge_blocked_host_routes_to_no_web(db):
-    respx.get("https://blocked.example.com/robots.txt").mock(return_value=httpx.Response(403))
+def test_edge_blocked_host_is_no_verdict_and_is_retried(db):
+    # A 403 on robots.txt means no policy was read. The live probe parked 38 firms
+    # as NO_WEB this way and one answered 200 the next day (D-026).
+    route = respx.get("https://blocked.example.com/robots.txt").mock(
+        return_value=httpx.Response(403)
+    )
 
     firm_id = make_firm(db, domain="blocked.example.com")
+    make_lead(db, firm_id)
+    result = p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    assert result.processed == 0
+    assert result.skipped == 1
+    assert site_map_rows(db, firm_id) == []
+    assert lead_state(db, firm_id) == "DISCOVERED"
+
+    from tests.planes.p._p_helpers import source_registry_row
+
+    reg = source_registry_row(db, "blocked.example.com")
+    assert reg["source_state"] == "edge_blocked"
+
+    # Not marked done: the next run asks the host again instead of skipping it.
+    p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+    assert route.call_count == 2
+
+
+@respx.mock
+def test_policy_closed_host_routes_to_no_web(db):
+    # A published rule closing the site is a verdict, unlike a blocked fetch.
+    respx.get("https://closed.example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nDisallow: /\n")
+    )
+    firm_id = make_firm(db, domain="closed.example.com")
     make_lead(db, firm_id)
     result = p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
 
     assert result.processed == 1
     assert site_map_rows(db, firm_id) == []
     assert lead_state(db, firm_id) == "NO_WEB"
-
-    from tests.planes.p._p_helpers import source_registry_row
-
-    reg = source_registry_row(db, "blocked.example.com")
-    assert reg["source_state"] == "edge_blocked"
 
 
 def test_no_domain_routes_to_no_web_via_firm_ids_file(db, tmp_path):
@@ -280,8 +310,9 @@ def test_unreachable_host_stays_discovered_no_conclusion(db):
     firm_id = make_firm(db, domain="down.example.com")
     make_lead(db, firm_id)
     result = p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
-    assert result.processed == 1
-    assert lead_state(db, firm_id) == "NO_WEB"  # not crawlable this run
+    assert result.processed == 0
+    assert result.skipped == 1
+    assert lead_state(db, firm_id) == "DISCOVERED"  # a network condition, not a verdict
     from tests.planes.p._p_helpers import source_registry_row
 
     assert source_registry_row(db, "down.example.com")["source_state"] == "unreachable"
@@ -314,6 +345,30 @@ def test_crawl_delay_persisted_to_source_registry(db):
     assert reg["source_state"] == "rate_limited"
     assert float(reg["crawl_delay_s"]) == 5.0
     assert lead_state(db, firm_id) == "PROFILING"  # rate_limited is still crawlable
+
+
+@respx.mock
+def test_slow_host_is_probed_only(db):
+    # cavanaghlawgroup.com declares Crawl-delay 600 (D-026): one robots read, no
+    # sitemap and no homepage this run, probes for P2 to budget.
+    respx.get("https://crawl.example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nCrawl-delay: 600\n")
+    )
+    sitemap = respx.get("https://crawl.example.com/sitemap.xml").mock(
+        return_value=httpx.Response(404)
+    )
+    home = respx.get("https://crawl.example.com/").mock(
+        return_value=httpx.Response(200, html="<html></html>")
+    )
+    firm_id = make_firm(db, domain="crawl.example.com")
+    make_lead(db, firm_id)
+    result = p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    assert result.processed == 1
+    assert sitemap.call_count == 0 and home.call_count == 0
+    assert lead_state(db, firm_id) == "PROFILING"
+    rows = site_map_rows(db, firm_id)
+    assert rows and all(r["discovered_via"] == "probe" for r in rows)
 
 
 # ---------------------------------------------------------------------------

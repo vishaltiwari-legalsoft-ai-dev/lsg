@@ -66,8 +66,9 @@ _PROBE_PATHS = ("/careers", "/jobs", "/employment-opportunities", "/join-our-tea
 
 # Bump whenever parse_careers_page can produce different postings for the same HTML.
 # careers_sweep.parser_version joins the content hash in the skip-unchanged rule, so a
-# parser fix re-parses pages already swept (v2: page-level job context, soft-404s).
-PARSER_VERSION = "2"
+# parser fix re-parses pages already swept (v2: page-level job context, soft-404s;
+# v3: a page that is itself the posting).
+PARSER_VERSION = "3"
 
 # Deliberately excluded -- context/70-decisions/02-deliberate-exclusions.md.
 # Never fetched; a link to one is recorded on whatever posting we found and
@@ -106,6 +107,7 @@ class CareersOutcome:
     url: str | None
     fetch_ok: bool = False
     status: int | None = None
+    final_url: str | None = None
     body: bytes | None = None
     content_type_ok: bool = True
     error: str | None = None
@@ -123,69 +125,126 @@ def _probe_candidates(domain: str) -> list[str]:
     return [f"{base}{path}" for path in _PROBE_PATHS]
 
 
+# Where a site sends a URL it does not have: its root, or an error page that still
+# answers 200. Seen in the probe: /404, /404?aspxerrorpath=..., index.php?error=404.
+_NOT_FOUND_URL_RE = re.compile(
+    r"(?:^|/)(?:404|not-?found|page-not-found|error)(?:[/.?]|$)|(?:^|[?&])error=404|aspxerrorpath=",
+    re.I,
+)
+
+
+def redirected_away(url: str | None, final_url: str | None) -> bool:
+    """A careers URL that answered 200 only because the site redirected it to its
+    homepage (this host or another) or to a "not found" page. The live probe counted
+    14 of 31 such pages as careers pages -- the firm has no careers page at that
+    URL, so the probe cascade should keep going (D-026)."""
+    if not url or not final_url:
+        return False
+    requested = urlsplit(url).path.rstrip("/")
+    landed = urlsplit(final_url)
+    landed_path = landed.path.rstrip("/")
+    if not requested:
+        return False
+    if not landed_path:
+        return True
+    landed_ref = landed_path + (f"?{landed.query}" if landed.query else "")
+    return bool(_NOT_FOUND_URL_RE.search(landed_ref))
+
+
 async def _sweep_one_firm(
     fetcher: Fetcher,
     robots_cache: RobotsCache,
     user_agent: str,
     firm_id: str,
     info: dict,
-) -> CareersOutcome:
+) -> list[CareersOutcome]:
+    """Every sweep made for one firm this run: one per found careers URL, or the
+    single outcome of the probe cascade when the map holds no found URL."""
     domain = info.get("domain")
     if not domain:
-        return CareersOutcome(firm_id=firm_id, url=None, note="no domain -- nothing to sweep")
+        return [CareersOutcome(firm_id=firm_id, url=None, note="no domain -- nothing to sweep")]
 
     robots = await robots_cache.get(domain)
+    found: list[str] = list(info.get("site_map_urls") or [])
+    if robots.slow:
+        found = found[:1]  # one request is all a 600s Crawl-delay affords this run
     if not robots.crawlable():
-        candidate_url = info.get("site_map_url") or _probe_candidates(domain)[0]
-        return CareersOutcome(
-            firm_id=firm_id,
-            url=candidate_url,
-            fetch_ok=False,
-            note=f"host not crawlable (source_state={robots.source_state})",
-        )
-
-    site_map_url = info.get("site_map_url")
-    if site_map_url:
-        decision = robots.decision(site_map_url, user_agent)
-        if decision == "disallowed":
-            return CareersOutcome(
-                firm_id=firm_id, url=site_map_url, fetch_ok=False,
-                note="robots.txt disallows the careers page",
+        candidate_url = found[0] if found else _probe_candidates(domain)[0]
+        return [
+            CareersOutcome(
+                firm_id=firm_id,
+                url=candidate_url,
+                fetch_ok=False,
+                note=f"host not crawlable (source_state={robots.source_state})",
             )
-        result = await fetcher.fetch(site_map_url, robots_decision=decision)
-        return CareersOutcome(
-            firm_id=firm_id, url=site_map_url, fetch_ok=result.fetch_ok, status=result.status,
-            body=result.body, content_type_ok=result.content_type_ok, error=result.error,
-        )
+        ]
 
-    # No known careers URL -- probe in order, stop at the first *confirmed*
-    # page (any non-404 outcome). Exhausting every candidate at 404 is
-    # itself a definitive answer worth recording.
+    if found:
+        outcomes: list[CareersOutcome] = []
+        for url in found:
+            decision = robots.decision(url, user_agent)
+            if decision == "disallowed":
+                outcomes.append(
+                    CareersOutcome(
+                        firm_id=firm_id, url=url, fetch_ok=False,
+                        note="robots.txt disallows the careers page",
+                    )
+                )
+                continue
+            result = await fetcher.fetch(url, robots_decision=decision)
+            outcomes.append(
+                CareersOutcome(
+                    firm_id=firm_id, url=url, fetch_ok=result.fetch_ok, status=result.status,
+                    final_url=result.final_url, body=result.body,
+                    content_type_ok=result.content_type_ok, error=result.error,
+                )
+            )
+        return outcomes
+
+    # No found careers URL -- probe in order, stop at the first *confirmed*
+    # page (any non-404 outcome that was not redirected away). Exhausting every
+    # candidate at 404 is itself a definitive answer worth recording.
     last: FetchResult | None = None
-    last_url = _probe_candidates(domain)[-1]
-    for url in _probe_candidates(domain):
+    candidates = _probe_candidates(domain)[:1] if robots.slow else _probe_candidates(domain)
+    last_url = candidates[-1]
+    for url in candidates:
         decision = robots.decision(url, user_agent)
         if decision == "disallowed":
             continue
         result = await fetcher.fetch(url, robots_decision=decision)
         last, last_url = result, url
-        if result.fetch_ok and result.status != 404:
-            return CareersOutcome(
-                firm_id=firm_id, url=url, fetch_ok=result.fetch_ok, status=result.status,
-                body=result.body, content_type_ok=result.content_type_ok, error=result.error,
-            )
+        if (
+            result.fetch_ok
+            and result.status != 404
+            and not redirected_away(url, result.final_url)
+        ):
+            return [
+                CareersOutcome(
+                    firm_id=firm_id, url=url, fetch_ok=result.fetch_ok, status=result.status,
+                    final_url=result.final_url, body=result.body,
+                    content_type_ok=result.content_type_ok, error=result.error,
+                )
+            ]
         if not result.fetch_ok:
-            return CareersOutcome(
-                firm_id=firm_id, url=url, fetch_ok=False, status=result.status, error=result.error,
-            )
+            return [
+                CareersOutcome(
+                    firm_id=firm_id, url=url, fetch_ok=False, status=result.status,
+                    error=result.error,
+                )
+            ]
     if last is not None:
-        return CareersOutcome(
-            firm_id=firm_id, url=last_url, fetch_ok=last.fetch_ok, status=last.status,
-            body=last.body, content_type_ok=last.content_type_ok, error=last.error,
+        return [
+            CareersOutcome(
+                firm_id=firm_id, url=last_url, fetch_ok=last.fetch_ok, status=last.status,
+                final_url=last.final_url, body=last.body,
+                content_type_ok=last.content_type_ok, error=last.error,
+            )
+        ]
+    return [
+        CareersOutcome(
+            firm_id=firm_id, url=None, note="every careers probe path is disallowed by robots.txt"
         )
-    return CareersOutcome(
-        firm_id=firm_id, url=None, note="every careers probe path is disallowed by robots.txt"
-    )
+    ]
 
 
 async def _sweep_all_firms(
@@ -193,7 +252,7 @@ async def _sweep_all_firms(
     candidates: dict[str, dict],
     max_concurrent_hosts: int,
     default_interval_s: float,
-) -> tuple[dict[str, CareersOutcome], dict]:
+) -> tuple[dict[str, list[CareersOutcome]], dict]:
     limiter = HostRateLimiter(default_interval_s=default_interval_s)
     block_tracker = HostBlockTracker()
     async with Fetcher(
@@ -391,6 +450,17 @@ _PAGE_JOB_CONTEXT_RE = re.compile(
     re.IGNORECASE,
 )
 _SECTION_HEADINGS = ("h2", "h3", "h4", "h5")
+# A page that IS the posting rather than a list of them: butlerfirm.com's h1 "We are
+# Hiring a Paralegal" under the title "B|K is Hiring a Personal Injury Paralegal".
+# Nothing in it is a heading or list item naming a role, so v2 found nothing. The
+# announcing phrase names the role; its object is the posting (v3). A subject is
+# required ("we are", "is", "now") so "Hiring a car accident lawyer: what to expect"
+# blog titles never match.
+_SINGLE_POSTING_RE = re.compile(
+    r"\b(?:we(?:'re|\s+are)|is|now)\s+hiring\b[:\s]*(?:(?:a|an|for|our\s+next)\s+)?"
+    r"(?P<role>[A-Za-z][A-Za-z /&-]{2,60}?)\s*(?:$|[.!?,(|]|\s[-–—]\s|\s+(?:in|at|for)\s)",
+    re.IGNORECASE,
+)
 _SOFT_404_RE = re.compile(r"\b(?:page\s+(?:you\s+were\s+looking\s+for\s+)?(?:could\s+not|"
                           r"cannot|can't)\s+be\s+found|page\s+not\s+found|error\s+404|404\s+error"
                           r"|^\s*404\b)", re.IGNORECASE | re.MULTILINE)
@@ -417,6 +487,41 @@ def _section_text(heading: lxml.html.HtmlElement, limit: int = 3000) -> str:
     return " ".join(" ".join(parts).split())[:limit]
 
 
+def single_posting_from_page(tree: lxml.html.HtmlElement, page_text: str) -> dict | None:
+    """The one posting a page announces in its h1 or <title> ("We are Hiring a
+    Paralegal"), or None. Only support roles: "Is hiring a lawyer worth it?" names
+    an attorney and is an article."""
+    candidates = [" ".join((h.text_content() or "").split()) for h in tree.iter("h1")]
+    title = " ".join((tree.findtext(".//title") or "").split())
+    if title:
+        candidates.append(re.split(r"\s[-–—|]\s", title)[0])  # drop the " - Site Name" suffix
+    for text in candidates:
+        m = _SINGLE_POSTING_RE.search(text)
+        if not m:
+            continue
+        role_text = m.group("role").strip()
+        role = normalize_title(role_text)
+        if not role or not is_support_role(role):
+            continue
+        body = page_text[:3000]
+        return {
+            "title": role_text,
+            "body": body,
+            "board_posted_date": None,
+            "employment_type": None,
+            "location_raw": None,
+            "apply_email": _extract_apply_email(page_text),
+            "payload": {
+                "parse_method": "html",
+                "confidence": 0.6,
+                "role": role,
+                "page_context": True,
+                "single_posting": True,
+            },
+        }
+    return None
+
+
 def html_heuristic_postings(tree: lxml.html.HtmlElement) -> list[dict]:
     """Lowest-confidence layer (after JSON-LD, microdata and ATS embeds).
 
@@ -425,12 +530,17 @@ def html_heuristic_postings(tree: lxml.html.HtmlElement) -> list[dict]:
     the heading as its body (support AND attorney roles are recorded — JA6 rejects
     non-support roles with a reason, keeping the record). Without page context, the
     v1 rule stands: the job word must be inside the heading or list item itself.
+    A page that is itself one posting is read from its h1/title (v3).
     """
     page_text = " ".join((tree.text_content() or "").split())
     page_context = bool(_PAGE_JOB_CONTEXT_RE.search(page_text))
     page_email = _extract_apply_email(page_text)
     seen: set[str] = set()
     out: list[dict] = []
+    single = single_posting_from_page(tree, page_text)
+    if single is not None:
+        seen.add(single["title"].lower())
+        out.append(single)
     for el in tree.iter(*_HEADING_AND_LIST_TAGS):
         text = " ".join((el.text_content() or "").split())
         if not text or len(text) > 200:
@@ -530,23 +640,33 @@ def parse_careers_page(html: str, url: str) -> ParsedCareers:
 # ---------------------------------------------------------------------------
 
 
+# Careers URLs the site itself published (sitemap) or linked (homepage nav) are swept,
+# up to this many per firm -- a careers section can list its openings on sub-pages.
+_MAX_FOUND_URLS = 3
+
+
 def _load_careers_candidates(conn: psycopg.Connection, firm_ids: list[str]) -> dict[str, dict]:
     with conn.cursor() as cur:
         cur.execute("SELECT id, domain FROM firm WHERE id = ANY(%s)", (firm_ids,))
         domains = {str(r["id"]): r["domain"] for r in cur.fetchall()}
 
         cur.execute(
-            "SELECT firm_id, url FROM site_map WHERE firm_id = ANY(%s) AND page_kind = 'careers' "
-            "ORDER BY firm_id, url",
+            "SELECT firm_id, url, discovered_via FROM site_map "
+            "WHERE firm_id = ANY(%s) AND page_kind = 'careers' ORDER BY firm_id, url",
             (firm_ids,),
         )
-        site_map_urls: dict[str, str] = {}
+        found: dict[str, list[str]] = {}
         for row in cur.fetchall():
-            fid = str(row["firm_id"])
-            site_map_urls.setdefault(fid, row["url"])
+            # A probe row is the same guess the cascade makes, and the cascade tries
+            # every path in turn. Trusting one guess from the map meant the
+            # alphabetically-first "/careers" beat a real posting URL the sitemap
+            # published, and a 404 on it ended the search (D-026).
+            if row["discovered_via"] == "probe":
+                continue
+            found.setdefault(str(row["firm_id"]), []).append(row["url"])
 
     return {
-        fid: {"domain": domains.get(fid), "site_map_url": site_map_urls.get(fid)}
+        fid: {"domain": domains.get(fid), "site_map_urls": found.get(fid, [])[:_MAX_FOUND_URLS]}
         for fid in firm_ids
     }
 
@@ -645,10 +765,14 @@ def _write_sweep(conn: psycopg.Connection, firm_id: str, outcome: CareersOutcome
 
     content_hash = outcome.content_hash
 
-    if outcome.status == 404:
+    if outcome.status == 404 or redirected_away(outcome.url, outcome.final_url):
+        # A 200 that landed on the homepage or an error page is the same answer
+        # as a 404: there is no careers page at this URL. Recorded as such, never
+        # parsed -- a homepage's text has no openings and its size is misleading.
         _insert_sweep(
-            conn, firm_id, outcome.url, fetch_ok=True, status_code=404, postings_found=0,
-            content_hash=content_hash, parse_method="none",
+            conn, firm_id, outcome.url, fetch_ok=True, status_code=outcome.status,
+            postings_found=0, content_hash=content_hash,
+            parse_method="none" if outcome.status == 404 else "redirected",
         )
         return "not_found"
 
@@ -731,18 +855,21 @@ def run(ctx: RunContext, **opts: object) -> RunResult:
     for policy in robots_seen.values():
         persist_robots_policy(ctx.conn, policy)
 
-    for firm_id, outcome in outcomes.items():
+    for firm_id, firm_outcomes in outcomes.items():
         input_hash = hashes[firm_id]
         with ctx.once("ja1_careers", firm_id, input_hash) as should_run:
             if not should_run:
                 result.skipped += 1
                 continue
-            status = _write_sweep(ctx.conn, firm_id, outcome)
+            for outcome in firm_outcomes:
+                status = _write_sweep(ctx.conn, firm_id, outcome)
+                if status == "fetch_failed":
+                    result.notes.append(
+                        f"{firm_id}: careers sweep fetch failed ({outcome.error})"
+                    )
+                elif outcome.note:
+                    result.notes.append(f"{firm_id}: {outcome.note}")
             result.processed += 1
-            if status == "fetch_failed":
-                result.notes.append(f"{firm_id}: careers sweep fetch failed ({outcome.error})")
-            elif outcome.note:
-                result.notes.append(f"{firm_id}: {outcome.note}")
         ctx.checkpoint()
 
     return result

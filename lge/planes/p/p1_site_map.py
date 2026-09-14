@@ -88,17 +88,33 @@ def _sitemap_cap() -> int:
 # --------------------------------------------------------------------------
 
 
+# Bump whenever the mapper's own logic changes (link patterns, probe paths, caps):
+# it joins the domain in the idempotency key, so already-mapped firms are mapped
+# again without the domain having to change. v2: hiring anchors and paths read off
+# real homepages (D-026).
+MAPPER_VERSION = "2"
+
+
+def mapper_input_hash(domain: str | None) -> str:
+    return hashlib.sha256(f"{domain or ''}|{MAPPER_VERSION}".encode()).hexdigest()
+
+
 @dataclass
 class SiteMapOutcome:
     firm_id: str
     domain: str | None
     robots_state: str | None = None
     crawlable: bool = False
+    # False when the host could not be judged this run: robots.txt blocked at the
+    # edge or unreachable, so no policy was read. Nothing is written, the lead
+    # stays DISCOVERED and the next run tries again. True for every verdict --
+    # mapped, no domain, or a published rule closing the site.
+    conclusive: bool = True
     urls: list[tuple[str, str, str]] = field(default_factory=list)  # (url, kind, via)
     note: str | None = None
 
     def input_hash(self) -> str:
-        return hashlib.sha256((self.domain or "").encode("utf-8")).hexdigest()
+        return mapper_input_hash(self.domain)
 
 
 _SITEMAP_NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -172,10 +188,21 @@ async def _discover_sitemap_urls(
 # sitemap; the live probe found only the homepage on sites whose nav plainly linked
 # "Our Attorneys" and "Car Accidents". The homepage's own navigation is the most
 # reliable map of a small site, so it is read before any blind probe.
+#
+# Careers anchors come from real homepages (D-026): "B|K is Hiring a Personal Injury
+# Paralegal" was a posting linked straight from the homepage and was missed; "Join
+# Us" and a bare "Employment" nav label were missed too. The traps are practice
+# pages and blog posts: "Employment & Wage Litigation", "workers injured on the
+# job", "Cost of Hiring a Motorcycle Accident Lawyer" -- so "job" only counts in
+# its plural or listing forms, "hiring" only with a subject, and "employment" only
+# alone or with "opportunities".
 _ANCHOR_KINDS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("careers", re.compile(
-        r"\b(?:careers?|jobs?|join (?:our|the) team|employment opportunit|we'?re hiring"
-        r"|work with us)\b", re.I)),
+        r"\b(?:careers?|jobs|job\s+(?:openings?|opportunit\w*|listings?)"
+        r"|join\s+(?:our|the)\s+(?:team|firm)|join\s+us|employment\s+opportunit\w*"
+        r"|(?:we'?re|we\s+are|is|now)\s+hiring|work\s+(?:with|for)\s+us"
+        r"|open\s+positions?|positions?\s+available)\b"
+        r"|^\s*employment\s*$", re.I)),
     ("attorneys", re.compile(
         r"\b(?:attorneys?|lawyers?|our (?:legal )?team"
         r"|meet (?:the|our) (?:team|attorneys|lawyers)|our people)\b", re.I)),
@@ -278,12 +305,27 @@ async def _map_one_firm(
     outcome.robots_state = robots.source_state
 
     if not robots.crawlable():
-        outcome.note = f"host not crawlable (source_state={robots.source_state}) -- NO_WEB"
+        if robots.source_state == "policy_closed":
+            outcome.note = "robots.txt closes the site to our user agent -- NO_WEB"
+        else:
+            # edge_blocked / unreachable: no policy was read, so there is no verdict.
+            # The live probe parked 38 firms as NO_WEB on this path; one of them
+            # answered 200 the next day. Draw no conclusion, retry next run.
+            outcome.conclusive = False
+            outcome.note = (
+                f"host not judged this run (source_state={robots.source_state}) -- retry"
+            )
         return outcome
     outcome.crawlable = True
 
     by_kind: dict[str, list[tuple[str, str]]] = {}
-    sitemap_urls = await _discover_sitemap_urls(fetcher, domain, robots)
+    # A slow host cannot be mapped within a run (sitemap + homepage would be 20
+    # minutes at 600s): probes only, and P2 fetches what fits its budget (D-026).
+    if robots.slow:
+        outcome.note = f"slow host (Crawl-delay {robots.crawl_delay_s:g}s) -- probes only"
+        sitemap_urls: list[str] = []
+    else:
+        sitemap_urls = await _discover_sitemap_urls(fetcher, domain, robots)
     for url in sitemap_urls:
         decision = robots.decision(url, user_agent)
         if decision == "disallowed":
@@ -298,7 +340,7 @@ async def _map_one_firm(
     # Link discovery: read the homepage's own navigation before any blind probe,
     # whenever the sitemap left a content kind uncovered.
     wanted = ("practice", "attorneys", "team", "about", "careers", "fees")
-    if any(not by_kind.get(k) for k in wanted):
+    if not robots.slow and any(not by_kind.get(k) for k in wanted):
         home_url = f"https://{domain}/"
         if robots.decision(home_url, user_agent) != "disallowed":
             home = await fetcher.fetch(home_url)
@@ -397,8 +439,7 @@ def run(ctx: RunContext, **opts: object) -> RunResult:
         return result
 
     domains = _load_firm_domains(ctx.conn, firm_ids)
-    hashes = {fid: hashlib.sha256((domains.get(fid) or "").encode("utf-8")).hexdigest()
-              for fid in firm_ids}
+    hashes = {fid: mapper_input_hash(domains.get(fid)) for fid in firm_ids}
     done = already_done(ctx.conn, "p1_site_map", hashes)
     pending = {fid: domains[fid] for fid in firm_ids if fid not in done}
     result.skipped += len(done)
@@ -433,6 +474,11 @@ def run(ctx: RunContext, **opts: object) -> RunResult:
         persist_robots_policy(ctx.conn, policy)
 
     for firm_id, outcome in outcomes.items():
+        if not outcome.conclusive:
+            # Not recorded as done on purpose: the next run must try the host again.
+            result.skipped += 1
+            result.notes.append(f"{firm_id}: {outcome.note}")
+            continue
         input_hash = outcome.input_hash()
         with ctx.once("p1_site_map", firm_id, input_hash) as should_run:
             if not should_run:

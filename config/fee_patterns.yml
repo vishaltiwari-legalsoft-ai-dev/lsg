@@ -27,6 +27,15 @@ contingency:
   - '\byou\s+(?:(?:do\s+not|don[''’�]t|won[''’�]t|will\s+not|never)\s+(?:pay|owe))\b.{0,40}\b(?:unless|until)\b'
   # "We don't get paid unless you are paid", "we only get paid if we win"
   - '\bwe\s+(?:do\s+not|don[''’�]t|only)\s+get\s+paid\b.{0,40}\b(?:unless|until|if|when)\b'
+  # --- site-chrome slogans (live probe, 14 Sep 2026; D-026) ---
+  # Header/footer/title slogans: "No Recovery, No Fee", "No Win No Fee",
+  # "No Fee Without Recovery". No "unless" in them, so the spec's first pattern misses.
+  - '\bno\s+(?:recovery|win)\b[\s,.:;!|-]{0,6}\bno\s+fees?\b'
+  - '\bno\s+fees?\b[\s,.:;!|-]{0,6}\b(?:no|without)\s+(?:recovery|win)\b'
+  # "Contingency-Based Legal Representation" (warlawgroup.com footer)
+  - '\bcontingen(?:cy|t)[\s-]based\b'
+  # "Doesn't collect a fee unless you win compensation" (fltlaw.com)
+  - '\b(?:doesn[''’�]t|does\s+not|don[''’�]t|won[''’�]t|never)\s+(?:collect|charge|take|receive|get|earn)\b.{0,24}\bfees?\b.{0,24}\b(?:unless|until)\b'
 
 fee_shifting:
   - '\bfees?\b.{0,20}\bpaid\s+by\s+(?:the\s+)?(?:defendant|employer|manufacturer)\b'
@@ -40,4 +49,9 @@ flat:
 hourly:
   - '\bhourly\s+rate\b'
   - '\bbilled\s+(?:hourly|by\s+the\s+hour)\b'
-  - '\bper\s+hour\b'
+  # The spec's bare "per hour" matched SPEED on accident-law pages -- "must slow to
+  # 10 miles per hour", "e-bikes travel up to 28 miles per hour" -- and put two
+  # personal-injury firms on the hourly tier (D-026). Billing needs money or a
+  # billing word next to it.
+  - '\$\s?\d[\d,]*(?:\.\d+)?\s*(?:per|an|a|/)\s*hour\b'
+  - '\b(?:bill(?:ed|s|ing)?|charg(?:e|es|ed|ing)|rates?|fees?)\b[^.\n]{0,40}\bper\s+hour\b'

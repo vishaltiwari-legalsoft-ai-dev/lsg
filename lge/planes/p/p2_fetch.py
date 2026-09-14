@@ -70,6 +70,28 @@ def _quick_word_count(body: bytes) -> int | None:
     return len(words)
 
 
+# The pages worth the most when a host's Crawl-delay means we cannot have them all.
+_KIND_PRIORITY = {
+    "home": 0, "careers": 1, "practice": 2, "fees": 3, "about": 4, "contact": 5,
+    "attorneys": 6, "team": 7,
+}
+HOST_TIME_BUDGET_S = 300.0
+
+
+def budgeted(
+    urls: list[tuple[str, str]], crawl_delay_s: float | None
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """(fetch this run, leave for later). A host asking for a long Crawl-delay is
+    honoured, but must not hold the whole batch: cavanaghlawgroup.com declares 600s,
+    which made one firm's 13 pages a two-hour tail behind every other host (D-026).
+    What fits the per-host budget is fetched, most valuable pages first."""
+    ordered = sorted(urls, key=lambda u: _KIND_PRIORITY.get(u[1], 9))
+    if not crawl_delay_s or crawl_delay_s * len(ordered) <= HOST_TIME_BUDGET_S:
+        return ordered, []
+    keep = max(1, int(HOST_TIME_BUDGET_S // crawl_delay_s))
+    return ordered[:keep], ordered[keep:]
+
+
 async def _fetch_one_firm(
     fetcher: Fetcher,
     robots_cache: RobotsCache,
@@ -77,6 +99,27 @@ async def _fetch_one_firm(
     urls: list[tuple[str, str]],
 ) -> list[DocumentFetch]:
     out: list[DocumentFetch] = []
+    if not urls:
+        return out
+    policy = await robots_cache.get(host_of(urls[0][0]))
+    urls, deferred = budgeted(urls, policy.crawl_delay_s)
+    for url, kind in deferred:
+        out.append(
+            DocumentFetch(
+                url=url,
+                page_kind=kind,
+                fetch_ok=False,
+                status=None,
+                final_url=None,
+                body=None,
+                robots_decision=None,
+                content_type_ok=True,
+                error=(
+                    f"not fetched this run: host Crawl-delay {policy.crawl_delay_s:g}s "
+                    "exceeds the per-host budget"
+                ),
+            )
+        )
     for url, kind in urls:
         host = host_of(url)
         robots = await robots_cache.get(host)

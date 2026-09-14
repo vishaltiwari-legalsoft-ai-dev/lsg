@@ -74,6 +74,32 @@ def _section_weight(text: str | None, weight: float) -> float:
     return float(len((text or "").split()))
 
 
+# A match inside a negated clause is not the firm's fee model: "We never charge
+# hourly rates", "we do not work on a contingency basis". The clause is the text
+# before the match back to the last clause break, so the "never" in "We never
+# charge hourly rates -- you pay nothing unless we win" does not reach the
+# contingency promise after the dash.
+_CLAUSE_BREAK_RE = re.compile(r"[,;:—–]|\s-\s|\b(?:but|and|so|while|whereas)\b", re.IGNORECASE)
+_NEGATION_RE = re.compile(
+    r"\b(?:no|never|not|without|instead\s+of|rather\s+than|unlike|zero"
+    r"|don[''’]?t|doesn[''’]?t|won[''’]?t|isn[''’]?t|aren[''’]?t)\b",
+    re.IGNORECASE,
+)
+
+
+def _negated(sentence: str, match_start: int) -> bool:
+    clause = _CLAUSE_BREAK_RE.split(sentence[:match_start])[-1]
+    return bool(_NEGATION_RE.search(clause[-60:]))
+
+
+def _first_unnegated_match(sentence: str, family_patterns: tuple[re.Pattern[str], ...]) -> bool:
+    for pattern in family_patterns:
+        m = pattern.search(sentence)
+        if m is not None and not _negated(sentence, m.start()):
+            return True
+    return False
+
+
 def _detect_fee_model_raw(sections: Sequence[tuple[str, float]]) -> FeeResult:
     patterns = _compiled_patterns()
 
@@ -89,7 +115,7 @@ def _detect_fee_model_raw(sections: Sequence[tuple[str, float]]) -> FeeResult:
         families_in_section: set[str] = set()
         for sentence in _split_sentences(text):
             for family in _PRECEDENCE:
-                if any(p.search(sentence) for p in patterns[family]):
+                if _first_unnegated_match(sentence, patterns[family]):
                     all_matches.append((family, sentence, w))
                     families_in_section.add(family)
                     break  # first matching family wins this sentence

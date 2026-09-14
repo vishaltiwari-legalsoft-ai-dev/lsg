@@ -11,7 +11,7 @@
 #                     deterministic site rules -- not yet built this
 #                     milestone, but the tag is reserved so precedence
 #                     doesn't need editing when it lands)
-#   "llm(site)"    -> llm:p9:v1 (escalation tier) > llm:p8:v1 (cheap tier)
+#   "llm(site)"    -> llm:p9 (escalation tier) > llm:p8 (cheap tier)
 #   "regex(site)"  -> regex:p6 (P6 fee-model detector)
 #   "directory"    -> internal_firms (purchased dataset) -- later:
 #                     directory:<name> ranks alongside it, unlisted
@@ -92,23 +92,23 @@ precedence:
 
   # ---- qualification columns -----------------------------------------
   primary_practice:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
     - rules:practice
     - internal_firms
 
   practice_areas:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
     - rules:practice
     - internal_firms
 
   attorney_count:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
 
   # regex(site) > llm(site). Disagreement has its own escalation rule
-  # (reconcile.py: regex vs. any llm claim, before an llm:p9:v1 claim exists
+  # (reconcile.py: regex vs. any llm claim, before an llm:p9 claim exists
   # -> conflict + NULL + P9, "disagreement -> escalate"; once a p9 claim
   # exists for this firm/attr, apply the standard precedence rule below --
   # which still has regex:p6 on top, so a confident regex match keeps
@@ -116,8 +116,8 @@ precedence:
   # deterministic match).
   fee_model:
     - regex:p6
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
 
   cms_detected:
     - rules:p7
@@ -126,24 +126,24 @@ precedence:
   entity_kind:
     - rules:site
     - site:jsonld
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
     - internal_firms
 
   spanish_intake:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
     - rules:site
     - site:jsonld
 
   has_inhouse_recruiter:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
     - rules:site
 
   staff_ratio:
-    - llm:p9:v1
-    - llm:p8:v1
+    - llm:p9
+    - llm:p8
 
   country:
     - site:jsonld

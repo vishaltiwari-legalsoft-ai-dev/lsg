@@ -17,12 +17,13 @@ import pytest
 from lge.planes.p import p6_fee
 from lge.registry import RunContext
 from lge.settings import get_settings
+from lge.store.objects import ObjectStore
 from tests.conftest import make_firm
 
 pytestmark = pytest.mark.db
 
 
-def _insert_document(conn, firm_id, *, page_kind, fetched_at, url=None):
+def _insert_document(conn, firm_id, *, page_kind, fetched_at, url=None, object_key=None):
     content_hash = uuid.uuid4().hex
     url = url or f"https://example.com/{page_kind}"
     with conn.cursor() as cur:
@@ -34,7 +35,7 @@ def _insert_document(conn, firm_id, *, page_kind, fetched_at, url=None):
             VALUES (%s, %s, 200, %s, %s, 0, true, %s, %s)
             RETURNING id
             """,
-            (firm_id, url, content_hash, content_hash, page_kind, fetched_at),
+            (firm_id, url, content_hash, object_key or content_hash, page_kind, fetched_at),
         )
         return cur.fetchone()["id"]
 
@@ -87,6 +88,48 @@ def test_contingency_evidence_written(db):
     ev = claims[0]["evidence"].lower()
     assert "no fee unless we win" in ev or "contingency basis" in ev
     assert claims[0]["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC)
+
+
+_CHROME_HTML = (
+    b"<html><head><title>Smith Injury Law | Atlanta</title>"
+    b'<meta name="description" content="Serious injury lawyers."></head>'
+    b"<body><nav><a href='/'>Home</a><a href='/about'>About</a>"
+    b"<span>No fees unless we win!</span></nav>"
+    b"<main><p>We handle serious injury cases across Georgia.</p></main>"
+    b"<footer>Contingency-Based Legal Representation</footer>"
+    b"<script>var fee = 'hourly rate';</script></body></html>"
+)
+
+
+def test_page_text_is_one_line_per_block_and_drops_scripts():
+    lines = p6_fee.page_text(_CHROME_HTML.decode()).split("\n")
+    # the nav is one block: its inline links and the promise share a line, spaced
+    assert "Home About No fees unless we win!" in lines
+    assert "Contingency-Based Legal Representation" in lines
+    assert "Serious injury lawyers." in lines  # the meta description
+    assert not any("hourly" in line for line in lines)  # script text is invisible
+    assert p6_fee.page_text("") == ""
+
+
+def test_fee_promise_in_site_chrome_is_read(db, tmp_path):
+    # The probe's real shape: the promise sits in the nav/footer, which P4's main
+    # text drops as boilerplate. v2 reads the stored HTML itself (D-026).
+    store = ObjectStore(tmp_path)
+    key = store.put(_CHROME_HTML)
+    firm_id = make_firm(db)
+    doc_id = _insert_document(
+        db, firm_id, page_kind="home", fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+        object_key=key,
+    )
+    _insert_document_text(db, doc_id, "We handle serious injury cases across Georgia.")
+
+    result = p6_fee.run(_ctx(db), store=store)
+    assert result.processed == 1
+    assert result.failed == 0
+
+    claims = _claims(db, firm_id, "fee_model")
+    assert claims[0]["value"] == "contingency"
+    assert "no fees unless we win" in claims[0]["evidence"].lower()
 
 
 def test_unknown_fee_is_still_written(db):
@@ -195,7 +238,7 @@ def test_changed_version_reparses(db, monkeypatch):
     assert first.processed == 1
 
     # Same stored document, no crawl -- only the classifier/config version moves.
-    monkeypatch.setattr(p6_fee, "_VERSION", "p6:v2")
+    monkeypatch.setattr(p6_fee, "_VERSION", "p6:v99")
     second = p6_fee.run(_ctx(db))
     assert second.processed == 1
     assert second.skipped == 0

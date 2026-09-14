@@ -132,7 +132,10 @@ def _fetch_open_scored_leads(conn, at: datetime) -> list[dict]:
             FROM lead l
             JOIN firm f ON f.id = l.firm_id
             LEFT JOIN firm_track ft ON ft.firm_id = f.id
-            WHERE l.closed_at IS NULL AND l.band IS NOT NULL
+            -- DISCOVERED = never crawled. The nightly full scan still bands it
+            -- (HOLD, on vendor fit alone), but an un-crawled firm hasn't been
+            -- judged, so it belongs to UNSCORED, not to EXCLUDED or any list.
+            WHERE l.closed_at IS NULL AND l.band IS NOT NULL AND l.state <> 'DISCOVERED'
             ORDER BY f.canonical_name
             """,  # noqa: S608 -- _STRUCTURAL_EXCLUSION_SQL is a module constant, no user input
             {"at": at},

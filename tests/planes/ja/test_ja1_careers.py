@@ -58,12 +58,12 @@ def make_lead(conn, firm_id, **cols) -> str:
         return cur.fetchone()["id"]
 
 
-def insert_site_map_careers(conn, firm_id, url):
+def insert_site_map_careers(conn, firm_id, url, via="sitemap"):
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO site_map (firm_id, url, page_kind, discovered_via) "
-            "VALUES (%s, %s, 'careers', 'sitemap')",
-            (firm_id, url),
+            "VALUES (%s, %s, 'careers', %s)",
+            (firm_id, url, via),
         )
 
 
@@ -136,6 +136,37 @@ def test_html_heuristic_fixture_extracts_support_roles_only():
     assert not any("Holiday Party" in t for t in titles)
     assert all(p["payload"]["parse_method"] == "html" for p in parsed.postings)
     assert all(p["payload"]["confidence"] < 0.5 for p in parsed.postings)
+
+
+def test_single_posting_page_is_one_posting():
+    # butlerfirm.com's shape (D-026): the page is the posting, not a list of them.
+    html = (
+        "<html><head><title>B|K is Hiring a Personal Injury Paralegal - Butler Kahn</title>"
+        "</head><body><h1>We are Hiring a Paralegal</h1>"
+        "<p>Butler Kahn is looking for an experienced paralegal to join our Atlanta "
+        "office. Send your resume to jobs@butlerfirm.com.</p></body></html>"
+    )
+    parsed = ja1_careers.parse_careers_page(
+        html, "https://butlerfirm.com/hiring-personal-injury-paralegal-atlanta-ga/"
+    )
+    assert parsed.method == "html"
+    assert [p["payload"]["role"] for p in parsed.postings] == ["paralegal"]
+    assert parsed.postings[0]["title"] == "Paralegal"
+    assert parsed.postings[0]["apply_email"] == "jobs@butlerfirm.com"
+
+
+@pytest.mark.parametrize(
+    "h1",
+    [
+        "Is Hiring a Lawyer Worth It?",
+        "We are hiring",
+        "Hiring a Car Accident Lawyer: What to Expect",
+        "Now Hiring an Associate Attorney",
+    ],
+)
+def test_hiring_phrases_that_are_not_support_postings(h1):
+    html = f"<html><body><h1>{h1}</h1><p>Some article text about the topic.</p></body></html>"
+    assert ja1_careers.parse_careers_page(html, "https://firm.com/blog/x").method == "none"
 
 
 def test_is_excluded_board_host():
@@ -325,6 +356,148 @@ def test_probe_cascade_stops_at_first_non_404(db):
     assert len(sw) == 1
     assert sw[0]["url"] == "https://example.com/jobs"
     assert sw[0]["postings_found"] == 2
+
+
+@pytest.mark.parametrize(
+    "url,final_url,expected",
+    [
+        # real redirects from the probe (D-026): 14 of 31 "careers pages" were these
+        ("https://shiverhamilton.com/careers", "https://www.shiverhamilton.com", True),
+        ("https://newlandlaw.com/careers", "https://www.newlandlaw.com/404", True),
+        ("https://vlhlaw.com/careers", "https://www.vlhlaw.com/404?aspxerrorpath=/page.aspx", True),
+        ("https://hgroveslaw.com/careers", "https://hgroveslaw.com/index.php?error=404", True),
+        ("https://dresslerlawllp.com/careers", "https://sdonylaw.com/", True),
+        # ordinary redirects keep the page
+        ("https://firm.com/careers", "https://www.firm.com/careers/", False),
+        ("https://firm.com/careers", "https://firm.com/careers/openings", False),
+        ("https://firm.com/careers", None, False),
+    ],
+)
+def test_redirected_away(url, final_url, expected):
+    assert ja1_careers.redirected_away(url, final_url) is expected
+
+
+@respx.mock
+def test_probe_redirected_to_homepage_is_not_a_careers_page(db):
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    respx.get("https://example.com/careers").mock(
+        return_value=httpx.Response(301, headers={"location": "https://www.example.com/"})
+    )
+    respx.get("https://www.example.com/").mock(
+        return_value=httpx.Response(200, html="<html><body><h1>Welcome</h1></body></html>")
+    )
+    respx.get("https://example.com/jobs").mock(
+        return_value=httpx.Response(200, content=(_FIXTURES / "careers_jsonld.html").read_bytes())
+    )
+
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+
+    ja1_careers.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    sw = sweeps(db, firm_id)
+    assert len(sw) == 1
+    assert sw[0]["url"] == "https://example.com/jobs"  # the cascade kept going
+    assert sw[0]["postings_found"] == 2
+
+
+@respx.mock
+def test_found_careers_url_beats_the_guessed_probe(db):
+    # The probe's real shape (butlerfirm.com): the map holds the guessed /careers
+    # and a posting URL the sitemap published. Alphabetical order used to pick the
+    # guess, 404, and stop (D-026).
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    guess = respx.get("https://example.com/careers").mock(return_value=httpx.Response(404))
+    respx.get("https://example.com/hiring-personal-injury-paralegal/").mock(
+        return_value=httpx.Response(200, content=(_FIXTURES / "careers_jsonld.html").read_bytes())
+    )
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map_careers(db, firm_id, "https://example.com/careers", via="probe")
+    insert_site_map_careers(
+        db, firm_id, "https://example.com/hiring-personal-injury-paralegal/", via="sitemap"
+    )
+
+    ja1_careers.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    assert guess.call_count == 0
+    sw = sweeps(db, firm_id)
+    assert [s["url"] for s in sw] == ["https://example.com/hiring-personal-injury-paralegal/"]
+    assert sw[0]["postings_found"] == 2
+
+
+@respx.mock
+def test_map_with_only_guesses_uses_the_full_cascade(db):
+    # Probe rows in the map are the cascade's own guesses; a 404 on the first must
+    # not end the search.
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    respx.get("https://example.com/careers").mock(return_value=httpx.Response(404))
+    respx.get("https://example.com/jobs").mock(
+        return_value=httpx.Response(200, content=(_FIXTURES / "careers_jsonld.html").read_bytes())
+    )
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map_careers(db, firm_id, "https://example.com/careers", via="probe")
+
+    ja1_careers.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    sw = sweeps(db, firm_id)
+    assert [s["url"] for s in sw] == ["https://example.com/jobs"]
+    assert sw[0]["postings_found"] == 2
+
+
+@respx.mock
+def test_every_found_careers_url_is_swept(db):
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    respx.get("https://example.com/careers/").mock(
+        return_value=httpx.Response(200, html="<html><body><p>We love our team.</p></body></html>")
+    )
+    respx.get("https://example.com/careers/paralegal/").mock(
+        return_value=httpx.Response(200, content=(_FIXTURES / "careers_jsonld.html").read_bytes())
+    )
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map_careers(db, firm_id, "https://example.com/careers/", via="sitemap")
+    insert_site_map_careers(db, firm_id, "https://example.com/careers/paralegal/", via="link")
+
+    result = ja1_careers.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    assert result.processed == 1
+    sw = sweeps(db, firm_id)
+    assert len(sw) == 2
+    assert sum(s["postings_found"] for s in sw) == 2
+
+
+@respx.mock
+def test_site_map_careers_url_redirected_home_is_recorded_not_parsed(db):
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    respx.get("https://example.com/careers").mock(
+        return_value=httpx.Response(301, headers={"location": "https://example.com/"})
+    )
+    respx.get("https://example.com/").mock(
+        return_value=httpx.Response(200, html="<html><body><h2>Paralegal</h2></body></html>")
+    )
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map_careers(db, firm_id, "https://example.com/careers")
+
+    ja1_careers.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
+
+    sw = sweeps(db, firm_id)
+    assert len(sw) == 1
+    assert sw[0]["postings_found"] == 0
+    assert sw[0]["parse_method"] == "redirected"
+    assert postings(db, firm_id) == []
 
 
 @respx.mock

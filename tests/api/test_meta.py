@@ -30,10 +30,12 @@ def test_providers_never_leak_key_material(client, monkeypatch):
 
 
 def test_providers_report_inert_when_unconfigured(client, monkeypatch):
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    monkeypatch.delenv("ZEROBOUNCE_API_KEY", raising=False)
-    monkeypatch.delenv("NEVERBOUNCE_API_KEY", raising=False)
-    monkeypatch.delenv("GOOGLE_PLACES_API_KEY", raising=False)
+    # Set empty rather than delete: settings fall back to the project's .env
+    # when a variable is absent, so deleting only passed until a real key was added.
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setenv("ZEROBOUNCE_API_KEY", "")
+    monkeypatch.setenv("NEVERBOUNCE_API_KEY", "")
+    monkeypatch.setenv("GOOGLE_PLACES_API_KEY", "")
     from lge.settings import get_settings
 
     get_settings.cache_clear()

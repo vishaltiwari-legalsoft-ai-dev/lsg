@@ -187,6 +187,57 @@ The sample is 50 firms from the probe that have documents, stable across calls.
 
 ---
 
+## Revision 2 — found by running the UI against real data (additive)
+
+**Plain words everywhere.** No slug or code reaches the UI as display text: attribute values
+(`private_firm` → "Private law firm", `personal_injury, workers_comp` → "Personal injury, Workers'
+comp"), exclusion reasons (`tier_unclassified` → "Fee model unknown — not guessed, so the firm
+isn't tiered yet."), `Proof.sources` (`careers` → "Careers page") and alert details.
+
+**Non-null as documented:** `Proof.days_open`, `documents[].page_kind` (`"other"` when unknown),
+`firms[].state_display` ("Not a lead" when there is no open lead). A malformed id returns `404`
+with the error body, never `500`. List rows carry `proof` exactly as the detail does.
+
+**Only real sentences are quoted.** `AttributeRow` and each of its `claims[]` gain
+`quotable: boolean`. It is true only when the evidence is a sentence read from page text (fee
+language, practice pages, AI extraction): at least four words, different from the displayed
+value, and not markup. Structured-data echoes ("Attorney", "US", the phone number itself, an HTML
+tag) are `quotable: false`, and the UI does not quote or highlight them. The highlighter marks
+proof, not metadata.
+
+```ts
+interface AttributeRow { /* …as above… */ quotable: boolean
+  claims: {source_label, display, confidence, evidence, observed_at, won, quotable: boolean}[] }
+
+interface Alert { name, label, state, detail /* plain language */, technical: string | null }
+
+interface FirmDetail { /* …as above… */ merged_into: {id: string, name: string} | null }
+```
+
+### Identity review — duplicates found after crawling (decision D-024)
+Firms' own websites reveal identity keys the discovery sources did not: two vendor domains turned
+out to be one firm with two sites, sharing a name and a phone. Signals are immutable and carry
+`firm_id`, so firms are **merged by retirement**, never physically merged. The duplicate gets
+`merged_into = survivor`, its open lead closes as a duplicate, its contacts move to the
+survivor, its name, domain and phone become aliases, and its signals count toward the survivor's
+intent. Merged firms disappear from lists, scoring and gate G1.
+
+```ts
+interface FirmSide { id: string; name: string; domain: string | null; phone: string | null
+  city: string | null; state: string | null; tier_display: string; state_display: string
+  observations: number; contacts: number; signals: number }
+
+interface IdentityReviewItem { id: number; reason: string /* plain words */; rule: string
+  similarity: number | null; created_at: string; left: FirmSide; right: FirmSide }
+```
+- `GET /api/review/identity` → `{items: IdentityReviewItem[]}` (open items only)
+- `POST /api/review/identity/{id}/decision` with
+  `{decision: "merge" | "keep_separate", survivor_id?: string, note?: string}` → `{message: string}`.
+  `merge` without `survivor_id` keeps the firm with more observations (then the older one).
+  Every decision is written to `review_decision`.
+
+---
+
 ## Source labels
 
 | Tag | Shown as |

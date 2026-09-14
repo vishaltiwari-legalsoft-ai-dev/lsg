@@ -78,6 +78,18 @@ def test_unscored_lead_in_unscored_view(client, db):
     assert body["counts"]["UNSCORED"] == 1
 
 
+def test_never_crawled_lead_stays_unscored_after_the_nightly_scan(client, db):
+    # The full scan bands every open lead, un-crawled ones HOLD on vendor fit
+    # alone. Showing those as EXCLUDED told the user 21,940 firms were rejected.
+    firm_id = make_firm(db, canonical_name="Not Crawled Yet")
+    make_lead(db, firm_id, band="HOLD", grade=None, state="DISCOVERED")
+
+    unscored = client.get("/api/leads", params={"view": "UNSCORED"}).json()
+    assert [i["firm"]["name"] for i in unscored["items"]] == ["Not Crawled Yet"]
+    assert unscored["counts"]["UNSCORED"] == 1
+    assert unscored["counts"]["EXCLUDED"] == 0
+
+
 def test_cursor_pagination_is_stable_and_covers_every_row(client, db):
     lead_ids = set()
     for i in range(4):

@@ -97,5 +97,6 @@ def test_employment_law_page_is_not_careers():
 
 
 def test_parser_version_is_recorded_for_the_skip_rule():
-    # the skip-unchanged rule compares (content_hash, parser_version); v2 must re-parse
-    assert PARSER_VERSION == "2"
+    # the skip-unchanged rule compares (content_hash, parser_version): a parser change
+    # must bump this or already-swept pages keep their old result (v3: single-posting pages)
+    assert PARSER_VERSION == "3"
