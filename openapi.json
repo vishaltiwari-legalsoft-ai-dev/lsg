@@ -1196,6 +1196,13 @@
             ],
             "title": "Band"
           },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
           "contact": {
             "anyOf": [
               {
@@ -1353,6 +1360,7 @@
           "proof",
           "contact",
           "scored_at",
+          "blockers",
           "contacts",
           "missing_roles",
           "score",
@@ -1449,6 +1457,13 @@
               }
             ],
             "title": "Band"
+          },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
           },
           "contact": {
             "anyOf": [
@@ -1564,7 +1579,8 @@
           "grade",
           "proof",
           "contact",
-          "scored_at"
+          "scored_at",
+          "blockers"
         ],
         "title": "LeadRow",
         "type": "object"

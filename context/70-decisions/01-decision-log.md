@@ -469,6 +469,22 @@ prompt revision wins. Pinned by four tests using `v2` tags.
    a contingency basis") counts for nothing. The clause ends at the last comma, dash or
    conjunction, so a promise after the dash still stands. P6 v3.
 
+## D-027 · The band tabs show the pipeline; the export keeps the hygiene
+
+**Found (15 Sep 2026):** with the basics fixed, butlerfirm.com was Tier 1A, had an open paralegal
+role and a named owner, and was invisible: the Sequence tab showed only leads that already pass
+every email-list check (grade A, verified email, tiered, draft renders), and everything else sat
+under "Excluded" with a raw code. The user could not see the leads being worked on.
+
+**Ruling:** `category` stays the email list's verdict and `build_list` / the CSV export stay
+strict. The screen gets a second reading of the same classification: `pipeline_band` (the lead's
+band unless it is out — score too low, disqualified, suppressed, cooling down, a portal or
+displacement customer, or on the phone list) and `blockers` (what still keeps it off the list,
+as plain words). Not tiered yet because the fee model is unknown counts as in play. The API's
+band tabs select on `pipeline_band`; Excluded is only what is actually out; every list-hygiene
+code has a plain-word label (`reason_display`). Also found here: `days_open` compared a +05:30
+timestamp's date with a UTC date and showed "open -1 days" — one calendar (UTC) now.
+
 ---
 
 ## Standing rulings that were never in dispute

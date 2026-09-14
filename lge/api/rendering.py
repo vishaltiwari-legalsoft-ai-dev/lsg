@@ -9,6 +9,7 @@ either here.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
@@ -18,6 +19,7 @@ from lge.api.labels import (
     fee_display,
     practice_display,
     proof_headline,
+    reason_display,
     source_label,
     state_display,
     tier_display,
@@ -130,9 +132,13 @@ def fetch_signal_scores(
 
 
 def build_lead_row(
-    row: dict[str, Any], proof: Proof | None, contact: ContactSummary | None
+    row: dict[str, Any],
+    proof: Proof | None,
+    contact: ContactSummary | None,
+    blockers: Sequence[str] = (),
 ) -> LeadRow:
     return LeadRow(
+        blockers=[reason_display(b) for b in blockers],
         id=str(row["lead_id"]),
         firm=build_firm_ref(row),
         state=row.get("lead_state") or "",

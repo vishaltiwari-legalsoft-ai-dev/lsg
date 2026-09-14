@@ -93,6 +93,9 @@ class LeadRow(BaseModel):
     proof: Proof | None
     contact: ContactSummary | None
     scored_at: datetime | None
+    # What still keeps this lead off the email list, in plain words ("Email not
+    # verified", "Fee model unknown — not tiered yet"). Empty when it is on the list.
+    blockers: list[str]
 
 
 # =============================================================================

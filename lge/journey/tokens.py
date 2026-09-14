@@ -10,7 +10,7 @@ this module never raises and never guesses.
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 # ---------------------------------------------------------------------------
 # {first_name} <- contact.full_name
@@ -178,12 +178,19 @@ def format_month_name(dt: datetime | date | None) -> str | None:
     return dt.strftime("%B")
 
 
+def _utc_date(value: datetime | date) -> date:
+    # A timestamptz comes back from the store in the session's zone (+05:30 on
+    # this machine) while `at` is UTC; taking each one's own calendar date made a
+    # role found just after local midnight "open -1 days". One calendar: UTC.
+    if isinstance(value, datetime):
+        return (value.astimezone(UTC) if value.tzinfo else value).date()
+    return value
+
+
 def days_open(first_seen: datetime | date | None, at: datetime | date) -> str | None:
     if first_seen is None:
         return None
-    d1 = first_seen.date() if isinstance(first_seen, datetime) else first_seen
-    d2 = at.date() if isinstance(at, datetime) else at
-    return str((d2 - d1).days)
+    return str((_utc_date(at) - _utc_date(first_seen)).days)
 
 
 # ---------------------------------------------------------------------------

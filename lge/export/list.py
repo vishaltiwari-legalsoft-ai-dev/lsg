@@ -112,6 +112,13 @@ _STRUCTURAL_EXCLUSION_SQL = """
 """
 
 
+# Structural reasons that still leave the lead in play: the firm is not tiered yet
+# because its fee model is unknown. Everything else in _STRUCTURAL_EXCLUSION_SQL is
+# a rejection (too low a score, disqualified, suppressed, cooling down, a portal or
+# displacement customer) and stays off the band tabs.
+_IN_PLAY_EXCLUSIONS = frozenset({"tier_unclassified"})
+
+
 def _fetch_open_scored_leads(conn, at: datetime) -> list[dict]:
     """Every open lead with a band assigned -- including HOLD and every
     structurally-suppressed one, each carrying WHY in `structural_exclusion`
@@ -282,6 +289,16 @@ class ClassifiedLead:
     # callers that need the rendered touches (build_list's draft writer)
     # reuse this rather than calling build_journey a second time.
     journey_result: JourneyResult | None = None
+    # The screen's view of the same lead. `category` is the EMAIL LIST's verdict
+    # (export hygiene: grade A, verified email, tiered, renderable). A lead that
+    # fails it is still being worked -- butlerfirm.com with an open paralegal
+    # role and an unverified owner email was invisible under "Excluded". So the
+    # band tabs show every lead at that band that is not structurally rejected,
+    # and `blockers` says what still keeps it off the list, in the same codes
+    # `reasons` uses. None / () for a lead that is out (HOLD, disqualified,
+    # suppressed, cooldown, portal track) or on the phone list.
+    pipeline_band: str | None = None
+    blockers: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -311,11 +328,12 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
     out: list[ClassifiedLead] = []
     for lead in leads:
         lead_id = str(lead["lead_id"])
+        structural = lead["structural_exclusion"]
 
-        if lead["structural_exclusion"] is not None:
+        if structural is not None and structural not in _IN_PLAY_EXCLUSIONS:
             out.append(
                 ClassifiedLead(
-                    lead_id, "EXCLUDED", (lead["structural_exclusion"],),
+                    lead_id, "EXCLUDED", (structural,),
                     lead, None, None, None, None,
                 )
             )
@@ -323,6 +341,13 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
 
         contacts = contacts_by_firm.get(lead["firm_id"], [])
         primary, secondary = select_contacts(contacts, emails_by_contact)
+        # Grade B belongs to the phone list, never to a band tab.
+        pipeline_band = lead["band"] if lead["grade"] != "B" else None
+        blockers: list[str] = [structural] if structural is not None else []
+        if lead["grade"] is None:
+            blockers.append("grade_not_set")
+        if primary is None:
+            blockers.append("no_usable_contact")
 
         signal_row = signals_by_id.get(lead["arming_signal"])
         signal = (
@@ -336,6 +361,17 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
             else None
         )
         repost_first_seen = repost_by_signal_id.get(signal.id) if signal else None
+
+        if structural is not None:
+            # In play but not tiered yet (fee model unknown): off the list, on the screen.
+            out.append(
+                ClassifiedLead(
+                    lead_id, "EXCLUDED", (structural,),
+                    lead, primary, secondary, signal, repost_first_seen,
+                    pipeline_band=pipeline_band, blockers=tuple(blockers),
+                )
+            )
+            continue
 
         if lead["grade"] == "B":
             if primary is None:
@@ -357,7 +393,8 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
             out.append(
                 ClassifiedLead(
                     lead_id, "EXCLUDED", ("grade_not_set",),
-                    lead, None, None, signal, repost_first_seen,
+                    lead, primary, secondary, signal, repost_first_seen,
+                    pipeline_band=pipeline_band, blockers=tuple(blockers),
                 )
             )
             continue
@@ -367,6 +404,7 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
                 ClassifiedLead(
                     lead_id, "EXCLUDED", ("no_usable_contact",),
                     lead, None, None, signal, repost_first_seen,
+                    pipeline_band=pipeline_band, blockers=tuple(blockers),
                 )
             )
             continue
@@ -375,6 +413,7 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
             out.append(
                 ClassifiedLead(
                     lead_id, "STRIKE", (), lead, primary, secondary, signal, repost_first_seen,
+                    pipeline_band=pipeline_band,
                 )
             )
             continue
@@ -401,6 +440,7 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
                 ClassifiedLead(
                     lead_id, "EXCLUDED", (result.excluded_reason,),
                     lead, primary, secondary, signal, repost_first_seen,
+                    pipeline_band=pipeline_band, blockers=(result.excluded_reason,),
                 )
             )
         else:
@@ -408,6 +448,7 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
                 ClassifiedLead(
                     lead_id, lead["band"], (), lead, primary, secondary,
                     signal, repost_first_seen, journey_result=result,
+                    pipeline_band=pipeline_band,
                 )
             )
 

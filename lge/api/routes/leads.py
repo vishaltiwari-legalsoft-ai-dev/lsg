@@ -25,7 +25,7 @@ from lge import db as lge_db
 from lge.api.cursor import decode_cursor, encode_cursor
 from lge.api.deps import ConnDep
 from lge.api.errors import api_error, not_found
-from lge.api.labels import state_display
+from lge.api.labels import reason_display, state_display
 from lge.api.models import (
     DraftsResponse,
     LeadDetail,
@@ -117,7 +117,20 @@ def _matches_filters(
 def _build_row_for(cl: ClassifiedLead, signal_scores: dict, emails_by_contact: dict, at) -> LeadRow:
     proof = build_proof(cl.signal, cl.repost_first_seen, signal_scores, at)
     contact = build_contact_summary(cl.primary_contact, emails_by_contact)
-    return build_lead_row(cl.row, proof, contact)
+    return build_lead_row(cl.row, proof, contact, cl.blockers)
+
+
+def _in_view(cl: ClassifiedLead, view: str) -> bool:
+    """The band tabs show every lead in play at that band -- the email list's
+    verdict (`category`) is shown on the row as blockers, not used to hide it.
+    PHONE is grade B; EXCLUDED is only what is actually out."""
+    if view in ("STRIKE", "SEQUENCE", "NURTURE"):
+        return cl.pipeline_band == view
+    if view == "PHONE":
+        return cl.category == "PHONE"
+    if view == "EXCLUDED":
+        return cl.category == "EXCLUDED" and cl.pipeline_band is None
+    return False
 
 
 def _fetch_unscored_page(
@@ -167,8 +180,9 @@ def _fetch_unscored_page(
 def _view_counts(conn: psycopg.Connection, classification: LeadClassification) -> LeadViewCounts:
     counts = dict.fromkeys(_VIEWS, 0)
     for cl in classification.leads:
-        if cl.category in counts:
-            counts[cl.category] += 1
+        for view in ("STRIKE", "SEQUENCE", "NURTURE", "PHONE", "EXCLUDED"):
+            if _in_view(cl, view):
+                counts[view] += 1
     with conn.cursor() as cur:
         cur.execute(
             "SELECT count(*) AS n FROM lead WHERE closed_at IS NULL "
@@ -219,7 +233,7 @@ def list_leads(
     built = [
         _build_row_for(cl, signal_scores, classification.emails_by_contact, at)
         for cl in classification.leads
-        if cl.category == view
+        if _in_view(cl, view)
     ]
     built = [r for r in built if _matches_filters(r, tier, city, signal, contest, verified, q)]
     built.sort(key=_sort_key)
@@ -305,11 +319,10 @@ def _pick_owner_and_admin(contacts: list[dict]) -> tuple[dict | None, dict | Non
     return owner, admin
 
 
-def _lead_reasons(classification: LeadClassification, lead_id: str) -> list[str]:
-    for cl in classification.leads:
-        if cl.lead_id == lead_id:
-            return list(cl.reasons)
-    return []
+def _classified(classification: LeadClassification | None, lead_id: str) -> ClassifiedLead | None:
+    if classification is None:
+        return None
+    return next((cl for cl in classification.leads if cl.lead_id == lead_id), None)
 
 
 def _build_score_breakdown(
@@ -394,7 +407,9 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
     proof = build_proof(signal, repost_first_seen, signal_scores, at)
 
     classification = classify_open_scored_leads(conn, at) if row["band"] is not None else None
-    exclusion_reasons = _lead_reasons(classification, lead_id) if classification else []
+    classified = _classified(classification, lead_id)
+    exclusion_reasons = [reason_display(r) for r in classified.reasons] if classified else []
+    blockers = classified.blockers if classified else ()
 
     with conn.cursor() as cur:
         cur.execute(
@@ -418,7 +433,9 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
             for r in cur.fetchall()
         ]
 
-    lead_row = build_lead_row(row, proof, build_contact_summary(primary_contact, emails_by_contact))
+    lead_row = build_lead_row(
+        row, proof, build_contact_summary(primary_contact, emails_by_contact), blockers
+    )
     return LeadDetail(
         **lead_row.model_dump(),
         contacts=contacts,

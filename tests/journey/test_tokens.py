@@ -129,6 +129,17 @@ class TestDatesAndDurations:
     def test_days_open_none_first_seen(self):
         assert days_open(None, datetime(2026, 9, 11)) is None
 
+    def test_days_open_uses_one_calendar_across_zones(self):
+        # A role found at 00:10 local (+05:30) and read at 18:50 UTC the same
+        # instant-day showed "open -1 days" (D-027).
+        from datetime import UTC, timedelta, timezone
+
+        ist = timezone(timedelta(hours=5, minutes=30))
+        first_seen = datetime(2026, 9, 15, 0, 10, tzinfo=ist)
+        at = datetime(2026, 9, 14, 18, 50, tzinfo=UTC)
+        assert days_open(first_seen, at) == "0"
+        assert days_open(first_seen, at + timedelta(days=3)) == "3"
+
 
 class TestTortFromEvidence:
     def test_prefers_tort_field(self):

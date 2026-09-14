@@ -50,6 +50,57 @@ def test_suppressed_firm_never_in_strike_sequence_nurture(client, db):
     assert excluded["items"][0]["firm"]["domain"] == "blocked-lead.example.com"
 
 
+def test_lead_in_play_shows_in_its_band_with_blockers_and_stays_off_the_export(client, db):
+    # butlerfirm.com's shape: Tier 1A, an open paralegal role, a named owner whose
+    # email is not verified yet. It was invisible under "Excluded" (D-027).
+    firm_id, contact_id, signal_id = sequence_ready_firm(db, make_firm)
+    make_lead(
+        db, firm_id, contact_id=contact_id, arming_signal=signal_id,
+        band="SEQUENCE", grade=None, state="RESOLVED",
+    )
+
+    seq = client.get("/api/leads", params={"view": "SEQUENCE"}).json()
+    assert [r["firm"]["name"] for r in seq["items"]] == ["Ready Law Firm"]
+    assert seq["items"][0]["blockers"] == ["Email not verified"]
+    assert seq["items"][0]["contact"]["full_name"] == "John Smith"  # shown, not hidden
+    assert seq["counts"] == {
+        "STRIKE": 0, "SEQUENCE": 1, "NURTURE": 0, "PHONE": 0, "EXCLUDED": 0, "UNSCORED": 0,
+    }
+    assert client.get("/api/leads", params={"view": "EXCLUDED"}).json()["items"] == []
+
+    # The email list itself stays strict: not on the CSV.
+    csv_text = client.get("/api/leads/export.csv", params={"view": "SEQUENCE"}).text
+    assert "Ready Law Firm" not in csv_text
+
+    detail = client.get(f"/api/leads/{seq['items'][0]['id']}").json()
+    assert detail["blockers"] == ["Email not verified"]
+    assert detail["exclusion_reasons"] == ["Email not verified"]
+
+
+def test_untiered_lead_with_pain_shows_in_its_band(client, db):
+    # Dressie Law Firm's shape: two open roles, fee model unknown, so no tier yet.
+    firm_id, contact_id, signal_id = sequence_ready_firm(
+        db, make_firm, tier="UNCLASSIFIED", fee_model="unknown", canonical_name="Untiered Firm"
+    )
+    make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id, band="SEQUENCE")
+
+    seq = client.get("/api/leads", params={"view": "SEQUENCE"}).json()
+    assert [r["firm"]["name"] for r in seq["items"]] == ["Untiered Firm"]
+    assert seq["items"][0]["blockers"] == ["Fee model unknown — not tiered yet"]
+    assert seq["items"][0]["proof"] is not None  # the pain is shown with it
+
+
+def test_rejected_leads_stay_excluded_with_a_plain_reason(client, db):
+    firm_id, contact_id, signal_id = sequence_ready_firm(db, make_firm, tier="DQ_ENTITY")
+    make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id, band="SEQUENCE")
+
+    assert client.get("/api/leads", params={"view": "SEQUENCE"}).json()["items"] == []
+    excluded = client.get("/api/leads", params={"view": "EXCLUDED"}).json()
+    assert len(excluded["items"]) == 1
+    detail = client.get(f"/api/leads/{excluded['items'][0]['id']}").json()
+    assert detail["exclusion_reasons"] == ["Disqualified"]
+
+
 def test_grade_b_only_in_phone(client, db):
     firm_id, contact_id, signal_id = sequence_ready_firm(db, make_firm)
     make_lead(

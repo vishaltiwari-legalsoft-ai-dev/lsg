@@ -113,6 +113,38 @@ def state_display(state: str | None) -> str:
 
 
 # =============================================================================
+# List-hygiene reasons -- lge/export/list.py's codes (structural exclusions,
+# grade/contact checks, journey render failures) in plain words. Shown as a
+# lead's `blockers` on the band tabs and as `exclusion_reasons` in the detail.
+# =============================================================================
+
+_REASON_DISPLAY: dict[str, str] = {
+    "tier_unclassified": "Fee model unknown — not tiered yet",
+    "tier_not_set": "Not tiered yet",
+    "grade_not_set": "Email not verified",
+    "no_usable_contact": "No owner or office manager found",
+    "band_hold": "Score too low",
+    "cooldown": "On cooldown",
+    "tier_disqualified": "Disqualified",
+    "suppressed_firm": "Suppressed",
+    "suppressed_domain": "Suppressed",
+    "firm_track_portal": "Existing portal customer",
+    "firm_track_displacement": "Displacement track",
+}
+
+
+def reason_display(code: str | None) -> str:
+    if not code:
+        return "Unknown reason"
+    if code in _REASON_DISPLAY:
+        return _REASON_DISPLAY[code]
+    if code.startswith("missing_"):
+        what = code.removeprefix("missing_").replace("_", " ")
+        return f"Draft cannot be written — missing {what}"
+    return code.replace("_", " ").strip().capitalize()
+
+
+# =============================================================================
 # Email status -- contact_email.status -> plan/api-contract.md's exact copy.
 # =============================================================================
 
