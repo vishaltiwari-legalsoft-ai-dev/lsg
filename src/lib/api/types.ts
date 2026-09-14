@@ -99,6 +99,17 @@ export type HandcheckSampleFirm = S["HandcheckSampleFirm"];
 export type HandcheckResponse = S["HandcheckResponse"];
 export type HandcheckDecision = S["HandcheckDecisionRequest"];
 
+// ── Imports ─────────────────────────────────────────────────────────────────
+
+export type ImportColumn = S["ImportColumn"];
+export type ImportFieldOption = S["FieldOption"];
+export type ImportBatch = S["ImportBatch"];
+export type ImportSummary = S["ImportSummary"];
+export type ImportDetail = S["ImportDetail"];
+export type ImportsResponse = S["ImportsResponse"];
+export type MappingRequest = S["MappingRequest"];
+export type ImportLoadResponse = S["ImportLoadResponse"];
+
 // ── Errors ──────────────────────────────────────────────────────────────────
 // The error envelope is written by the backend's exception handler, so it is
 // not in openapi.json. `fix` is omitted when there is nothing to suggest.

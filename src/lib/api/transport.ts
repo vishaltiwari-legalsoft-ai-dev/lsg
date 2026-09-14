@@ -3,10 +3,12 @@ import { ApiError, EngineUnreachableError, isApiErrorBody } from "./errors";
 export type QueryValue = string | number | boolean | null | undefined;
 
 export interface RequestSpec {
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "PUT";
   path: string;
   query?: Record<string, QueryValue>;
   body?: unknown;
+  /** A file upload. Sent as multipart; the browser sets the boundary header. */
+  form?: FormData;
   signal?: AbortSignal;
 }
 
@@ -33,17 +35,17 @@ export function buildSearch(query: RequestSpec["query"]): string {
 export function httpTransport(base: string, fetchImpl: typeof fetch = fetch): Transport {
   async function send(spec: RequestSpec, accept: string): Promise<Response> {
     const url = `${base}${spec.path}${buildSearch(spec.query)}`;
+    const headers: Record<string, string> = { Accept: accept };
+    let body: BodyInit | undefined;
+    if (spec.form) {
+      body = spec.form;
+    } else if (spec.body !== undefined) {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(spec.body);
+    }
     let response: Response;
     try {
-      response = await fetchImpl(url, {
-        method: spec.method,
-        headers:
-          spec.body === undefined
-            ? { Accept: accept }
-            : { Accept: accept, "Content-Type": "application/json" },
-        body: spec.body === undefined ? undefined : JSON.stringify(spec.body),
-        signal: spec.signal,
-      });
+      response = await fetchImpl(url, { method: spec.method, headers, body, signal: spec.signal });
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
       throw new EngineUnreachableError(cause);

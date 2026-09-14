@@ -89,6 +89,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports_api_imports_get"];
+        put?: never;
+        /** Upload Import */
+        post: operations["upload_import_api_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import Detail */
+        get: operations["get_import_detail_api_imports__import_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}/load": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Load */
+        post: operations["start_load_api_imports__import_id__load_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{import_id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Mapping */
+        put: operations["put_mapping_api_imports__import_id__mapping_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/leads": {
         parameters: {
             query?: never;
@@ -356,6 +425,21 @@ export interface components {
             /** Stale */
             stale: boolean;
         };
+        /** Body_upload_import_api_imports_post */
+        Body_upload_import_api_imports_post: {
+            /**
+             * Batch Size
+             * @default 500
+             */
+            batch_size: number;
+            /** File */
+            file: string;
+            /**
+             * Source Tag
+             * @default internal_firms
+             */
+            source_tag: string;
+        };
         /** ContactSummary */
         ContactSummary: {
             /** Email */
@@ -406,6 +490,15 @@ export interface components {
             excluded_reason: string | null;
             /** Touches */
             touches: components["schemas"]["Touch"][];
+        };
+        /** FieldOption */
+        FieldOption: {
+            /** Label */
+            label: string;
+            /** Mandatory Group */
+            mandatory_group: string | null;
+            /** Name */
+            name: string;
         };
         /** FirmDetail */
         FirmDetail: {
@@ -581,6 +674,132 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** ImportBatch */
+        ImportBatch: {
+            /** Batch No */
+            batch_no: number;
+            /** Error */
+            error: string | null;
+            /** Health */
+            health: {
+                [key: string]: unknown;
+            } | null;
+            /** Row End */
+            row_end: number;
+            /** Row Start */
+            row_start: number;
+            /** Rows Loaded */
+            rows_loaded: number;
+            /** Rows Skipped */
+            rows_skipped: number;
+            /** Status */
+            status: string;
+        };
+        /** ImportColumn */
+        ImportColumn: {
+            /** Column */
+            column: string;
+            /** Confidence */
+            confidence: number;
+            /** Field */
+            field: string | null;
+            /** Field Label */
+            field_label: string | null;
+            /** Reason */
+            reason: string;
+            /** Samples */
+            samples: string[];
+        };
+        /** ImportDetail */
+        ImportDetail: {
+            /** Batch Size */
+            batch_size: number;
+            /** Batches */
+            batches: components["schemas"]["ImportBatch"][];
+            /** Batches Loaded */
+            batches_loaded: number;
+            /** Batches Total */
+            batches_total: number;
+            /** Columns */
+            columns: components["schemas"]["ImportColumn"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Fields */
+            fields: components["schemas"]["FieldOption"][];
+            /** File Name */
+            file_name: string;
+            /** Format */
+            format: string;
+            /** Health */
+            health: {
+                [key: string]: unknown;
+            } | null;
+            /** Health Score */
+            health_score: number | null;
+            /** Id */
+            id: string;
+            /** Loaded At */
+            loaded_at: string | null;
+            /** Missing */
+            missing: string[];
+            /** Notes */
+            notes: string[];
+            /** Row Count */
+            row_count: number;
+            /** Status */
+            status: string;
+            /** Status Display */
+            status_display: string;
+        };
+        /** ImportLoadResponse */
+        ImportLoadResponse: {
+            /** Id */
+            id: string;
+            /** Message */
+            message: string;
+            /** Status */
+            status: string;
+        };
+        /** ImportSummary */
+        ImportSummary: {
+            /** Batch Size */
+            batch_size: number;
+            /** Batches Loaded */
+            batches_loaded: number;
+            /** Batches Total */
+            batches_total: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** File Name */
+            file_name: string;
+            /** Format */
+            format: string;
+            /** Health Score */
+            health_score: number | null;
+            /** Id */
+            id: string;
+            /** Loaded At */
+            loaded_at: string | null;
+            /** Missing */
+            missing: string[];
+            /** Row Count */
+            row_count: number;
+            /** Status */
+            status: string;
+            /** Status Display */
+            status_display: string;
+        };
+        /** ImportsResponse */
+        ImportsResponse: {
+            /** Items */
+            items: components["schemas"]["ImportSummary"][];
+        };
         /** LeadDetail */
         LeadDetail: {
             /** Band */
@@ -689,6 +908,13 @@ export interface components {
             items: components["schemas"]["LeadRow"][];
             /** Next Cursor */
             next_cursor: string | null;
+        };
+        /** MappingRequest */
+        MappingRequest: {
+            /** Overrides */
+            overrides: {
+                [key: string]: string | null;
+            };
         };
         /** OutcomeRequest */
         OutcomeRequest: {
@@ -998,6 +1224,158 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    list_imports_api_imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportsResponse"];
+                };
+            };
+        };
+    };
+    upload_import_api_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_import_api_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import_detail_api_imports__import_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_load_api_imports__import_id__load_post: {
+        parameters: {
+            query?: {
+                sync?: boolean;
+            };
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportLoadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_mapping_api_imports__import_id__mapping_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MappingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

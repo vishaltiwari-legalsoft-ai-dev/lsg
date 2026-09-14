@@ -8,10 +8,14 @@ import type {
   HandcheckDecision,
   HandcheckResponse,
   HealthResponse,
+  ImportDetail,
+  ImportLoadResponse,
+  ImportsResponse,
   LeadDetail,
   LeadsQuery,
   LeadsResponse,
   LeadView,
+  MappingRequest,
   OutcomeRequest,
   OutcomeResponse,
   TodayResponse,
@@ -80,6 +84,33 @@ export function createApi(transport: Transport) {
         method: "POST",
         path: `/api/handcheck/${enc(firmId)}/${enc(attr)}`,
         body: decision,
+      }),
+
+    // ── Imports: any sheet, read, corrected, loaded in batches ────────────
+    imports: (signal?: AbortSignal) =>
+      transport.json<ImportsResponse>({ method: "GET", path: "/api/imports", signal }),
+
+    importDetail: (id: string, signal?: AbortSignal) =>
+      transport.json<ImportDetail>({ method: "GET", path: `/api/imports/${enc(id)}`, signal }),
+
+    uploadImport: (file: File, batchSize: number) => {
+      const form = new FormData();
+      form.append("file", file, file.name);
+      form.append("batch_size", String(batchSize));
+      return transport.json<ImportDetail>({ method: "POST", path: "/api/imports", form });
+    },
+
+    updateImportMapping: (id: string, body: MappingRequest) =>
+      transport.json<ImportDetail>({
+        method: "PUT",
+        path: `/api/imports/${enc(id)}/mapping`,
+        body,
+      }),
+
+    startImportLoad: (id: string) =>
+      transport.json<ImportLoadResponse>({
+        method: "POST",
+        path: `/api/imports/${enc(id)}/load`,
       }),
   };
 }

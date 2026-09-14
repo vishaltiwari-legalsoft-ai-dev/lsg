@@ -287,6 +287,8 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
 
     if (method === "GET" && path === "/api/health") return db.health;
     if (method === "GET" && path === "/api/today") return db.today;
+    // Imports need a real engine (files land on its disk); the fixture has none.
+    if (method === "GET" && path === "/api/imports") return { items: [] };
 
     if (method === "GET" && path === "/api/leads") {
       const view = (param(spec, "view") ?? "STRIKE") as LeadView;

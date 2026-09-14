@@ -32,6 +32,8 @@ export const queryKeys = {
   firmSearch: (q: string) => ["firm-search", q] as const,
   firm: (id: string) => ["firm", id] as const,
   handcheck: ["handcheck"] as const,
+  imports: ["imports"] as const,
+  import: (id: string) => ["import", id] as const,
 };
 
 export const LEADS_PAGE_SIZE = 50;
@@ -141,6 +143,69 @@ export function useHandcheck() {
   return useQuery({
     queryKey: queryKeys.handcheck,
     queryFn: ({ signal }) => api.handcheck(signal),
+  });
+}
+
+// ── Imports ─────────────────────────────────────────────────────────────────
+
+export function useImports() {
+  return useQuery({ queryKey: queryKeys.imports, queryFn: ({ signal }) => api.imports(signal) });
+}
+
+/** One sheet; polls while the engine is loading its batches. */
+export function useImport(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.import(id ?? ""),
+    queryFn: ({ signal }) => api.importDetail(id!, signal),
+    enabled: Boolean(id),
+    refetchInterval: (query) => (query.state.data?.status === "loading" ? 2000 : false),
+  });
+}
+
+export function useUploadImport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, batchSize }: { file: File; batchSize: number }) =>
+      api.uploadImport(file, batchSize),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.import(detail.id), detail);
+      void qc.invalidateQueries({ queryKey: queryKeys.imports });
+      toast.success(`Read ${detail.row_count} rows from ${detail.file_name}.`);
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+/** A person's correction to how a column was read. */
+export function useUpdateMapping(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (overrides: Record<string, string | null>) =>
+      api.updateImportMapping(id, { overrides }),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.import(id), detail);
+      void qc.invalidateQueries({ queryKey: queryKeys.imports });
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+export function useStartLoad(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.startImportLoad(id),
+    onSuccess: (response) => {
+      toast(response.message);
+      void qc.invalidateQueries({ queryKey: queryKeys.import(id) });
+      void qc.invalidateQueries({ queryKey: queryKeys.imports });
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
   });
 }
 
