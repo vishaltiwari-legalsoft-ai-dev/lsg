@@ -8,7 +8,7 @@ Field names and shapes here must match the contract exactly -- this module
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -419,3 +419,72 @@ class GateItem(BaseModel):
 
 class GatesResponse(BaseModel):
     items: list[GateItem]
+
+
+# =============================================================================
+# Imports -- any sheet, mapped, batched, loaded (D-029)
+# =============================================================================
+
+
+class ImportColumn(BaseModel):
+    column: str
+    field: str | None  # vocabulary name, or null when the column stays extra data
+    field_label: str | None
+    confidence: float
+    reason: str
+    samples: list[str]
+
+
+class FieldOption(BaseModel):
+    name: str
+    label: str
+    mandatory_group: str | None
+
+
+class ImportBatch(BaseModel):
+    batch_no: int
+    row_start: int
+    row_end: int
+    status: str
+    rows_loaded: int
+    rows_skipped: int
+    health: dict[str, Any] | None
+    error: str | None
+
+
+class ImportSummary(BaseModel):
+    id: str
+    file_name: str
+    format: str
+    row_count: int
+    status: str  # mapped | loading | loaded | failed
+    status_display: str
+    missing: list[str]  # mandatory data the sheet lacks, in plain words
+    batch_size: int
+    batches_total: int
+    batches_loaded: int
+    health_score: int | None
+    created_at: datetime
+    loaded_at: datetime | None
+
+
+class ImportDetail(ImportSummary):
+    columns: list[ImportColumn]
+    fields: list[FieldOption]
+    batches: list[ImportBatch]
+    health: dict[str, Any] | None
+    notes: list[str]
+
+
+class ImportsResponse(BaseModel):
+    items: list[ImportSummary]
+
+
+class MappingRequest(BaseModel):
+    overrides: dict[str, str | None]  # column -> field name, or null to unmap
+
+
+class ImportLoadResponse(BaseModel):
+    id: str
+    status: str
+    message: str

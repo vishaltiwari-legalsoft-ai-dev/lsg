@@ -136,7 +136,9 @@ _COMPONENTS: dict[str, ComponentSpec] = {}
 _GATES: dict[str, GateFn] = {}
 
 # Packages discover() walks looking for @component / @gate registrations.
-_DISCOVER_PACKAGES = ("lge.planes", "lge.resolve", "lge.score", "lge.journey", "lge.export")
+_DISCOVER_PACKAGES = (
+    "lge.ingest", "lge.planes", "lge.resolve", "lge.score", "lge.journey", "lge.export",
+)
 
 
 def component(name: str, plane: str, description: str) -> Callable[[ComponentFn], ComponentFn]:

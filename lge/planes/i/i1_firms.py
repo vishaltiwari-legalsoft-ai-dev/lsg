@@ -21,22 +21,19 @@ vendor's own field. i1_claims records that field as `vendor_headcount_range`
 
 from __future__ import annotations
 
-import csv
-import hashlib
 import re
 import uuid
 from collections import Counter
-from collections.abc import Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 
-import psycopg
 from psycopg.types.json import Jsonb
 
 from lge.classify.entity import classify_entity
-from lge.classify.people import person_name
 from lge.classify.roles import classify_role
-from lge.norm import NORM_VERSION, norm_domain, norm_email_domain, norm_name, norm_practice
+from lge.ingest.batches import DEFAULT_BATCH_SIZE
+from lge.ingest.load import DOMAIN_RULE_VERSION, batched_insert, load_import, register_import
+from lge.ingest.normalize import email_domain_plausible, resolve_domain
+from lge.norm import NORM_VERSION, norm_name, norm_practice
 from lge.registry import RunContext, RunResult, component
 from lge.settings import PROJECT_ROOT
 
@@ -76,6 +73,7 @@ _VENDOR_CMS_TAGS: dict[str, str] = {
 _GOV_STATE_RE = re.compile(r"^state\.[a-z]{2}\.us$")
 
 _LAW_INDUSTRY_RE = re.compile(r"\b(law|legal)\b", re.IGNORECASE)
+_US_RE = re.compile(r"^\s*(?:us|usa|u\.s\.a?\.?|united states(?: of america)?)\s*$", re.I)
 
 _NON_ALNUM_RE = re.compile(r"[^a-z0-9]")
 
@@ -95,70 +93,13 @@ def _is_government_domain(domain: str | None) -> bool:
     return bool(_GOV_STATE_RE.match(domain))
 
 
-# Bump when the domain derivation below can change for any input. Stored in
-# observation.norm_versions["i1_domain_rule"] so i1_rekey knows which rows were keyed
-# under an older rule — the norm_version mechanism: recompute, never re-harvest.
-I1_DOMAIN_RULE_VERSION = "2"
-
-
-def _email_domain_plausible(email_domain: str, name_stem: str | None) -> bool:
-    """An email domain may stand in as the firm's identity key only when it visibly
-    belongs to the firm: a name-stem token of >=4 chars appears in the domain's
-    registered label, or the stem's initials (>=2 tokens) do.
-
-    Why so strict: a contact's email can belong to a DIFFERENT organisation — a
-    previous firm, a university, a corporate employer. In the purchased file,
-    "Faggiano & Associates" carried an adlercohen.com address (another law firm),
-    "Bernice Lake PC" a mattel.com one. Used as an identity key, that merges two
-    firms — the invisible, unrecoverable direction. Refusing costs one domainless
-    firm — the visible, cheap direction.
-    """
-    if not name_stem:
-        return False
-    label = re.sub(r"[^a-z0-9]", "", email_domain.split(".", 1)[0].lower())
-    tokens = [t for t in re.split(r"\s+", name_stem.lower()) if t]
-    if any(len(t) >= 4 and t in label for t in tokens):
-        return True
-    if len(tokens) >= 2:
-        initials = "".join(t[0] for t in tokens)
-        if len(initials) >= 2 and initials in label:
-            return True
-    return False
-
-
-def _resolve_domain(
-    company_url: str | None, business_email: str | None, name_stem: str | None = None
-) -> tuple[str | None, bool]:
-    """(domain, from_email). The Company URL wins. When it yields nothing (blank,
-    shared-host-blocked, garbage like "513.2664"), the email's domain is used ONLY
-    if it plausibly belongs to the firm — see _email_domain_plausible."""
-    domain = norm_domain(company_url)
-    if domain is not None:
-        return domain, False
-    domain = norm_email_domain(business_email)
-    if domain is not None and _email_domain_plausible(domain, name_stem):
-        return domain, True
-    return None, False
-
-
-def _pick_city(row: dict[str, str]) -> str | None:
-    # Company City is far more complete than City (the contact's own city, which
-    # can differ from the firm's -- row 1 of the real file is a Houston contact at
-    # a Dallas firm) -- prefer it, fall back to City.
-    for key in ("Company City", "City"):
-        value = (row.get(key) or "").strip()
-        if value:
-            return value
-    return None
-
-
-def _source_key(email: str | None, row: dict[str, str], fieldnames: Sequence[str]) -> str:
-    if email and email.strip():
-        return hashlib.sha1(email.strip().lower().encode("utf-8")).hexdigest()
-    # Fallback: sha1 of the whole row, joined on a separator that can't appear in a
-    # CSV field value (unlike ",") so two different rows can't collide by accident.
-    joined = "\x1f".join((row.get(f) or "") for f in fieldnames)
-    return hashlib.sha1(joined.encode("utf-8")).hexdigest()
+# The domain rule (D-017), the email-domain plausibility test and the batched
+# insert now live in lge.ingest -- every sheet goes through the same path. The
+# old names stay importable for callers and tests that grew up with them.
+I1_DOMAIN_RULE_VERSION = DOMAIN_RULE_VERSION
+_email_domain_plausible = email_domain_plausible
+_resolve_domain = resolve_domain
+_batched_insert = batched_insert
 
 
 def _detect_cms_tag(technology: str | None) -> str | None:
@@ -181,6 +122,11 @@ def _most_common(values: list[str | None]) -> str | None:
 
 def _alnum(s: str | None) -> str:
     return _NON_ALNUM_RE.sub("", (s or "").lower())
+
+
+def _split_name(full_name: str) -> tuple[str, str]:
+    tokens = full_name.split()
+    return tokens[0], (tokens[-1] if len(tokens) > 1 else "")
 
 
 def _email_pattern(first: str | None, last: str | None, email: str | None) -> str:
@@ -207,171 +153,82 @@ def _email_pattern(first: str | None, last: str | None, email: str | None) -> st
     return "other"
 
 
-def _batched_insert(
-    cur: psycopg.Cursor,
-    table: str,
-    columns: Sequence[str],
-    conflict_cols: Sequence[str],
-    rows: Sequence[tuple],
-    batch_size: int = 2000,
-    update_cols: Sequence[str] = (),
-) -> int:
-    """Multi-row `INSERT ... VALUES (...), (...) ON CONFLICT (conflict_cols) DO
-    NOTHING`, batched so one call handles 37k rows in a handful of round trips.
-    Returns rows actually inserted (cur.rowcount summed across batches) -- rows
-    skipped by the conflict are not counted, which is how callers report
-    duplicates without a second query."""
-    if not rows:
-        return 0
-    col_list = ", ".join(columns)
-    conflict_list = ", ".join(conflict_cols)
-    n_cols = len(columns)
-    inserted = 0
-    for start in range(0, len(rows), batch_size):
-        chunk = rows[start : start + batch_size]
-        placeholders = ", ".join("(" + ", ".join(["%s"] * n_cols) + ")" for _ in chunk)
-        if update_cols:
-            # Deterministic re-derivation: a corrected rule over the same observation
-            # updates the claim in place; an unchanged re-run writes nothing.
-            sets = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
-            old = ", ".join(f"{table}.{c}" for c in update_cols)
-            new = ", ".join(f"EXCLUDED.{c}" for c in update_cols)
-            action = f"DO UPDATE SET {sets} WHERE ({old}) IS DISTINCT FROM ({new})"
-        else:
-            action = "DO NOTHING"
-        sql = (
-            f"INSERT INTO {table} ({col_list}) VALUES {placeholders} "  # noqa: S608
-            f"ON CONFLICT ({conflict_list}) {action}"
-        )
-        params = [v for row in chunk for v in row]
-        cur.execute(sql, params)
-        inserted += cur.rowcount
-    return inserted
-
-
 @component(
     "i1_load",
     "i",
-    "Load the purchased firm/contact CSV into observation (source=internal_firms).",
+    "Load a firm/contact sheet (any layout, CSV or XLSX) into observation, in batches.",
 )
 def i1_load(ctx: RunContext, **opts: object) -> RunResult:
+    """The sheet goes through lge.ingest: read, sniff the columns, normalise
+    every row to the canonical shape, load batch by batch. This wrapper keeps
+    the CLI name and adds the per-file summary the vendor loader used to print."""
     raw_path = opts.get("path")
     if not raw_path:
-        raise ValueError("i1_load requires --opt path=<csv file>")
+        raise ValueError("i1_load requires --opt path=<csv or xlsx file>")
     path = _resolve_path(str(raw_path))
     if not path.is_file():
         raise FileNotFoundError(f"i1_load: no such file: {path}")
 
-    file_bytes = path.read_bytes()
-    input_hash = hashlib.sha256(file_bytes).hexdigest()
-    entity_id = str(path.resolve())
-    # Deterministic per file: two loads of the same bytes produce the same
-    # fetched_at, so observation's UNIQUE (source, source_key, fetched_at) makes a
-    # retry's INSERT a safe, empty no-op via ON CONFLICT DO NOTHING below -- belt
-    # and braces alongside ctx.once, which is what actually skips a re-run.
-    fetched_at = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+    imp = register_import(
+        ctx.conn, path, source_tag=SOURCE,
+        batch_size=int(str(opts.get("batch_size", DEFAULT_BATCH_SIZE))),
+    )
+    if imp["status"] == "loaded":
+        return RunResult(skipped=1, notes=[f"unchanged file already loaded: {path}"])
 
-    with ctx.once("i1_load", entity_id, input_hash) as should_run:
-        if not should_run:
-            return RunResult(skipped=1, notes=[f"unchanged file already loaded: {path}"])
+    loaded = load_import(ctx, str(imp["id"]))
 
-        with path.open("r", encoding="utf-8", newline="") as fh:
-            reader = csv.DictReader(fh)
-            fieldnames = reader.fieldnames or []
-            rows = list(reader)
-
-        observation_rows: list[tuple] = []
-        no_domain = 0
-        from_email = 0
-        domain_counts: Counter[str] = Counter()
-        norm_versions = Jsonb(
-            {
-                "norm_domain": NORM_VERSION["norm_domain"],
-                "norm_name": NORM_VERSION["norm_name"],
-                "i1_domain_rule": I1_DOMAIN_RULE_VERSION,
-            }
+    with ctx.conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*) AS rows,
+                   count(*) FILTER (WHERE domain IS NULL) AS no_domain,
+                   count(*) FILTER (WHERE (payload ->> 'domain_from_email')::bool) AS from_email,
+                   count(DISTINCT domain) AS domains
+            FROM observation WHERE import_id = %s
+            """,
+            (imp["id"],),
         )
-
-        for row in rows:
-            business_email = (row.get("Business Email") or "").strip()
-            company_url = (row.get("Company URL") or "").strip()
-            name_raw = (
-                row.get("Formatted Company Name") or row.get("Company Name") or ""
-            ).strip() or None
-            name_stem = norm_name(name_raw)
-            domain, used_email = _resolve_domain(company_url, business_email, name_stem)
-            if domain is None:
-                no_domain += 1
-            else:
-                domain_counts[domain] += 1
-                if used_email:
-                    from_email += 1
-            city = _pick_city(row)
-            source_key = _source_key(business_email, row, fieldnames)
-
-            observation_rows.append(
-                (
-                    SOURCE,
-                    source_key,
-                    None,  # firm_id -- set later by identity resolution
-                    Jsonb(row),
-                    fetched_at,
-                    name_raw,
-                    name_stem,
-                    domain,
-                    None,  # phone_e164 -- not in this vendor file
-                    None,  # addr_hash -- no street data
-                    None,  # zip5
-                    city,
-                    None,  # state -- never embedded in City/Company City (checked)
-                    norm_versions,
-                )
-            )
-
-        with ctx.conn.cursor() as cur:
-            inserted = _batched_insert(
-                cur,
-                "observation",
-                (
-                    "source",
-                    "source_key",
-                    "firm_id",
-                    "payload",
-                    "fetched_at",
-                    "name_raw",
-                    "name_stem",
-                    "domain",
-                    "phone_e164",
-                    "addr_hash",
-                    "zip5",
-                    "city",
-                    "state",
-                    "norm_versions",
-                ),
-                ("source", "source_key", "fetched_at"),
-                observation_rows,
-            )
-
-        contradictions = sorted(
-            ((d, n) for d, n in domain_counts.items() if n > 10),
-            key=lambda kv: (-kv[1], kv[0]),
+        summary = cur.fetchone()
+        # Size contradiction: more than ten contacts on file for a firm the sheet
+        # says has at most ten people -- the vendor-headcount trap.
+        cur.execute(
+            """
+            SELECT domain, count(*) AS n FROM observation
+            WHERE import_id = %s AND domain IS NOT NULL
+              AND coalesce((payload ->> 'size_max')::int, 0) BETWEEN 1 AND 10
+            GROUP BY domain HAVING count(*) > 10 ORDER BY count(*) DESC, domain
+            """,
+            (imp["id"],),
         )
-
-        notes = [
-            f"rows read: {len(rows)}",
-            f"rows inserted: {inserted} (duplicates skipped: {len(rows) - inserted})",
-            f"rows with no domain: {no_domain}",
-            f"rows whose domain came from the email: {from_email}",
-            f"distinct domains: {len(domain_counts)}",
-            f"size-contradiction domains (>10 contacts, file states 1-10 employees): "
-            f"{len(contradictions)}",
-        ]
-        for d, n in contradictions[:20]:
-            notes.append(f"  contradiction: {d} -> {n} contacts")
-
-        return RunResult(
-            processed=len(rows), skipped=len(rows) - inserted, failed=0, notes=notes
+        contradictions = cur.fetchall()
+        cur.execute(
+            "SELECT coalesce(sum(rows_loaded), 0) AS loaded, coalesce(sum(rows_skipped), 0) "
+            "AS skipped FROM import_batch WHERE import_id = %s",
+            (imp["id"],),
         )
+        counts = cur.fetchone()
+
+    notes = [
+        f"import {imp['id']}: {imp['row_count']} rows in {len(imp['column_map']['mapping'])} "
+        f"mapped columns, {loaded.processed} batch(es) loaded, {loaded.failed} failed",
+        f"rows read: {imp['row_count']}",
+        f"rows inserted: {counts['loaded']} (duplicates skipped: {counts['skipped']})",
+        f"rows with no domain: {summary['no_domain']}",
+        f"rows whose domain came from the email: {summary['from_email']}",
+        f"distinct domains: {summary['domains']}",
+        f"size-contradiction domains (>10 contacts, file states 1-10 employees): "
+        f"{len(contradictions)}",
+    ]
+    if imp["missing"]:
+        notes.append(f"mandatory data the sheet lacks: {', '.join(imp['missing'])}")
+    for row in contradictions[:20]:
+        notes.append(f"  contradiction: {row['domain']} -> {row['n']} contacts")
+    notes.extend(loaded.notes)
+    return RunResult(
+        processed=int(counts["loaded"]), skipped=int(counts["skipped"]),
+        failed=loaded.failed, notes=notes,
+    )
 
 
 @component(
@@ -400,7 +257,7 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
         observed_at = max(o["fetched_at"] for o in obs)
         evidence_n = f"most common of {n} vendor contact row(s)"
 
-        canonical_name = _most_common([o["payload"].get("Formatted Company Name") for o in obs])
+        canonical_name = _most_common([o["payload"].get("firm_name") for o in obs])
         if canonical_name:
             claim_rows.append(
                 (firm_id, "canonical_name", Jsonb(canonical_name), SOURCE, 0.5, evidence_n,
@@ -415,18 +272,20 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
             )
             counts["city"] += 1
 
-        claim_rows.append(
-            (
-                firm_id,
-                "country",
-                Jsonb("US"),
-                SOURCE,
-                0.7,
-                "vendor dataset Country column is United States for every contact",
-                observed_at,
+        country = _most_common([o["payload"].get("country") for o in obs])
+        has_us_state = any(o["payload"].get("state") for o in obs)
+        if country and _US_RE.match(country):
+            claim_rows.append(
+                (firm_id, "country", Jsonb("US"), SOURCE, 0.7,
+                 f"sheet's country column: {country}", observed_at)
             )
-        )
-        counts["country"] += 1
+            counts["country"] += 1
+        elif not country and has_us_state:
+            claim_rows.append(
+                (firm_id, "country", Jsonb("US"), SOURCE, 0.6,
+                 "no country column; a US state is given", observed_at)
+            )
+            counts["country"] += 1
 
         firm_domain = _most_common([o["domain"] for o in obs])
         firm_name = _most_common([o["name_raw"] for o in obs])
@@ -446,7 +305,7 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
                 )
             )
             counts[f"entity_kind:{entity.kind}"] += 1
-        elif any(_LAW_INDUSTRY_RE.search(o["payload"].get("Industry") or "") for o in obs):
+        elif any(_LAW_INDUSTRY_RE.search(o["payload"].get("firm_type") or "") for o in obs):
             claim_rows.append(
                 (
                     firm_id,
@@ -462,7 +321,7 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
 
         matched_tags = [
             tag
-            for tag in (_detect_cms_tag(o["payload"].get("Technology")) for o in obs)
+            for tag in (_detect_cms_tag(o["payload"].get("technology")) for o in obs)
             if tag
         ]
         if matched_tags:
@@ -481,7 +340,7 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
             )
             counts["cms_detected"] += 1
 
-        description = _most_common([o["payload"].get("Description") for o in obs])
+        description = _most_common([o["payload"].get("firm_type") for o in obs])
         if description and description.strip():
             # A HINT, never primary_practice. Doc 02 §4: vendor practice data is
             # "coarse — site classification still runs"; the firm dataset is a
@@ -507,7 +366,7 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
         # Informational -- no firm column. NEVER attorney_count: vendor headcount is
         # total headcount, not attorneys (the vendor-headcount trap this whole
         # component exists to guard against).
-        employees_range = _most_common([o["payload"].get("Employees Range") for o in obs])
+        employees_range = _most_common([o["payload"].get("firm_size") for o in obs])
         if employees_range:
             claim_rows.append(
                 (
@@ -522,19 +381,37 @@ def i1_claims(ctx: RunContext, **opts: object) -> RunResult:
             )
             counts["vendor_headcount_range"] += 1
 
-        if n > 10:
+        size_max = _most_common([o["payload"].get("size_max") for o in obs])
+        if n > 10 and size_max is not None and int(size_max) <= 10:
             claim_rows.append(
                 (
                     firm_id,
                     "vendor_size_contradiction",
-                    Jsonb({"contacts_in_file": n, "stated": "1 to 10"}),
+                    Jsonb({"contacts_in_file": n, "stated": employees_range}),
                     SOURCE,
                     0.9,
-                    f"{n} vendor contact rows for a firm whose stated range is '1 to 10'",
+                    f"{n} contact rows for a firm whose stated size is '{employees_range}'",
                     observed_at,
                 )
             )
             counts["vendor_size_contradiction"] += 1
+
+        # What the sheet itself knows about pain and history -- informational
+        # claims on the record; never a signal (no first-seen date of our own).
+        job_post = _most_common([o["payload"].get("job_post") for o in obs])
+        if job_post:
+            claim_rows.append(
+                (firm_id, "sheet_job_post", Jsonb(job_post), SOURCE, 0.6,
+                 "job post column in the sheet", observed_at)
+            )
+            counts["sheet_job_post"] += 1
+        if any(o["payload"].get("contacted_before") for o in obs):
+            last = max((o["payload"].get("contacted_at") or "" for o in obs), default="")
+            claim_rows.append(
+                (firm_id, "contacted_before", Jsonb({"contacted": True, "last": last or None}),
+                 SOURCE, 0.8, "sheet says this firm was contacted before", observed_at)
+            )
+            counts["contacted_before"] += 1
 
     with ctx.conn.cursor() as cur:
         inserted = _batched_insert(
@@ -586,17 +463,21 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
     skipped = 0
 
     not_people = 0
+    legacy = 0
     for row in obs_rows:
         payload = row["payload"]
         firm_id = str(row["firm_id"])
-        # The vendor's "Full Name" is not always a person ("Arizona Litigation
-        # Support Court Reporters") and often carries credentials ("Jeremy D.
-        # Raincrow, J.D., Ph.D."). Same rule as every other contact source.
-        raw_name = (payload.get("Full Name") or "").strip()
-        full_name = person_name(raw_name)
-        email_raw = (payload.get("Business Email") or "").strip()
-        email = email_raw.lower()
-        if raw_name and not full_name:
+        if "person_name" not in payload:
+            legacy += 1  # pre-canonical payload: run ingest_renormalize first
+            skipped += 1
+            continue
+        # The sheet's name is not always a person ("Arizona Litigation Support
+        # Court Reporters") and often carries credentials ("Jeremy D. Raincrow,
+        # J.D., Ph.D.") -- normalize already applied the one rule every contact
+        # source shares (lge.classify.people).
+        full_name = payload.get("person_name")
+        email = payload.get("email")
+        if payload.get("person_name_raw") and not full_name:
             not_people += 1
             skipped += 1
             continue
@@ -610,11 +491,10 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
             continue
         existing_keys.add(key)
 
-        title = (payload.get("Job Title") or "").strip() or None
+        title = payload.get("person_title") or None
         role_result = classify_role(title)
-        linkedin = (payload.get("Linkedin") or "").strip() or None
-        pattern = _email_pattern(payload.get("First Name"), payload.get("Last Name"), email)
-        vendor_status = (payload.get("Business Email Quality") or "").strip() or None
+        first, last = _split_name(full_name)
+        pattern = _email_pattern(first, last, email)
 
         contact_id = str(uuid.uuid4())
         contact_rows.append(
@@ -625,15 +505,18 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
                 title,
                 role_result.role,
                 None,  # bar_number -- R2 (bar record joiner), not this source
-                linkedin,
-                None,  # phone_direct -- not in this vendor file
-                email_raw,  # email_raw -- the vendor's own claimed address, as given
+                payload.get("linkedin"),
+                payload.get("phone"),
+                payload.get("phone_e164"),
+                payload.get("email_raw") or email,  # the sheet's own address, as given
                 SOURCE,
                 role_result.confidence,
                 None,  # enriched_at -- this is a raw load, not an enrichment pass
             )
         )
-        email_rows.append((contact_id, email, "unverified", vendor_status, pattern, None))
+        email_rows.append(
+            (contact_id, email, "unverified", payload.get("email_status") or None, pattern, None)
+        )
 
     with ctx.conn.cursor() as cur:
         inserted_contacts = _batched_insert(
@@ -648,6 +531,7 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
                 "bar_number",
                 "linkedin_url",
                 "phone_direct",
+                "phone_e164",
                 "email_raw",
                 "source",
                 "confidence",
@@ -671,6 +555,8 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
         f"skipped (duplicate person, or missing name/email): {skipped}",
         f"not a person (firm names, page titles, one-word names): {not_people}",
     ]
+    if legacy:
+        notes.append(f"pre-canonical payloads skipped: {legacy} -- run ingest_renormalize")
     return RunResult(processed=len(contact_rows), skipped=skipped, failed=0, notes=notes)
 
 
@@ -691,6 +577,7 @@ def i1_rekey(ctx: RunContext, **opts: str) -> RunResult:
     """
     changed: list[tuple] = []
     blocked = 0
+    legacy = 0
     with ctx.conn.cursor() as cur:
         cur.execute(
             "SELECT id, payload, name_stem, domain, firm_id FROM observation WHERE source = %s",
@@ -699,14 +586,13 @@ def i1_rekey(ctx: RunContext, **opts: str) -> RunResult:
         rows = cur.fetchall()
     for row in rows:
         payload = row["payload"]
-        name_raw = (
-            payload.get("Formatted Company Name") or payload.get("Company Name") or ""
-        ).strip() or None
+        if "firm_name" not in payload:
+            legacy += 1  # pre-canonical payload: run ingest_renormalize first
+            continue
+        name_raw = payload.get("firm_name") or None
         name_stem = norm_name(name_raw)
-        domain, _used_email = _resolve_domain(
-            (payload.get("Company URL") or "").strip(),
-            (payload.get("Business Email") or "").strip(),
-            name_stem,
+        domain, _used_email = resolve_domain(
+            payload.get("website"), payload.get("email"), name_stem
         )
         if (domain, name_stem) == (row["domain"], row["name_stem"]):
             continue
@@ -730,6 +616,8 @@ def i1_rekey(ctx: RunContext, **opts: str) -> RunResult:
             )
     notes = [f"re-keyed {len(changed)} unresolved observations under i1_domain_rule "
              f"v{I1_DOMAIN_RULE_VERSION}"]
+    if legacy:
+        notes.append(f"pre-canonical payloads skipped: {legacy} -- run ingest_renormalize")
     if blocked:
         notes.append(
             f"{blocked} RESOLVED observations would change key — not rewritten. They are "

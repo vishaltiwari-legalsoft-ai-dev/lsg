@@ -60,21 +60,24 @@ def test_vendor_rows_that_are_not_people_never_become_contacts(loaded, db):
 
     from psycopg.types.json import Jsonb
 
+    from lge.classify.people import person_name
+
     with db.cursor() as cur:
         for key, name in (
             ("np-1", "Arizona Litigation Support Court Reporters"),
             ("np-2", "Jeremy D. Raincrow, J.D., Ph.D."),
         ):
+            # the canonical shape normalize_row writes: cleaned name + the raw one
+            payload = {
+                "person_name_raw": name, "person_name": person_name(name),
+                "is_person": person_name(name) is not None,
+                "email": f"{key}@janedoelaw.com", "person_title": "Owner",
+            }
             cur.execute(
                 "INSERT INTO observation "
                 "(source, source_key, firm_id, payload, fetched_at, domain) "
                 "VALUES ('internal_firms', %s, %s, %s, %s, 'janedoelaw.com')",
-                (
-                    key, loaded["janedoe"],
-                    Jsonb({"Full Name": name, "Business Email": f"{key}@janedoelaw.com",
-                           "Job Title": "Owner"}),
-                    datetime(2026, 9, 15, tzinfo=UTC),
-                ),
+                (key, loaded["janedoe"], Jsonb(payload), datetime(2026, 9, 15, tzinfo=UTC)),
             )
     result = i1_contacts(_ctx(db))
     assert any(n.startswith("not a person") and n.endswith(": 1") for n in result.notes)

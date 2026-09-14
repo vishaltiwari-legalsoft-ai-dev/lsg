@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from lge.api.deps import close_pool, get_pool
-from lge.api.routes import firms, handcheck, health, leads, meta, pipeline, today
+from lge.api.routes import firms, handcheck, health, imports, leads, meta, pipeline, today
 
 logger = logging.getLogger("lge.api")
 
@@ -55,6 +55,7 @@ app.include_router(firms.router)
 app.include_router(handcheck.router)
 app.include_router(meta.router)
 app.include_router(pipeline.router)
+app.include_router(imports.router)
 
 
 def _error_body(code: str, message: str, fix: str | None = None) -> dict:

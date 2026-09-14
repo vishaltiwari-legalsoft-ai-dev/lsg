@@ -85,17 +85,20 @@ def test_size_contradiction_reported_for_domain_with_12_contacts(db):
     )
 
 
-def test_payload_is_the_full_raw_row_and_name_stem_is_normalized(db):
+def test_payload_is_the_canonical_row_with_the_raw_row_kept(db):
     i1_load(_ctx(db), path=str(FIXTURE))
     with db.cursor() as cur:
         cur.execute(
-            "SELECT payload, name_raw, name_stem FROM observation "
+            "SELECT payload, name_raw, name_stem, import_id, batch_no FROM observation "
             "WHERE source = 'internal_firms' AND domain = 'smallcountyda.gov'"
         )
         row = cur.fetchone()
 
-    assert row["payload"]["Job Title"] == "Assistant District Attorney"
-    assert row["payload"]["Business Email"] == "info@smallcountyda.gov"
+    assert row["payload"]["person_title"] == "Assistant District Attorney"
+    assert row["payload"]["email"] == "info@smallcountyda.gov"
+    assert row["payload"]["firm_size"] == "1 to 10"
+    assert row["payload"]["_raw"]["Job Title"] == "Assistant District Attorney"
+    assert row["import_id"] is not None and row["batch_no"] == 1
     assert row["name_raw"] == "Smallcounty District Attorney"
     assert row["name_stem"] == norm_name("Smallcounty District Attorney")
 
@@ -106,7 +109,7 @@ def test_city_prefers_company_city_and_falls_back_to_city(db):
         # Company City is blank on this row -> falls back to City="Boise"
         cur.execute(
             "SELECT city, state FROM observation WHERE source = 'internal_firms' "
-            "AND payload ->> 'Business Email' = 'soloattorney@gmail.com'"
+            "AND payload ->> 'email' = 'soloattorney@gmail.com'"
         )
         gmail_row = cur.fetchone()
         # Company City is present and used directly elsewhere

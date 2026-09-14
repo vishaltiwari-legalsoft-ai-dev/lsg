@@ -513,6 +513,35 @@ minted email addresses for them.
 firms; 54 firms have a general inbox on record; 65 of 157 reached firms have a first-party
 (non-vendor) email for a decision-maker.
 
+## D-029 · Step 1 rebuilt: any sheet, in batches, with the website verified
+
+**Asked for (15 Sep 2026):** inputs are whatever the team has, not the one vendor layout; find
+firm name, website, location, size, type (mandatory) and the rest (job post, contacted before and
+when) intelligently; process in batches; verify every website and search for the real one when
+the sheet's is wrong; re-check data health after.
+
+**Rulings:**
+- **`lge.ingest`** owns the sheet: reader (CSV in any encoding/delimiter, XLSX), a fixed field
+  vocabulary, a sniffer that reads headers *and* values (a typed value shape beats a misleading
+  header; an exact header for an untyped field keeps its meaning; the more specific synonym wins,
+  so "Company City" beats "City"), a normaliser to one canonical row, batches of 500 by default,
+  and a health report per batch. Every downstream step reads canonical keys only; the vendor
+  loader is a caller of the same path, and the 36,814 rows already stored were rewritten into the
+  canonical shape with the original kept under `_raw`.
+- **Tables:** `import_file` (the sheet, its confirmed column map, what mandatory data it lacks),
+  `import_batch` (one row per batch with status, counts, health, error), `website_check`,
+  and `observation.import_id/batch_no`. Migration 093.
+- **Website check:** missing/malformed → search; robots.txt unreachable → dead → search;
+  blocked at the edge → recorded, never searched (the site exists); answers → the page must
+  name the firm, else mismatch → search. A search hit is a *candidate*: it is adopted only
+  after its own homepage passes the same name check. The first live run adopted eight
+  directories on a snippet alone (w9ein.com, lawyerguide.com, datanyze.com); those were
+  reverted and re-checked. A correction writes a `search:ddg` observation, the old domain as
+  an alias, and the firm's domain under the `resolve` writer; a found domain that already
+  belongs to another firm opens an identity review instead.
+- **API and UI:** upload → mapping with confidence and reasons, editable → load in the
+  background with the identity, claims and contacts steps chained → progress per batch.
+
 ---
 
 ## Standing rulings that were never in dispute

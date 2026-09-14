@@ -360,6 +360,30 @@
         "title": "BenchStatus",
         "type": "object"
       },
+      "Body_upload_import_api_imports_post": {
+        "properties": {
+          "batch_size": {
+            "default": 500,
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "source_tag": {
+            "default": "internal_firms",
+            "title": "Source Tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_import_api_imports_post",
+        "type": "object"
+      },
       "ContactSummary": {
         "properties": {
           "email": {
@@ -572,6 +596,36 @@
           "touches"
         ],
         "title": "DraftsResponse",
+        "type": "object"
+      },
+      "FieldOption": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "mandatory_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mandatory Group"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "mandatory_group"
+        ],
+        "title": "FieldOption",
         "type": "object"
       },
       "FirmDetail": {
@@ -1177,6 +1231,392 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "ImportBatch": {
+        "properties": {
+          "batch_no": {
+            "title": "Batch No",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "health": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health"
+          },
+          "row_end": {
+            "title": "Row End",
+            "type": "integer"
+          },
+          "row_start": {
+            "title": "Row Start",
+            "type": "integer"
+          },
+          "rows_loaded": {
+            "title": "Rows Loaded",
+            "type": "integer"
+          },
+          "rows_skipped": {
+            "title": "Rows Skipped",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_no",
+          "row_start",
+          "row_end",
+          "status",
+          "rows_loaded",
+          "rows_skipped",
+          "health",
+          "error"
+        ],
+        "title": "ImportBatch",
+        "type": "object"
+      },
+      "ImportColumn": {
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field"
+          },
+          "field_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Label"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "samples": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Samples",
+            "type": "array"
+          }
+        },
+        "required": [
+          "column",
+          "field",
+          "field_label",
+          "confidence",
+          "reason",
+          "samples"
+        ],
+        "title": "ImportColumn",
+        "type": "object"
+      },
+      "ImportDetail": {
+        "properties": {
+          "batch_size": {
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "batches": {
+            "items": {
+              "$ref": "#/components/schemas/ImportBatch"
+            },
+            "title": "Batches",
+            "type": "array"
+          },
+          "batches_loaded": {
+            "title": "Batches Loaded",
+            "type": "integer"
+          },
+          "batches_total": {
+            "title": "Batches Total",
+            "type": "integer"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ImportColumn"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldOption"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "health": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health"
+          },
+          "health_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health Score"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "loaded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loaded At"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_display": {
+            "title": "Status Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "format",
+          "row_count",
+          "status",
+          "status_display",
+          "missing",
+          "batch_size",
+          "batches_total",
+          "batches_loaded",
+          "health_score",
+          "created_at",
+          "loaded_at",
+          "columns",
+          "fields",
+          "batches",
+          "health",
+          "notes"
+        ],
+        "title": "ImportDetail",
+        "type": "object"
+      },
+      "ImportLoadResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "message"
+        ],
+        "title": "ImportLoadResponse",
+        "type": "object"
+      },
+      "ImportSummary": {
+        "properties": {
+          "batch_size": {
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "batches_loaded": {
+            "title": "Batches Loaded",
+            "type": "integer"
+          },
+          "batches_total": {
+            "title": "Batches Total",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_name": {
+            "title": "File Name",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "health_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Health Score"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "loaded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loaded At"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_display": {
+            "title": "Status Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "file_name",
+          "format",
+          "row_count",
+          "status",
+          "status_display",
+          "missing",
+          "batch_size",
+          "batches_total",
+          "batches_loaded",
+          "health_score",
+          "created_at",
+          "loaded_at"
+        ],
+        "title": "ImportSummary",
+        "type": "object"
+      },
+      "ImportsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImportSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ImportsResponse",
+        "type": "object"
+      },
       "LeadDetail": {
         "properties": {
           "band": {
@@ -1653,6 +2093,29 @@
           "counts"
         ],
         "title": "LeadsResponse",
+        "type": "object"
+      },
+      "MappingRequest": {
+        "properties": {
+          "overrides": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Overrides",
+            "type": "object"
+          }
+        },
+        "required": [
+          "overrides"
+        ],
+        "title": "MappingRequest",
         "type": "object"
       },
       "OutcomeRequest": {
@@ -2425,6 +2888,197 @@
         "tags": [
           "health"
         ]
+      }
+    },
+    "/api/imports": {
+      "get": {
+        "operationId": "list_imports_api_imports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Imports"
+      },
+      "post": {
+        "operationId": "upload_import_api_imports_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_import_api_imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Import"
+      }
+    },
+    "/api/imports/{import_id}": {
+      "get": {
+        "operationId": "get_import_detail_api_imports__import_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "title": "Import Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Import Detail"
+      }
+    },
+    "/api/imports/{import_id}/load": {
+      "post": {
+        "operationId": "start_load_api_imports__import_id__load_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "title": "Import Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sync",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Sync",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportLoadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Load"
+      }
+    },
+    "/api/imports/{import_id}/mapping": {
+      "put": {
+        "operationId": "put_mapping_api_imports__import_id__mapping_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "import_id",
+            "required": true,
+            "schema": {
+              "title": "Import Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Mapping"
       }
     },
     "/api/leads": {
