@@ -21,6 +21,7 @@ logic with two chances to drift:
 from __future__ import annotations
 
 import functools
+import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -258,6 +259,11 @@ def _canon(value: Any) -> Any:
             return frozenset(value)
         except TypeError:
             return tuple(sorted(str(v) for v in value))
+    if isinstance(value, dict):
+        # An address is a dict (street_norm, unit, city, state, zip5, addr_hash):
+        # two sources printing the same office agree. Hit once two address
+        # sources existed (site:jsonld and site:page, D-031).
+        return json.dumps(value, sort_keys=True, default=str)
     return value
 
 

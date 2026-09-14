@@ -64,6 +64,27 @@ def test_agreement_takes_max_confidence():
     assert out.confidence == pytest.approx(0.99)
 
 
+def test_two_sources_printing_the_same_office_agree():
+    # An address claim is a dict; with site:jsonld and site:page both writing
+    # one (D-031) the agreement check must compare dicts, not hash them.
+    office = {"street_norm": "3350 PEACHTREE RD NE", "unit": "STE 1200", "city": "ATLANTA",
+              "state": "GA", "zip5": "30326", "addr_hash": "abc"}
+    claims = [
+        rc.Claim("site:jsonld", dict(office), 0.9, AT),
+        rc.Claim("site:page", dict(office), 0.8, AT),
+    ]
+    out = rc.resolve_claims("address", claims)
+    assert out.value == office
+    assert out.conflict is False
+    assert out.confidence == pytest.approx(0.9)
+
+    other = {**office, "zip5": "30060", "addr_hash": "def"}
+    out = rc.resolve_claims(
+        "address", [rc.Claim("site:jsonld", office, 0.9, AT), rc.Claim("site:page", other, 0.8, AT)]
+    )
+    assert out.value == office  # precedence: site:jsonld above site:page
+
+
 def test_disagreement_precedence_wins():
     # canonical_name: site > bar > places > directory(internal_firms)
     claims = [
