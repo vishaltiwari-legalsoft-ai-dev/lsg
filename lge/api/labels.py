@@ -436,6 +436,10 @@ def _format_site_fact(attr: str, value: Any) -> str | None:
         if not value:
             return "Nothing missing among the pages read"
         return ", ".join(gap_label(g["gap"]) for g in value if isinstance(g, dict))
+    if attr in ("google_maps_url", "google_business_url") and isinstance(value, str):
+        # A Maps/search URL runs to hundreds of characters; the host and the
+        # start of the query say what it is.
+        return value.split("://", 1)[-1][:72] + ("…" if len(value) > 75 else "")
     if attr == "search_review_snippets" and isinstance(value, list):
         parts = [str(s.get("body") or s.get("title") or "")[:100] for s in value[:2]
                  if isinstance(s, dict)]
