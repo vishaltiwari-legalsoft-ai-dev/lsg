@@ -832,7 +832,15 @@ def run(ctx: RunContext, **opts: object) -> RunResult:
         return result
 
     today = date.today().isoformat()
-    hashes = {fid: hashlib.sha256(f"ja1_careers:{today}".encode()).hexdigest() for fid in firm_ids}
+    # Keyed on the day AND the careers URLs on the map: a careers page the
+    # crawl found after this morning's sweep is swept today, not tomorrow.
+    candidates = _load_careers_candidates(ctx.conn, firm_ids)
+    hashes = {
+        fid: hashlib.sha256(
+            f"ja1_careers:{today}:{','.join(sorted(candidates[fid]['site_map_urls']))}".encode()
+        ).hexdigest()
+        for fid in firm_ids
+    }
     done = already_done(ctx.conn, "ja1_careers", hashes)
     pending_ids = [fid for fid in firm_ids if fid not in done]
     result.skipped += len(done)
@@ -854,7 +862,7 @@ def run(ctx: RunContext, **opts: object) -> RunResult:
             "refusing to fetch: settings.user_agent is empty -- set LGE_USER_AGENT"
         )
 
-    candidates = _load_careers_candidates(ctx.conn, pending_ids)
+    candidates = {fid: candidates[fid] for fid in pending_ids}
     max_concurrent_hosts = int(
         opts.get("max_concurrent_hosts", rate_defaults()["max_concurrent_hosts"])
     )
