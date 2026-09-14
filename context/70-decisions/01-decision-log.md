@@ -542,6 +542,40 @@ the sheet's is wrong; re-check data health after.
 - **API and UI:** upload → mapping with confidence and reasons, editable → load in the
   background with the identity, claims and contacts steps chained → progress per batch.
 
+## D-030 · Step 2, part A: the crawler reads the whole firm, not eleven guessed paths
+
+**Asked for (15 Sep 2026):** "we have piss poor weak scrappers" -- from the site, read the
+careers landing page, the contact page, the locations, the important names and designations,
+recent developments and testimonials; extract emails, names and links for outreach; then search
+for the LinkedIn profiles and the Google Business reviews; then read intent from the pain.
+Part A is the reading; parts B-D (per-page facts, searches, intent signals) build on it.
+
+**Rulings:**
+- **Three new page kinds:** `locations`, `testimonials`, `news` -- where the firm sits, what
+  clients say, what it has been up to. Migration 094 widens the `page_kind` checks and adds
+  `'crawl'` to `discovered_via`.
+- **P2 crawls, it does not only fetch the map.** Every page P2 reads is parsed for its own
+  links; same-host links of a wanted kind are queued up to the per-kind cap (config
+  `caps`) and a total of 30 per firm, two levels deep from the map. Pages found this way are
+  written to `site_map` as `discovered_via='crawl'` and are excluded from P2's input hash, so
+  a re-run stays a no-op unless the map or the caps change. Slow hosts (Crawl-delay > 60s)
+  get the map only.
+- **A fetched page is not always a page.** A body under 250 words that says "not found" is
+  recorded as `document.soft_404 = true` and ignored by P4 and every claim reader; a body that
+  is byte-identical to a page already stored for the firm is skipped (`duplicate_of`); the
+  reason a fetch failed is kept in `document.fetch_error` instead of being lost in a log line.
+- **The renderer is the system Chrome**, `--headless=new --dump-dom` under our own honest
+  User-Agent, found via `LGE_CHROME` or the usual install paths. Playwright's browser download
+  is blocked by Windows Application Control on this machine; the installed Chrome is not. A
+  rendered DOM replaces the document's bytes, hash and word count and its extracted text is
+  dropped so P4 reads it again. No browser: the gate still flags, the note still counts.
+- **Caps:** home 1, practice 6, careers 3, contact 2, about 2, attorneys 3, team 3,
+  locations 2, testimonials 3, news 4, fees 1, other 2, total 30 (was 14). The mapper is
+  `MAPPER_VERSION=3`, so every firm is re-mapped once.
+- **Not changed:** robots.txt is still obeyed, the per-host interval is still max(2s,
+  Crawl-delay), the edge block is still not circumvented (D-026). A robust scraper is one that
+  reads more of what it is allowed to read, not one that reads what it is not.
+
 ---
 
 ## Standing rulings that were never in dispute

@@ -1,6 +1,6 @@
-# config/crawl.yml — P1 site-mapper: page-kind classification and path
-# probes, plus the rate-discipline defaults the per-host token bucket falls
-# back to when a host declares no Crawl-delay.
+# config/crawl.yml — P1 site-mapper and P2 fetcher: page-kind classification,
+# path probes, per-firm caps, and the rate-discipline defaults the per-host
+# token bucket falls back to when a host declares no Crawl-delay.
 #
 # max_concurrent_hosts bounds how many DIFFERENT hosts P1/P2/P4/JA1 fetch
 # concurrently in one run (a semaphore over per-host worker tasks) — it does
@@ -14,6 +14,9 @@ rate:
 # page_kind -> regexes matched case-insensitively against the URL path only
 # (never the query string or fragment). Checked in this order; the first
 # kind whose pattern matches wins. A path matching none of these is 'other'.
+#
+# D-030 added locations, testimonials and news: where a firm says where it
+# sits, what clients say about it, and what it has been up to lately.
 page_kinds:
   home:
     - '^/$'
@@ -32,6 +35,33 @@ page_kinds:
     - '/employment-opportunit'
     - '/join-(?:our-team|us)'
     - '/work-with-us'
+  locations:
+    - '/locations?(?:/|$)'
+    - '/offices?(?:/|$)'
+    - '/office-locations?'
+    - '/our-offices'
+    - '/areas-we-serve'
+    - '/service-areas?'
+  testimonials:
+    - '/testimonials?(?:/|$)'
+    - '/reviews?(?:/|$)'
+    - '/client-(?:reviews|testimonials|stories)'
+    - '/what-(?:our-)?clients-say'
+    - '/success-stories'
+    - '/case-results?'
+    - '/results(?:/|$)'
+    - '/verdicts'
+    - '/settlements'
+  news:
+    - '/blog(?:/|$)'
+    - '/news(?:/|$)'
+    - '/articles?(?:/|$)'
+    - '/press(?:/|$)'
+    - '/media(?:/|$)'
+    - '/firm-news'
+    - '/in-the-news'
+    - '/updates(?:/|$)'
+    - '/insights(?:/|$)'
   attorneys:
     - '/attorneys?(?:/|$)'
     - '/our-attorneys'
@@ -58,25 +88,37 @@ page_kinds:
 # P1's own path probes: candidate URLs added as site_map rows
 # (discovered_via='probe') for any page_kind with zero sitemap-discovered
 # URLs. P2 fetches these exactly like any other site_map URL — a probe that
-# 404s is simply recorded that way, not treated as an error. Exactly the
-# thirteen paths named in context/40-pipeline/02-component-register.md.
+# 404s is simply recorded that way, not treated as an error.
 probe_paths:
-  about:     ['/about', '/about-us']
-  attorneys: ['/attorneys', '/our-attorneys']
-  team:      ['/our-team', '/team']
-  practice:  ['/practice-areas']
-  contact:   ['/contact', '/contact-us']
-  careers:   ['/careers', '/jobs', '/employment-opportunities']
-  fees:      ['/fees']
+  about:        ['/about', '/about-us']
+  attorneys:    ['/attorneys', '/our-attorneys']
+  team:         ['/our-team', '/team']
+  practice:     ['/practice-areas']
+  contact:      ['/contact', '/contact-us']
+  careers:      ['/careers', '/jobs', '/employment-opportunities']
+  fees:         ['/fees']
+  locations:    ['/locations', '/offices']
+  testimonials: ['/testimonials', '/reviews']
+  news:         ['/blog', '/news']
 
-# Per-firm caps on the final site_map, applied in this order (home first,
-# then practice, then the remaining "other" kinds each capped individually)
-# until `total` is reached.
+# Per-firm caps on the pages read: applied by P1 to the initial map (home
+# first, then practice, then every other kind) and by P2 to the links it
+# discovers on fetched pages, until `total` is reached. A kind without its
+# own line gets `other`.
 caps:
   home: 1
-  practice: 4
-  other: 2     # about, attorneys, team, contact, careers, fees — each
-  total: 14
+  practice: 6
+  careers: 3
+  contact: 2
+  about: 2
+  attorneys: 3
+  team: 3
+  locations: 2
+  testimonials: 3
+  news: 4
+  fees: 1
+  other: 2
+  total: 30
 
 sitemap:
   max_urls_read: 2000

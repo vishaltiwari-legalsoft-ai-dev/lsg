@@ -47,10 +47,10 @@ UA = "TestBot/1.0 (+https://example.com/bot)"
         ("https://example.com/law-careers", "careers"),
         ("https://example.com/hiring-personal-injury-paralegal-atlanta-ga", "careers"),
         ("https://example.com/hiring-a-lawyer", "other"),
-        ("https://example.com/blog/cost-of-hiring-motorcycle-accident-lawyer", "other"),
+        ("https://example.com/blog/cost-of-hiring-motorcycle-accident-lawyer", "news"),
         ("https://example.com/sexual-abuse-at-farragut-career-academy-in-illinois", "other"),
         ("https://example.com/fees", "fees"),
-        ("https://example.com/blog/some-post", "other"),
+        ("https://example.com/blog/some-post", "news"),
         ("https://example.com/random-page", "other"),
     ],
 )
@@ -90,9 +90,9 @@ def test_apply_caps_home_practice_and_other_kinds():
     out = _apply_caps(by_kind)
     kinds = [k for _u, k, _v in out]
     assert kinds.count("home") == 1
-    assert kinds.count("practice") == 4  # capped from 6
-    assert kinds.count("attorneys") == 2  # both, cap is 2
-    assert len(out) <= 14
+    assert kinds.count("practice") == 6  # the practice cap
+    assert kinds.count("attorneys") == 2  # both fit under the attorneys cap of 3
+    assert len(out) <= 30
 
 
 def test_apply_caps_prefers_sitemap_over_probe_within_a_kind():
@@ -102,13 +102,36 @@ def test_apply_caps_prefers_sitemap_over_probe_within_a_kind():
     assert out[0] == ("https://x/about", "about", "sitemap")
 
 
-def test_apply_caps_total_cap_of_14():
+def test_apply_caps_per_kind_and_total_of_30():
     by_kind: dict[str, list[tuple[str, str]]] = {}
-    for kind, n in [("home", 1), ("practice", 4), ("about", 2), ("attorneys", 2),
-                    ("team", 2), ("contact", 2), ("careers", 2), ("fees", 2)]:
-        by_kind[kind] = [(f"https://x/{kind}-{i}", "sitemap") for i in range(n + 3)]
+    for kind in ("home", "practice", "about", "attorneys", "team", "contact", "careers",
+                 "fees", "locations", "testimonials", "news"):
+        by_kind[kind] = [(f"https://x/{kind}-{i}", "sitemap") for i in range(8)]
     out = _apply_caps(by_kind)
-    assert len(out) == 14
+    kinds = [k for _u, k, _v in out]
+    # 1 + 6 + 2 + 3 + 3 + 2 + 3 + 1 + 2 + 3 + 4 = 30, exactly the total
+    assert (kinds.count("news"), kinds.count("testimonials"), kinds.count("locations")) == (4, 3, 2)
+    assert len(out) == 30
+
+
+@pytest.mark.parametrize(
+    "url,anchor,expected",
+    [
+        ("https://firm.com/x/", "Our Offices", "locations"),
+        ("https://firm.com/x/", "Areas We Serve", "locations"),
+        ("https://firm.com/x/", "Testimonials", "testimonials"),
+        ("https://firm.com/x/", "Case Results", "testimonials"),
+        ("https://firm.com/x/", "Blog", "news"),
+        ("https://firm.com/x/", "Firm News", "news"),
+        ("https://firm.com/case-results/", "Home", "testimonials"),
+        ("https://firm.com/blog/why-hire-us/", "Home", "news"),
+        ("https://firm.com/locations/atlanta/", "Home", "locations"),
+    ],
+)
+def test_new_page_kinds_from_anchor_and_path(url, anchor, expected):
+    from lge.planes.p.p1_site_map import classify_link
+
+    assert classify_link(url, anchor) == expected
 
 
 def test_parse_sitemap_xml_urlset():
@@ -228,19 +251,19 @@ def test_practice_and_other_kind_caps_from_flat_sitemap(db):
 
     rows = site_map_rows(db, firm_id)
     practice_urls = sorted(r["url"] for r in rows if r["page_kind"] == "practice")
-    assert len(practice_urls) == 4  # capped from 6 in the fixture
-    assert practice_urls == [
+    assert len(practice_urls) == 6  # the fixture's six all fit under the practice cap of 6
+    assert practice_urls[:4] == [
         "https://example.com/practice-areas/bankruptcy",
         "https://example.com/practice-areas/criminal",
         "https://example.com/practice-areas/family-law",
         "https://example.com/practice-areas/immigration",
     ]
     team_urls = [r["url"] for r in rows if r["page_kind"] == "team"]
-    assert len(team_urls) == 2  # both probes fit under the other-kind cap of 2
+    assert len(team_urls) == 2  # both probes fit under the team cap
     assert all(r["discovered_via"] == "probe" for r in rows if r["page_kind"] == "team")
-    # 'other' (blog posts) never makes it into site_map at all.
+    # 'other' never makes it into site_map at all.
     assert not any(r["page_kind"] == "other" for r in rows)
-    assert len(rows) <= 14
+    assert len(rows) <= 30
 
 
 # ---------------------------------------------------------------------------

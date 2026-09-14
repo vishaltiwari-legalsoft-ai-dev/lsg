@@ -157,7 +157,7 @@ def fetch_documents(
 ) -> list[dict]:
     """Raw `document` rows for one firm, oldest-fetched first (a stable,
     deterministic order every re-run reproduces)."""
-    clauses = ["firm_id = %s"]
+    clauses = ["firm_id = %s", "soft_404 = false"]
     params: list[Any] = [firm_id]
     if fetch_ok_only:
         clauses.append("fetch_ok = true")
@@ -187,7 +187,7 @@ def fetch_documents_with_text(
 ) -> list[dict]:
     """`document` LEFT JOIN `document_text` for one firm -- `main_text`/`word_count`
     come back None for a page P4 hasn't stripped yet, tolerated by callers."""
-    clauses = ["d.firm_id = %s"]
+    clauses = ["d.firm_id = %s", "d.soft_404 = false"]
     params: list[Any] = [firm_id]
     if fetch_ok_only:
         clauses.append("d.fetch_ok = true")

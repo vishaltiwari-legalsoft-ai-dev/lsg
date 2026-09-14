@@ -160,6 +160,102 @@ def test_slow_host_gets_only_what_fits_the_budget(db, tmp_path, monkeypatch):
 
 
 @respx.mock
+def test_links_on_fetched_pages_are_crawled_within_caps(db, tmp_path):
+    # D-030: the firm's testimonials, offices and news live a click or two
+    # away from the homepage. Duplicate bytes are written once; a 200 that is
+    # an error page is marked, not read.
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\n")
+    )
+    offices_html = "<html><body><p>Atlanta and Macon offices.</p></body></html>"
+    respx.get("https://example.com/").mock(return_value=httpx.Response(200, html=(
+        '<html><body><a href="/testimonials/">Testimonials</a>'
+        ' <a href="/our-offices/">Our Offices</a>'
+        ' <a href="/blog/">Blog</a> <a href="/careers-old/">Careers</a>'
+        ' <a href="/index.html">Home again</a></body></html>'
+    )))
+    respx.get("https://example.com/testimonials/").mock(return_value=httpx.Response(200, html=(
+        '<html><body><blockquote>Great lawyers.</blockquote>'
+        ' <a href="/blog/new-office-in-macon/">New office in Macon</a></body></html>'
+    )))
+    respx.get("https://example.com/our-offices/").mock(
+        return_value=httpx.Response(200, html=offices_html)
+    )
+    respx.get("https://example.com/blog/").mock(
+        return_value=httpx.Response(200, html="<html><body><h1>Page not found</h1></body></html>")
+    )
+    respx.get("https://example.com/careers-old/").mock(
+        return_value=httpx.Response(200, html=offices_html)
+    )
+    respx.get("https://example.com/index.html").mock(
+        return_value=httpx.Response(200, html="<html><body>Home page text</body></html>")
+    )
+    respx.get("https://example.com/blog/new-office-in-macon/").mock(
+        return_value=httpx.Response(
+            200, html="<html><body><p>We opened in Macon.</p></body></html>"
+        )
+    )
+
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map(db, firm_id, "https://example.com/", "home")
+
+    result = p2_fetch.run(
+        ctx(db, live=True, user_agent=UA), limit=10, store=ObjectStore(tmp_path),
+        default_interval_s="0",
+    )
+    assert result.processed == 1
+    docs = {d["url"]: d for d in get_documents(db, firm_id)}
+
+    # followed: testimonials, offices, blog (from home) and the news post (from testimonials)
+    assert "https://example.com/testimonials/" in docs
+    assert docs["https://example.com/our-offices/"]["page_kind"] == "locations"
+    assert docs["https://example.com/blog/new-office-in-macon/"]["page_kind"] == "news"
+    # a 200 that is an error page is marked, and never read for meaning
+    assert docs["https://example.com/blog/"]["soft_404"] is True
+    # the same bytes as /our-offices/ -> written once, the first URL stands
+    assert "https://example.com/careers-old/" not in docs
+    # 'home' is never crawled into (index.html), and the crawl left its map behind
+    assert "https://example.com/index.html" not in docs
+    with db.cursor() as cur:
+        cur.execute(
+            "SELECT url, page_kind FROM site_map WHERE firm_id = %s AND discovered_via = 'crawl' "
+            "ORDER BY url", (firm_id,),
+        )
+        crawled = cur.fetchall()
+    assert {r["page_kind"] for r in crawled} == {"testimonials", "locations", "news", "careers"}
+    assert "found by crawling" in result.notes[0]
+
+    # a second run: the crawl rows do not change the key, nothing is fetched again
+    again = p2_fetch.run(
+        ctx(db, live=True, user_agent=UA), limit=10, store=ObjectStore(tmp_path),
+        default_interval_s="0",
+    )
+    assert again.processed == 0 and again.skipped == 1
+
+
+@respx.mock
+def test_failed_fetch_records_its_reason(db, tmp_path):
+    respx.get("https://example.com/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nDisallow: /private\n")
+    )
+    respx.get("https://example.com/").mock(side_effect=httpx.ConnectTimeout("slow"))
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    insert_site_map(db, firm_id, "https://example.com/", "home")
+    insert_site_map(db, firm_id, "https://example.com/private", "about")
+
+    p2_fetch.run(
+        ctx(db, live=True, user_agent=UA), limit=10, store=ObjectStore(tmp_path),
+        default_interval_s="0",
+    )
+    docs = {d["url"]: d for d in get_documents(db, firm_id)}
+    assert docs["https://example.com/"]["fetch_ok"] is False
+    assert "ConnectTimeout" in docs["https://example.com/"]["fetch_error"]
+    assert docs["https://example.com/private"]["fetch_error"] == "robots.txt disallows this path"
+
+
+@respx.mock
 def test_same_url_same_hash_produces_no_duplicate_row(db, tmp_path):
     body = b"<html><body>Stable content</body></html>"
     respx.get("https://example.com/robots.txt").mock(

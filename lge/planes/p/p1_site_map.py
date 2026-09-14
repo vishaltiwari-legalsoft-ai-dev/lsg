@@ -42,7 +42,10 @@ from lge.registry import RunContext, RunResult, component
 
 logger = logging.getLogger("lge.planes.p1")
 
-_OTHER_KINDS = ("about", "attorneys", "team", "contact", "careers", "fees")
+_OTHER_KINDS = (
+    "about", "attorneys", "team", "contact", "careers", "fees",
+    "locations", "testimonials", "news",
+)
 
 
 @functools.lru_cache(maxsize=1)
@@ -91,8 +94,8 @@ def _sitemap_cap() -> int:
 # Bump whenever the mapper's own logic changes (link patterns, probe paths, caps):
 # it joins the domain in the idempotency key, so already-mapped firms are mapped
 # again without the domain having to change. v2: hiring anchors and paths read off
-# real homepages (D-026).
-MAPPER_VERSION = "2"
+# real homepages (D-026). v3: locations, testimonials and news kinds; caps to 30.
+MAPPER_VERSION = "3"
 
 
 def mapper_input_hash(domain: str | None) -> str:
@@ -206,6 +209,16 @@ _ANCHOR_KINDS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("attorneys", re.compile(
         r"\b(?:attorneys?|lawyers?|our (?:legal )?team"
         r"|meet (?:the|our) (?:team|attorneys|lawyers)|our people)\b", re.I)),
+    ("locations", re.compile(
+        r"\b(?:locations?|offices?|our offices|office locations?|areas we serve"
+        r"|service areas?)\b", re.I)),
+    ("testimonials", re.compile(
+        r"\b(?:testimonials?|reviews?|client reviews|what (?:our )?clients say"
+        r"|success stories|case results?|results|verdicts?(?: (?:&|and) settlements)?)\b",
+        re.I)),
+    ("news", re.compile(
+        r"\b(?:blog|news|articles?|press|media|insights|firm news|updates|in the news)\b",
+        re.I)),
     ("practice", re.compile(
         r"\b(?:practice areas?|areas of practice|what we do|our services|cases we handle"
         r"|practice)\b", re.I)),
@@ -288,7 +301,7 @@ def _apply_caps(by_kind: dict[str, list[tuple[str, str]]]) -> list[tuple[str, st
     take("home", caps["home"])
     take("practice", caps["practice"])
     for kind in _OTHER_KINDS:
-        take(kind, caps["other"])
+        take(kind, caps.get(kind, caps["other"]))
     return out
 
 
@@ -339,7 +352,8 @@ async def _map_one_firm(
 
     # Link discovery: read the homepage's own navigation before any blind probe,
     # whenever the sitemap left a content kind uncovered.
-    wanted = ("practice", "attorneys", "team", "about", "careers", "fees")
+    wanted = ("practice", "attorneys", "team", "about", "careers", "fees",
+              "locations", "testimonials", "news")
     if not robots.slow and any(not by_kind.get(k) for k in wanted):
         home_url = f"https://{domain}/"
         if robots.decision(home_url, user_agent) != "disallowed":

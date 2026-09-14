@@ -59,6 +59,7 @@ def _select_eligible_documents(conn: psycopg.Connection, firm_ids: list[str]) ->
             WHERE d.firm_id = ANY(%s)
               AND d.fetch_ok = true
               AND d.status_code BETWEEN 200 AND 299
+              AND d.soft_404 = false
               AND d.object_key IS NOT NULL
               AND (dt.document_id IS NULL OR dt.extractor <> %s)
             ORDER BY d.firm_id, d.id

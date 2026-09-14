@@ -35,7 +35,8 @@ def test_nav_links_are_classified_by_anchor_text_and_practice_vocabulary():
 def test_offsite_media_fragments_and_unclassifiable_links_are_dropped():
     urls = [u for u, _k in extract_homepage_links(HOME, "https://firm.com/", "firm.com")]
     assert not any("facebook" in u or u.endswith(".pdf") or "tel:" in u for u in urls)
-    assert "https://firm.com/blog/news-roundup/" not in urls   # 'other' is not kept
+    assert "https://firm.com/blog/news-roundup/" in urls   # the blog is a kind now (D-030)
+    assert "https://firm.com/#main" not in urls
     assert urls.count("https://firm.com/car-accidents/") == 1  # query-string dupe collapsed
 
 

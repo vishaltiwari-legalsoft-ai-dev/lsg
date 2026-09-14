@@ -6,23 +6,26 @@ Flagging is a pure DB read/write over already-fetched rows, so it runs
 regardless of the live gate; an actual render (launching a browser) is live
 network work and is gated the same way every other fetch is.
 
-Playwright is not installed in this environment (Windows Application
-Control is likely to block its browser download even if it were) -- this
-component still implements the gate and the render-attempt path so it is
-correct if playwright is ever added, but on THIS box it always takes the
-"render unavailable" branch and reports how many pages would have
-rendered, per the task brief.
+The renderer is the system Chrome (`--headless --dump-dom`, under our own
+honest User-Agent), found via LGE_CHROME or the usual install paths (D-030).
+Playwright's own browser download is blocked by Windows Application Control
+on this machine; the installed Chrome is not. With no browser at all the
+component still flags pages and reports how many would have rendered.
 """
 
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import logging
+import os
+import subprocess
+from pathlib import Path
 
 import psycopg
 
 from lge.fetch.client import EmptyUserAgentError
+from lge.fetch.decode import decode_html
+from lge.fetch.pagecheck import visible_words
 from lge.fetch.selection import select_firm_ids
 from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
@@ -32,28 +35,55 @@ logger = logging.getLogger("lge.planes.p3")
 WORD_COUNT_GATE = 500
 
 
+_CHROME_CANDIDATES = (
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+)
+RENDER_TIMEOUT_S = 45
+
+
+def chrome_path() -> str | None:
+    """The system Chrome, if there is one (LGE_CHROME overrides). Playwright's
+    own browser download is blocked on this machine; the installed Chrome is
+    not, and `--headless --dump-dom` is all a render needs (D-030)."""
+    override = os.environ.get("LGE_CHROME")
+    if override:
+        return override if Path(override).is_file() else None
+    for candidate in _CHROME_CANDIDATES:
+        if Path(candidate).is_file():
+            return candidate
+    return None
+
+
 def render_available() -> bool:
-    """True if `playwright` is importable. Does not attempt to launch a
-    browser -- that can still fail separately (binaries missing, OS policy),
-    which `_attempt_render` handles per-document."""
-    return importlib.util.find_spec("playwright") is not None
+    """True when a browser can be launched. A launch can still fail (OS
+    policy, a hung page), which `_attempt_render` handles per document."""
+    return chrome_path() is not None
 
 
 def _render_page_sync(url: str, user_agent: str) -> bytes | None:  # pragma: no cover
-    """Best-effort real render. Only ever called when render_available() is
-    True, which it is not in this environment -- exercised in tests via a
-    monkeypatched replacement, never this body."""
-    from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        try:
-            page = browser.new_page(user_agent=user_agent)
-            page.goto(url, timeout=30_000, wait_until="networkidle")
-            html = page.content()
-        finally:
-            browser.close()
-    return html.encode("utf-8")
+    """The page's DOM after JavaScript ran, from headless Chrome under our own
+    honest identity. Exercised in tests via a monkeypatched replacement."""
+    binary = chrome_path()
+    if binary is None:
+        return None
+    proc = subprocess.run(
+        [
+            binary, "--headless=new", "--disable-gpu", "--no-first-run",
+            "--no-default-browser-check", "--disable-extensions", "--hide-scrollbars",
+            f"--user-agent={user_agent}", "--virtual-time-budget=8000",
+            f"--timeout={(RENDER_TIMEOUT_S - 10) * 1000}", "--dump-dom", url,
+        ],
+        capture_output=True, timeout=RENDER_TIMEOUT_S, check=False,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise RuntimeError(
+            f"chrome exited {proc.returncode}: {proc.stderr.decode('utf-8', 'replace')[-200:]}"
+        )
+    return proc.stdout
 
 
 def _select_render_candidates(conn: psycopg.Connection, firm_ids: list[str]) -> list[dict]:
@@ -106,17 +136,21 @@ def _attempt_render(
         return False
     object_key = store.put(html)
     with conn.cursor() as cur:
+        # The rendered DOM is the document now: new bytes, new hash, new word
+        # count -- and no extracted text, so P4 reads it again.
         cur.execute(
-            "UPDATE document SET rendered = true, object_key = %s, bytes = %s WHERE id = %s",
-            (object_key, len(html), row["id"]),
+            "UPDATE document SET rendered = true, object_key = %s, content_hash = %s, "
+            "bytes = %s, word_count = %s WHERE id = %s",
+            (object_key, object_key, len(html), visible_words(decode_html(html)), row["id"]),
         )
+        cur.execute("DELETE FROM document_text WHERE document_id = %s", (row["id"],))
     return True
 
 
 @component(
     "p3_render",
     "P",
-    "Render fallback gate: flag thin-text pages, render if playwright is available",
+    "Render fallback gate: flag thin-text pages, render JavaScript shells with the system Chrome",
 )
 def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) -> RunResult:
     store = store or get_store()
@@ -140,9 +174,9 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         by_firm.setdefault(str(row["firm_id"]), []).append(row)
 
     hashes = {fid: _input_hash(rows) for fid, rows in by_firm.items()}
-    have_playwright = render_available()
+    have_browser = render_available()
     live = bool(ctx.settings.live) or str(opts.get("live", "")) in ("1", "true", "True")
-    will_attempt_render = have_playwright and live
+    will_attempt_render = have_browser and live
 
     if will_attempt_render and not ctx.settings.user_agent.strip():
         raise EmptyUserAgentError(
@@ -166,7 +200,7 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
             result.processed += 1
         ctx.checkpoint()
 
-    if have_playwright:
+    if have_browser:
         if live:
             result.notes.append(
                 f"flagged {total_flagged} page(s) under {WORD_COUNT_GATE} words; "
@@ -175,11 +209,11 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         else:
             result.notes.append(
                 f"flagged {total_flagged} page(s) under {WORD_COUNT_GATE} words; "
-                f"playwright is importable but live=0 -- no render attempted"
+                f"a browser is available but live=0 -- no render attempted"
             )
     else:
         result.notes.append(
-            f"render unavailable (playwright not importable): {total_flagged} page(s) "
+            f"render unavailable (no Chrome found; set LGE_CHROME): {total_flagged} page(s) "
             f"under {WORD_COUNT_GATE} words would have rendered"
         )
 

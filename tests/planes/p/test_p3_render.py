@@ -1,6 +1,6 @@
 """P3 render gate: fires only when static text is under 500 words, flags
-`document.render_needed`, and reports "render unavailable" when playwright
-is not importable -- which it never is in this environment."""
+`document.render_needed`, renders through the system Chrome when there is
+one, and reports "render unavailable" when there is not."""
 
 from __future__ import annotations
 
@@ -34,9 +34,17 @@ def get_document(conn, doc_id):
         return cur.fetchone()
 
 
-def test_render_available_is_false_in_this_environment():
-    # playwright is deliberately not installed here -- this is the load-
-    # bearing fact the whole component's "unavailable" branch depends on.
+def test_render_available_follows_the_chrome_binary(monkeypatch, tmp_path):
+    # The renderer is the system Chrome (D-030): no browser, no render.
+    original = p3_render.chrome_path
+    monkeypatch.setattr(p3_render, "chrome_path", lambda: None)
+    assert p3_render.render_available() is False
+    fake = tmp_path / "chrome.exe"
+    fake.write_bytes(b"")
+    monkeypatch.setenv("LGE_CHROME", str(fake))
+    monkeypatch.setattr(p3_render, "chrome_path", original)
+    assert p3_render.render_available() is True
+    monkeypatch.setenv("LGE_CHROME", str(tmp_path / "missing.exe"))
     assert p3_render.render_available() is False
 
 
@@ -56,7 +64,7 @@ def test_thin_page_is_flagged_render_needed(db):
 
     doc = get_document(db, doc_id)
     assert doc["render_needed"] is True
-    assert doc["rendered"] is False  # never actually rendered -- playwright unavailable
+    assert doc["rendered"] is False  # never actually rendered -- live=0
 
 
 def test_page_over_the_gate_is_not_flagged(db):
@@ -91,7 +99,8 @@ def test_404_is_never_flagged_even_with_low_word_count(db):
     assert get_document(db, doc_id)["render_needed"] is False
 
 
-def test_reports_render_unavailable_with_a_count(db):
+def test_reports_render_unavailable_with_a_count(db, monkeypatch):
+    monkeypatch.setattr(p3_render, "render_available", lambda: False)  # no browser here
     firm_id = make_firm(db, domain="example.com")
     make_lead(db, firm_id)
     insert_document(db, firm_id, url="https://example.com/a", word_count=10)
@@ -127,11 +136,9 @@ def test_rerun_with_unchanged_documents_is_a_no_op(db):
     assert r2.skipped == 1
 
 
-def test_when_playwright_is_available_and_live_it_attempts_render(db, monkeypatch, tmp_path):
-    """Simulates the "playwright IS importable" branch (not true on this
-    box) by monkeypatching render_available() and the render function, so
-    the attempt/record-keeping path is proven even though it never runs for
-    real here."""
+def test_when_a_browser_is_available_and_live_it_attempts_render(db, monkeypatch, tmp_path):
+    """The render function is replaced so the attempt/record-keeping path is
+    proven without launching Chrome in the test."""
     firm_id = make_firm(db, domain="example.com")
     make_lead(db, firm_id)
     doc_id = insert_document(db, firm_id, url="https://example.com/", word_count=42)
