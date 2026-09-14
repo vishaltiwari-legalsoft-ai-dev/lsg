@@ -65,6 +65,7 @@ flows:
       - component: reconcile
       - gate: g3_tier_distribution
       - component: r_site_contacts
+      - component: r_site_emails
       - component: r3_email_pattern
       - component: r4_verify
       - component: classify

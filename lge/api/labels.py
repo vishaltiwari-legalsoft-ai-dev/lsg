@@ -42,6 +42,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "rules:p7": "Firm website (page code)",
     "rules:practice": "Firm website (practice pages)",
     "rules:site": "Firm website",
+    "site:page": "Firm website (page text)",
     "internal_firms": "Purchased firm list",
     "internal_jobs": "Job history file",
     "careers": "Careers page",
@@ -342,6 +343,9 @@ _ATTR_LABELS: dict[str, str] = {
     "vendor_headcount_range": "Vendor headcount range (not used for tier)",
     "email_pattern": "Email pattern",
     "languages": "Languages (not used for tier)",
+    "site_emails": "Emails on the site (not used for tier)",
+    "general_email": "General inbox",
+    "hiring_email": "Hiring inbox",
 }
 
 

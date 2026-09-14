@@ -49,6 +49,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from lge.classify.people import person_name
 from lge.classify.roles import classify_role
 from lge.registry import RunContext, RunResult, component
 
@@ -64,6 +65,8 @@ _WS_RE = re.compile(r"\s+")
 
 def _role_rank(role: str | None) -> int:
     return _ROLE_RANK.get(role or "unknown", 0)
+
+
 
 
 def _norm_person_name(name: str | None) -> str:
@@ -194,8 +197,9 @@ def _apply_claim_entries(
     counts: dict[str, int],
 ) -> None:
     for entry in entries:
-        name = (entry.get("name") or "").strip()
+        name = person_name(entry.get("name"))
         if not name:
+            counts["not_a_person"] = counts.get("not_a_person", 0) + 1
             continue
         key = _norm_person_name(name)
         if not key:

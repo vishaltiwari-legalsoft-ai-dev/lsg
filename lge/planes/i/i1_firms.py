@@ -34,6 +34,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from lge.classify.entity import classify_entity
+from lge.classify.people import person_name
 from lge.classify.roles import classify_role
 from lge.norm import NORM_VERSION, norm_domain, norm_email_domain, norm_name, norm_practice
 from lge.registry import RunContext, RunResult, component
@@ -584,12 +585,21 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
     email_rows: list[tuple] = []
     skipped = 0
 
+    not_people = 0
     for row in obs_rows:
         payload = row["payload"]
         firm_id = str(row["firm_id"])
-        full_name = (payload.get("Full Name") or "").strip()
+        # The vendor's "Full Name" is not always a person ("Arizona Litigation
+        # Support Court Reporters") and often carries credentials ("Jeremy D.
+        # Raincrow, J.D., Ph.D."). Same rule as every other contact source.
+        raw_name = (payload.get("Full Name") or "").strip()
+        full_name = person_name(raw_name)
         email_raw = (payload.get("Business Email") or "").strip()
         email = email_raw.lower()
+        if raw_name and not full_name:
+            not_people += 1
+            skipped += 1
+            continue
         if not full_name or not email:
             skipped += 1
             continue
@@ -659,6 +669,7 @@ def i1_contacts(ctx: RunContext, **opts: object) -> RunResult:
         f"contacts inserted: {inserted_contacts}",
         f"contact_email rows inserted: {inserted_emails}",
         f"skipped (duplicate person, or missing name/email): {skipped}",
+        f"not a person (firm names, page titles, one-word names): {not_people}",
     ]
     return RunResult(processed=len(contact_rows), skipped=skipped, failed=0, notes=notes)
 

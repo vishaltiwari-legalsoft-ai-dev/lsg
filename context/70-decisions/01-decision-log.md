@@ -485,6 +485,34 @@ band tabs select on `pipeline_band`; Excluded is only what is actually out; ever
 code has a plain-word label (`reason_display`). Also found here: `days_open` compared a +05:30
 timestamp's date with a UTC date and showed "open -1 days" — one calendar (UTC) now.
 
+## D-028 · Emails printed on the firm's site are read; a contact must be a person
+
+**Found (15 Sep 2026):** every email on file came from the purchased list. 100 of the 157 reached
+firms print an address on their own pages, 52 a personal one (michelle@dressielaw.com,
+dfried@friedbonder.com), and none was captured. Separately, 73 `contact` rows were not people —
+"Chicago Injury Attorneys Near Northwestern Memorial Hospital", "Lawyers With An Edge", "Beattie
+Law Firm", "Administrator" — from structured data, AI reads and the vendor list alike, and R3 had
+minted email addresses for them.
+
+**Rulings:**
+- **`r_site_emails` (Plane R)** reads the stored HTML, never re-fetches: `mailto:` links, visible
+  text and "[at]" spelling, on the firm's own domain only. A personal address attaches to the
+  one contact whose name renders to that local part under R3's patterns; an ambiguous or
+  unmatched local part is never guessed onto a person. General inboxes become the
+  `general_email` claim, hiring inboxes `hiring_email`, everything found `site_emails`
+  (source `site:page`). Rows are `unverified`; R4 verifies. Cloudflare's `data-cfemail`
+  obfuscation is deliberately not decoded — it is an anti-harvesting measure.
+- **`lge.classify.people.person_name`** gates every contact source: title suffixes (" -
+  Personal Injury Lawyer"), credentials (", J.D., Ph.D.", "Esq.", "Jr.") and honorifics are
+  stripped; a name is a person when it has two to four tokens, no digits, no "&", and no
+  practice or firm words. The vendor loader, P5's people and the AI's decision makers all pass
+  through it. The 73 existing non-persons were removed (2 leads re-pointed to another
+  decision-maker, 1 left without one) and 261 names cleaned.
+
+**Effect on the probe:** 17 site-printed addresses now sit on named owners/office managers at 13
+firms; 54 firms have a general inbox on record; 65 of 157 reached firms have a first-party
+(non-vendor) email for a decision-maker.
+
 ---
 
 ## Standing rulings that were never in dispute

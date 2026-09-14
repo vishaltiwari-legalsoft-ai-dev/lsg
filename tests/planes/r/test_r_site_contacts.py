@@ -60,6 +60,49 @@ def _contacts(conn, firm_id) -> list[dict]:
         return cur.fetchall()
 
 
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("Paul A. Greenberg - Personal Injury Lawyer", "Paul A. Greenberg"),  # suffix is a title
+        ("Jeremy D. Raincrow, J.D., Ph.D.", "Jeremy D. Raincrow"),  # credentials after the comma
+        ("C. Richard (Rick) Rayburn, Jr.", "C. Richard (Rick) Rayburn"),
+        ("Rich Kovarsky, Pe, Dfe, Cfi, Cfei", "Rich Kovarsky"),
+        ("Attorney Tiffany Lunn", "Tiffany Lunn"),  # honorific, not a practice word
+        ("Michael Lijoi Jr.", "Michael Lijoi"),  # credentials with no comma
+        ("Elena Butko Esq.", "Elena Butko"),
+        ("Robert C Hahn, Iii", "Robert C Hahn"),
+        ("Shana De Caro", "Shana De Caro"),
+        ("Valerie Harris Adler", "Valerie Harris Adler"),
+        ("Chicago Injury Attorneys Near Northwestern Memorial Hospital", None),
+        ("Chicago Car Accident Center", None),
+        ("Lawyers With An Edge", None),
+        ("Rosenberg, Minc, Falkoff &amp; Wolff, LLP.", None),
+        ("Friend, Levinson & Turner LTD", None),
+        ("Arizona Litigation Support Court Reporters", None),
+        ("Briskman Briskman Greenberg LLC", None),
+        ("Law Office of Jane Doe", None),
+        ("24/7 Intake Team", None),
+        ("Madonna", None),  # one token is not a person we can address
+        ("", None),
+    ],
+)
+def test_person_name_rejects_page_titles_and_firm_names(raw, expected):
+    assert r_site_contacts.person_name(raw) == expected
+
+
+def test_page_titles_in_claims_never_become_contacts(db):
+    firm_id = make_firm(db)
+    _write_claim(
+        db, firm_id, "jsonld_people",
+        [{"name": "Chicago Injury Attorneys Near Northwestern Memorial Hospital",
+          "title": "Attorney"},
+         {"name": "Paul A. Greenberg - Personal Injury Lawyer", "title": "Partner"}],
+        "site:jsonld", 0.95, datetime(2026, 9, 15, tzinfo=UTC),
+    )
+    r_site_contacts.run(_ctx(db))
+    assert [c["full_name"] for c in _contacts(db, firm_id)] == ["Paul A. Greenberg"]
+
+
 def test_llm_owner_and_jsonld_office_manager_become_contacts(db):
     firm_id = make_firm(db)
     now = datetime(2026, 1, 1, tzinfo=UTC)
