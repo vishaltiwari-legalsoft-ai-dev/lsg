@@ -50,6 +50,32 @@ def _compiled_tools() -> tuple[dict, ...]:
     return tuple(tools)
 
 
+# URL- and host-shaped tokens inside an inline script. The fingerprints are
+# matched against these, never against the script itself: every fingerprint
+# begins with `(?:[\w-]+\.)*`, which backtracks quadratically on minified
+# JavaScript ("a.b.c.d(...)" for 300 KB), and one firm's thirty pages took
+# P7 minutes of CPU per page on the probe (D-034).
+_URL_TOKEN_RE = re.compile(
+    r"(?:https?:)?//[\w.-]+(?:/[^\s'\"<>)]*)?"
+    r"|\b[\w-]+(?:\.[\w-]+)*\.(?:com|net|org|io|app|cloud|us|ai|co|legal|law|chat|live)\b",
+    re.IGNORECASE,
+)
+_MAX_TOKENS_PER_SCRIPT = 500
+
+
+def _script_tokens(text: str) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for m in _URL_TOKEN_RE.finditer(text):
+        token = m.group(0)
+        if token not in seen:
+            seen.add(token)
+            out.append(token)
+            if len(out) >= _MAX_TOKENS_PER_SCRIPT:
+                break
+    return out
+
+
 def _collect_haystacks(tree: lxml.html.HtmlElement) -> list[str]:
     haystacks: list[str] = []
     for el in tree.iter("script"):
@@ -57,7 +83,7 @@ def _collect_haystacks(tree: lxml.html.HtmlElement) -> list[str]:
         if src:
             haystacks.append(src)
         if el.text and el.text.strip():
-            haystacks.append(el.text)
+            haystacks.extend(_script_tokens(el.text))
     for el in tree.iter("link"):
         href = el.get("href")
         if href:

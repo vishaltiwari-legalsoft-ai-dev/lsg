@@ -657,6 +657,25 @@ anything lacking in the website.
   touch-1 variant, so they raise the intent score and show as proof but do not, on their
   own, start a sequence -- that is Step 3's revamp.
 
+## D-034 · The probe crawl at thirty pages: what broke, what was fixed
+
+**Found (15 Sep 2026)** running the rebuilt crawler over the 242 probe firms (2,838 pages OK
+across 200 firms, 441 found by crawling, 723 not fetched behind an edge block):
+
+- **The per-host time budget bounded the map, not the crawl.** A host asking Crawl-delay 30s
+  got its thirty pages in fifteen minutes. Pages found by crawling now count against the same
+  budget (`page_budget = min(caps.total, 300s / Crawl-delay)`).
+- **The render gate would have rendered every thin page.** With contact and office pages in
+  the map, 1,037 pages were under 500 words; 29 were JavaScript shells. P3 renders only a
+  shell (a root element and scripts, almost no text); a thin static page is left alone.
+- **P7's fingerprints backtracked on minified JavaScript.** Every pattern opens with
+  `(?:[\w-]+\.)*`, and the haystack was the whole inline script; 300 KB of `a.b.c.d(...)` cost
+  minutes per page. Inline scripts now contribute only their URL- and host-shaped tokens.
+- **`once()` masked the real error.** A unique violation inside a body aborted the
+  transaction, and the 'failed' mark failed in turn. The body runs under a savepoint now.
+- **A render can produce a DOM already on file** for the same URL (`(url, content_hash)` is
+  unique). P3 marks the row rendered and leaves it as it was.
+
 ---
 
 ## Standing rulings that were never in dispute

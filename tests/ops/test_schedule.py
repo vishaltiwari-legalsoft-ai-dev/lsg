@@ -39,8 +39,8 @@ def test_load_flows_has_the_three_required_flows():
 
     nightly_names = [s.get("component") or s.get("gate") for s in flows["nightly"]]
     assert nightly_names == [
-        "ja1_careers", "ja6_normalise", "ja6_closure", "score", "build_list",
-        "observe_snapshot", "alerts",
+        "ja1_careers", "ja6_normalise", "ja6_closure", "ja7_pain_signals", "score",
+        "build_list", "observe_snapshot", "alerts",
     ]
 
 

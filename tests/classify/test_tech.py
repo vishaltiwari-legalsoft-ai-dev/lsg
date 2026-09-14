@@ -38,6 +38,24 @@ def test_detects_inline_script_text():
     assert "mycase" in names
 
 
+def test_minified_inline_script_is_scanned_by_token_not_by_backtracking():
+    # Found on the probe: 300 KB of "a.b.c.d(...)" made every fingerprint's
+    # leading (?:[\w-]+\.)* backtrack for minutes per page. The host inside
+    # the script is still found, in well under a second.
+    import time
+
+    minified = "var x=a.b.c.d.e.f(g.h.i);" * 12000  # ~300 KB
+    html = (
+        "<html><body><script>" + minified
+        + 'loadWidget("https://intake.mycase.com/widget.js");' + minified
+        + "</script></body></html>"
+    )
+    started = time.perf_counter()
+    hits = detect_tech(html)
+    assert time.perf_counter() - started < 2.0
+    assert "mycase" in {h.name for h in hits}
+
+
 def test_detects_link_href():
     html = '<html><head><link rel="stylesheet" href="https://cdn.filevine.com/app.css">'
     hits = detect_tech(html)
