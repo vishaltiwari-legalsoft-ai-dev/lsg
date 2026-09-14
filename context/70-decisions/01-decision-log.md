@@ -608,6 +608,28 @@ the emails, names and links that outreach needs.
   address is words, never a bare number. Found on the fixture, would have been found on the
   first real contact page.
 
+## D-032 · Step 2, part C: two web searches, logged once, LinkedIn never fetched
+
+**Asked for (15 Sep 2026):** with a name, search `<firm> + <person name> + linkedin profile`;
+without one, `<firm> + Location + Google business reviews`.
+
+**Rulings:**
+- **`r_search_links`** (Plane R) runs both under `live=1`, through the same throttled
+  DuckDuckGo call the website check uses. Per firm: at most four people without a LinkedIn
+  URL, owners first, then admins, then attorneys; then one reviews query.
+- **A profile is adopted only when the result names the person**: a `linkedin.com/in/`
+  result whose title or slug carries both name tokens. The firm's name in the title breaks
+  ties between namesakes -- minus the person's own surname, since an eponymous firm proves
+  nothing. Only the URL is written (`contact.linkedin_url`); LinkedIn is never fetched.
+- **Reviews are read off the snippets**, never off Google itself: the Maps result's
+  "4.9 (312)" when there is one, otherwise the largest "N reviews" printed anywhere. Claims
+  under `search:ddg`: `google_business_url`, `google_rating`, `review_count` (now with a
+  precedence entry, so the fit score's `review_count > 40` reads it) and
+  `search_review_snippets` for Part D.
+- **`search_log`** (migration 095) records every query with the results considered and the
+  outcome; a person or firm is not searched again for 90 days, a failed search is retried
+  next run. The adopted URL or claim can always be traced to the result that produced it.
+
 ---
 
 ## Standing rulings that were never in dispute

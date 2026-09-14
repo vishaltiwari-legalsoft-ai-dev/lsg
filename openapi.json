@@ -434,6 +434,17 @@
             "title": "Id",
             "type": "string"
           },
+          "linkedin_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Url"
+          },
           "phone": {
             "anyOf": [
               {

@@ -78,6 +78,7 @@ class ContactSummary(BaseModel):
     email_status: EmailStatus | None
     email_status_display: str | None
     phone: str | None
+    linkedin_url: str | None = None
 
 
 class LeadRow(BaseModel):

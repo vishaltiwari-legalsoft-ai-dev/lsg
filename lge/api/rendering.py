@@ -106,6 +106,7 @@ def build_contact_summary(
             else None
         ),
         phone=contact_row.get("phone_direct"),
+        linkedin_url=contact_row.get("linkedin_url"),
     )
 
 

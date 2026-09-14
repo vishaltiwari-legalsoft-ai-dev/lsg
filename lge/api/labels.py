@@ -43,6 +43,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "rules:practice": "Firm website (practice pages)",
     "rules:site": "Firm website",
     "site:page": "Firm website (page text)",
+    "search:ddg": "Web search (DuckDuckGo)",
     "internal_firms": "Purchased firm list",
     "internal_jobs": "Job history file",
     "careers": "Careers page",
@@ -363,6 +364,10 @@ _ATTR_LABELS: dict[str, str] = {
     "online_intake_form": "Online intake form",
     "copyright_year": "Copyright year in the footer",
     "site_gaps": "What the site lacks",
+    # r_search_links (D-032): what a web search says.
+    "google_business_url": "Google Business listing",
+    "google_rating": "Google rating",
+    "search_review_snippets": "Review snippets from search (not used for tier)",
 }
 
 _GAP_LABELS: dict[str, str] = {
@@ -431,6 +436,10 @@ def _format_site_fact(attr: str, value: Any) -> str | None:
         if not value:
             return "Nothing missing among the pages read"
         return ", ".join(gap_label(g["gap"]) for g in value if isinstance(g, dict))
+    if attr == "search_review_snippets" and isinstance(value, list):
+        parts = [str(s.get("body") or s.get("title") or "")[:100] for s in value[:2]
+                 if isinstance(s, dict)]
+        return "; ".join(p for p in parts if p) + _more(len(parts), len(value)) or None
     return None
 
 

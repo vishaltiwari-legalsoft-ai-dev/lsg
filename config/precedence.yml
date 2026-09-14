@@ -164,13 +164,20 @@ precedence:
   repeat_role_count:
     - internal_jobs
 
-  # first_seen_bar_admission, review_count, paid_ads_active: not given an
-  # explicit precedence by context/30-data-model/04-attribute-reconciliation.md
-  # or the task brief's mapping (no source yet emits claims for them --
-  # review_count/paid_ads_active await a Places/ad-tracker integration,
-  # first_seen_bar_admission awaits bar:<state>). Deliberately left out of
-  # this map: reconcile() falls back to its documented default for an attr
-  # with no configured precedence -- agree/one-source resolve normally,
-  # disagreement is broken by most-recently-observed claim (no escalation,
-  # since none of the three is tier-determining). Add a list here the day a
-  # real source shows up rather than guessing an order now.
+  # review_count: read off the snippets a web search returns for the firm's
+  # Google listing (r_search_links, D-032). A Places integration, when there
+  # is one, goes above it.
+  review_count:
+    - places
+    - search:ddg
+
+  # first_seen_bar_admission, paid_ads_active: not given an explicit
+  # precedence by context/30-data-model/04-attribute-reconciliation.md or the
+  # task brief's mapping (no source yet emits claims for them --
+  # paid_ads_active awaits an ad-tracker integration, first_seen_bar_admission
+  # awaits bar:<state>). Deliberately left out of this map: reconcile() falls
+  # back to its documented default for an attr with no configured precedence
+  # -- agree/one-source resolve normally, disagreement is broken by
+  # most-recently-observed claim (no escalation, since neither is
+  # tier-determining). Add a list here the day a real source shows up rather
+  # than guessing an order now.
