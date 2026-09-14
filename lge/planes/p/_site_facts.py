@@ -55,6 +55,19 @@ def _attorney_re() -> re.Pattern[str]:
 
 
 @functools.lru_cache(maxsize=1)
+def _not_a_person_re() -> re.Pattern[str]:
+    return re.compile(
+        r"\b(?:" + "|".join(f"(?:{p})" for p in config()["not_a_person_words"]) + r")\b",
+        re.IGNORECASE,
+    )
+
+
+@functools.lru_cache(maxsize=1)
+def _not_a_title_re() -> re.Pattern[str]:
+    return _alternation("not_a_title_words")
+
+
+@functools.lru_cache(maxsize=1)
 def _profile_path_re() -> re.Pattern[str]:
     return re.compile(config()["profile_path"], re.IGNORECASE)
 
@@ -191,7 +204,12 @@ def find_addresses(text: str) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 _NAME_TAGS = ("h1", "h2", "h3", "h4", "h5", "strong", "b", "a", "span", "p", "div", "dt")
-_NAME_CLASS_RE = re.compile(r"name|title|member|attorney|lawyer|staff|team|person|bio|card", re.I)
+# Elements whose class says "this is a person's name". Not "title" (section
+# titles) and not "team"/"card" (whole cards): those brought in headings.
+_NAME_CLASS_RE = re.compile(
+    r"\bname\b|member-name|attorney-name|staff-name|person|author|bio", re.I
+)
+_HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5"})
 _MAX_TITLE_CHARS = 90
 _MAX_CONTAINER_CHARS = 600
 _MAX_PEOPLE = 60
@@ -202,36 +220,35 @@ _NAME_PARTICLES = frozenset({"de", "da", "del", "della", "di", "van", "von", "de
 
 
 def name_like(text: str) -> str | None:
-    """A person's name as printed on a page: `person_name` plus two page
+    """A person's name as printed on a page: `person_name` plus the page
     rules -- no job word in it ("Senior Litigation Paralegal" is a title, not
-    a person) and Title Case tokens ("Learn more" is a link, not a person)."""
-    name = person_name(clean(text))
-    if not name or _title_re().search(name):
+    a person), no heading/place/practice word ("Bronx Locations", "Premises
+    Liability"), Title Case tokens ("Learn more" is a link), no punctuation
+    that a name never carries, and a surname longer than one letter."""
+    text = clean(text)
+    if not text or ":" in text or "?" in text or "!" in text:
         return None
-    for token in name.split():
+    name = person_name(text)
+    if not name or _title_re().search(name) or _not_a_person_re().search(name):
+        return None
+    tokens = name.split()
+    if len(tokens[-1].rstrip(".")) < 2:
+        return None
+    for token in tokens:
         if token.lower() in _NAME_PARTICLES or token[0].isupper():
             continue
         return None
     return name
 
 
-# "View Attorney Bio", "Read Full Profile", "Meet Our Attorneys": link labels
-# and headings that contain a job word without being anyone's title.
-_NOT_A_TITLE_RE = re.compile(
-    r"^(?:view|read|see|learn|meet|click|more|our|the|all|contact|email|call)\b"
-    r"|\b(?:bio|bios|profile|profiles|biography|more|page|team|firm|us)$"
-    r"|\b(?:near|serving|in|for|with)\b",
-    re.I,
-)
-
-
 def looks_like_title(text: str) -> bool:
-    """A short line naming a job -- not a sentence about one, and not a link
-    to one."""
+    """A short line naming a job -- not a sentence about one, not a link to
+    one ("View Attorney Bio"), not an organisation ("Illinois Trial Lawyers
+    Association") and not a page heading ("Atlanta Wrongful Death Lawyers")."""
     text = clean(text)
     if not text or len(text) > _MAX_TITLE_CHARS or text.count(".") > 2:
         return False
-    if _NOT_A_TITLE_RE.search(text):
+    if _not_a_title_re().search(text):
         return False
     return bool(_title_re().search(text))
 
@@ -266,12 +283,16 @@ def _title_near(el: lxml.html.HtmlElement, name: str) -> str | None:
             at = next(i for i, p in enumerate(pieces) if name in p or p in name)
         except StopIteration:
             continue
-        for piece in pieces[at + 1:]:
+        # The title is printed right next to the name: the next few chunks,
+        # up to the next person's name.
+        for piece in pieces[at + 1: at + 4]:
             if name_like(piece):
                 break
             if looks_like_title(piece):
                 return piece
-        if level == 0:
+        # Inside a small card (a few chunks) the title may sit above the name.
+        # Never on a flat page, where "above" is the previous person's title.
+        if level == 0 and len(pieces) <= 4:
             for piece in pieces[:at]:
                 if looks_like_title(piece) and not name_like(piece):
                     return piece
@@ -326,9 +347,10 @@ def find_people(
     for el in tree.iter(*_NAME_TAGS):
         if el.tag == "a":
             continue
-        if el.tag in ("span", "p", "div") and not _NAME_CLASS_RE.search(
-            (el.get("class") or "") + " " + (el.get("id") or "")
-        ):
+        name_classed = bool(
+            _NAME_CLASS_RE.search((el.get("class") or "") + " " + (el.get("id") or ""))
+        )
+        if el.tag not in _HEADING_TAGS and not name_classed:
             continue
         text = clean(el.text_content())
         if len(text) > 60:
@@ -337,7 +359,10 @@ def find_people(
         if not name:
             continue
         title = _title_near(el, name)
-        if strict and not title and name.casefold() not in people:
+        # A name with no title printed next to it counts only when the page
+        # says it is a name (a name-classed element) or a profile link already
+        # brought it in: a bare heading that looks like a name is a heading.
+        if not title and name.casefold() not in people and (strict or not name_classed):
             continue
         add(name, title, None, 0.8 if title else 0.5)
 

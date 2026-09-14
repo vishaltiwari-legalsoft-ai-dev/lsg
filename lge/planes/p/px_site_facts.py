@@ -47,7 +47,8 @@ from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 _COMPONENT = "px_site_facts"
-_VERSION = "px_facts:v2"  # v2: link labels ("View Attorney Bio") are not titles
+_VERSION = "px_facts:v3"  # v3: headings, places and practice areas are not people
+_MAX_PEOPLE_PER_FIRM = 60
 _SOURCE = "site:page"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "site_facts.yml"
 
@@ -173,7 +174,15 @@ def read_firm(docs: list[dict], domain: str | None, store: ObjectStore) -> Facts
                 or any(p.search(text) for p in _spanish_patterns())
             )
 
-    facts.people = [people[k] for k in people_order]
+    # A firm has at most sixty people worth naming: those with a title and a
+    # profile page first, so a directory of a hundred bare names is trimmed
+    # to the ones outreach can use.
+    position = {k: i for i, k in enumerate(people_order)}
+    ranked = sorted(
+        (people[k] for k in people_order),
+        key=lambda p: (p["title"] is None, p["url"] is None, position[p["name"].casefold()]),
+    )
+    facts.people = ranked[:_MAX_PEOPLE_PER_FIRM]
     facts.posts = sorted(posts.values(), key=lambda p: p["date"], reverse=True)[:12]
     return facts
 
@@ -251,25 +260,31 @@ def write_facts(conn: Any, firm_id: Any, facts: Facts) -> int:
         claim("address", value, _CONFIDENCE_ADDRESS, raw, when)
         if value.get("city"):
             claim("city", value["city"], _CONFIDENCE_ADDRESS, raw, when)
-    if facts.offices:
+    # A list fact is written whenever the pages that carry it were read --
+    # empty included -- so a re-read that finds nothing replaces the earlier
+    # claim instead of leaving it standing (same observed_at: updated in place).
+    read = facts.kinds_read
+    if facts.offices or read & {"contact", "locations"}:
         offices = [
             {k: o.get(k) for k in ("street_norm", "unit", "city", "state", "zip5", "url")}
             for o in facts.offices
         ]
-        claim("office_locations", offices, _CONFIDENCE_LIST, facts.offices[0]["raw"])
+        claim("office_locations", offices, _CONFIDENCE_LIST,
+              facts.offices[0]["raw"] if facts.offices else "no street address on the pages read")
         claim("office_count", len(offices), _CONFIDENCE_LIST,
-              "; ".join(f"{o['city']}, {o['state']}" for o in offices[:6]))
-    if facts.people:
+              "; ".join(f"{o['city']}, {o['state']}" for o in offices[:6]) or "none found")
+    if facts.people or read & set(_PEOPLE_KINDS):
         claim("site_people", facts.people, _CONFIDENCE_LIST,
               f"{len(facts.people)} people named on {facts.people_page_url or 'the site'}")
         counts = staff_listed(facts.people)
         claim("staff_listed", counts, _CONFIDENCE_LIST,
               f"{counts['attorneys']} attorneys, {counts['support']} support, "
               f"{counts['other']} other")
-    if facts.testimonials:
-        first = facts.testimonials[0]
+    if facts.testimonials or read & {"testimonials", "home"}:
+        first = facts.testimonials[0] if facts.testimonials else None
         claim("testimonials", facts.testimonials[:10], _CONFIDENCE_LIST,
-              f"{len(facts.testimonials)} quotes; first: {first['quote'][:100]}")
+              f"{len(facts.testimonials)} quotes; first: {first['quote'][:100]}"
+              if first else "no client quotes on the pages read")
     if facts.review_summary:
         claim("site_review_summary", facts.review_summary, _CONFIDENCE_LIST,
               facts.review_summary.get("evidence"))
@@ -280,15 +295,16 @@ def write_facts(conn: Any, firm_id: Any, facts: Facts) -> int:
               ", ".join(sorted(facts.review_profiles)))
     if facts.maps_url:
         claim("google_maps_url", facts.maps_url, _CONFIDENCE, facts.maps_url)
-    if facts.posts:
+    if facts.posts or "news" in read:
         claim("recent_posts", facts.posts, _CONFIDENCE_LIST,
-              f"{facts.posts[0]['date']}: {facts.posts[0]['title'][:80]}")
+              f"{facts.posts[0]['date']}: {facts.posts[0]['title'][:80]}"
+              if facts.posts else "no dated posts on the pages read")
+        growth = sf.growth_news(facts.posts)
+        claim("growth_news", growth, _CONFIDENCE_LIST,
+              f"{growth[0]['date']}: {growth[0]['title'][:80]}" if growth else "none")
+    if facts.posts:
         claim("latest_post_date", facts.posts[0]["date"], _CONFIDENCE_LIST,
               facts.posts[0]["title"][:100])
-        growth = sf.growth_news(facts.posts)
-        if growth:
-            claim("growth_news", growth, _CONFIDENCE_LIST,
-                  f"{growth[0]['date']}: {growth[0]['title'][:80]}")
     if facts.chat_vendor:
         claim("live_chat_vendor", facts.chat_vendor, _CONFIDENCE, facts.chat_vendor)
     if facts.kinds_read & {"contact", "home"}:

@@ -55,6 +55,10 @@ def test_team_page_yields_people_with_their_printed_titles():
         ("Personal Injury Attorneys Serving Atlanta", False),
         ("Contact an Attorney", False),
         ("Margaret has tried over 40 cases to verdict and leads the litigation practice.", False),
+        ("Illinois Trial Lawyers Association", False),  # an organisation
+        ("Atlanta Wrongful Death Lawyers", False),  # a page heading
+        ("Of Counsel", True),
+        ("PARTNER", True),
     ],
 )
 def test_looks_like_title(text, expected):
@@ -81,22 +85,36 @@ def test_title_class_reads_support_before_attorney():
         ("Senior Litigation Paralegal", None),
         ("Personal Injury Attorneys Serving Atlanta", None),
         ("read our reviews", None),
+        # headings, places and practice areas seen on real team pages
+        ("Bronx Locations", None),
+        ("Premises Liability", None),
+        ("Follow Us", None),
+        ("Stone Mountain", None),
+        ("Central Queens:", None),
+        ("Disability Pension", None),
+        ("View Robert's Bio", None),
+        ("Cody M", None),
+        ("PATRICK J. O'CONNOR", "PATRICK J. O'CONNOR"),
+        ("Maggie Belen Zaccara", "Maggie Belen Zaccara"),
     ],
 )
 def test_name_like(text, expected):
     assert sf.name_like(text) == expected
 
 
-def test_strict_mode_needs_a_title_or_a_profile_link():
+def test_a_bare_heading_is_a_person_only_when_the_page_says_so():
     html = (
         "<html><body><h2>John Carter</h2><p>John was hit by a truck on I-75 and came to us."
-        "</p><h3>Sarah Blake</h3><p class='title'>Managing Attorney</p></body></html>"
+        "</p><h3>Sarah Blake</h3><p class='title'>Managing Attorney</p>"
+        "<div class='member-name'>Dana Whitfield</div>"
+        "<h2>Bronx Locations</h2><h3>Premises Liability</h3></body></html>"
     )
     tree = sf.parse(html)
     strict = {p["name"] for p in sf.find_people(tree, _BASE, strict=True)}
     loose = {p["name"] for p in sf.find_people(tree, _BASE, strict=False)}
+    # a title-less heading is a heading; a name-classed element is a name (team pages only)
     assert strict == {"Sarah Blake"}
-    assert loose == {"John Carter", "Sarah Blake"}
+    assert loose == {"Sarah Blake", "Dana Whitfield"}
 
 
 # ---------------------------------------------------------------------------
