@@ -17,9 +17,24 @@ type ColumnMeta = { th?: string; td?: string };
 const features = tableFeatures({ columnMeta: {} as ColumnMeta });
 const helper = createColumnHelper<typeof features, LeadRow>();
 
+/**
+ * What still keeps the lead off the email list, in the engine's words ("Email not
+ * verified"). A lead with an open role and an unverified owner email used to be
+ * hidden under Excluded; now it sits in its band with this line on it.
+ */
+function Blockers({ lead, className }: { lead: LeadRow; className?: string }) {
+  if (lead.blockers.length === 0) return null;
+  return (
+    <span className={cn("block truncate text-meta text-redline", className)} title={lead.blockers.join("; ")}>
+      {lead.blockers.join("; ")}
+    </span>
+  );
+}
+
 function ContactLine({ row }: { row: LeadRow }) {
   const c = row.contact;
-  if (!c) return <Unknown>No owner or office manager found</Unknown>;
+  // No contact: the blockers line already says so.
+  if (!c) return row.blockers.length ? null : <Unknown>No owner or office manager found</Unknown>;
   return (
     <span className="truncate">
       <span className="text-ink">{c.full_name}</span>
@@ -97,6 +112,7 @@ const entryColumn = helper.display({
         <span className="truncate text-meta">
           <ContactLine row={lead} />
         </span>
+        <Blockers lead={lead} />
       </div>
     );
   },
@@ -135,8 +151,15 @@ const contactColumn = helper.display({
   header: "Contact",
   meta: { th: "w-[23%] min-w-60", td: "min-w-0" },
   cell: ({ row }) => {
-    const c = row.original.contact;
-    if (!c) return <Unknown className="text-table">No owner or office manager found</Unknown>;
+    const lead = row.original;
+    const c = lead.contact;
+    if (!c) {
+      return lead.blockers.length ? (
+        <Blockers lead={lead} className="text-table" />
+      ) : (
+        <Unknown className="text-table">No owner or office manager found</Unknown>
+      );
+    }
     return (
       <div className="grid min-w-0 justify-items-start gap-1">
         <span className="max-w-full truncate text-table">
@@ -144,6 +167,7 @@ const contactColumn = helper.display({
           <span className="text-slate">, {c.title ?? ROLE_LABEL[c.role]}</span>
         </span>
         <EmailStatusBadge contact={c} />
+        <Blockers lead={lead} className="max-w-full" />
       </div>
     );
   },

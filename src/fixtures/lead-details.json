@@ -42,6 +42,10 @@
     },
     "contact": null,
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [
+      "Email not verified",
+      "No owner or office manager found"
+    ],
     "contacts": [
       {
         "id": "contact-mats-rosen",
@@ -176,6 +180,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-harbor-1",
@@ -323,6 +328,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-calloway-1",
@@ -459,6 +465,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-pineridge-1",
@@ -597,6 +604,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-brightwater-1",
@@ -735,6 +743,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-delgado-1",
@@ -892,6 +901,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-northgate-1",
@@ -1032,6 +1042,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-lakeshore-1",
@@ -1170,6 +1181,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-sunbelt-1",
@@ -1290,6 +1302,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-oakiron-1",
@@ -1421,6 +1434,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-meridian-1",
@@ -1559,6 +1573,7 @@
       "phone": "+1 205-555-0142"
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-riverbend-1",
@@ -1681,6 +1696,7 @@
       "phone": "+1 305-555-0187"
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-coastal-1",
@@ -1814,6 +1830,9 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [
+      "Email not verified"
+    ],
     "contacts": [
       {
         "id": "contact-fx-summit-1",
@@ -1930,6 +1949,7 @@
       "phone": null
     },
     "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [],
     "contacts": [
       {
         "id": "contact-fx-granite-1",
@@ -2051,6 +2071,10 @@
     "proof": null,
     "contact": null,
     "scored_at": null,
+    "blockers": [
+      "Email not verified",
+      "No owner or office manager found"
+    ],
     "contacts": [],
     "missing_roles": [
       "owner",
@@ -2098,6 +2122,10 @@
     "proof": null,
     "contact": null,
     "scored_at": null,
+    "blockers": [
+      "Email not verified",
+      "No owner or office manager found"
+    ],
     "contacts": [],
     "missing_roles": [
       "owner",

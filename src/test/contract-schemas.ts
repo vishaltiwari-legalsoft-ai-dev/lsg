@@ -36,7 +36,7 @@ export const ContactSummary = z.strictObject({
 const leadRowShape = {
   id: s, firm: FirmRef, state: s, state_display: s, band: Band.nullable(), fit: nn, intent: nn,
   contest: Contest.nullable(), grade: z.enum(["A", "B"]).nullable(), proof: Proof.nullable(),
-  contact: ContactSummary.nullable(), scored_at: ns,
+  contact: ContactSummary.nullable(), scored_at: ns, blockers: z.array(s),
 };
 export const LeadRow = z.strictObject(leadRowShape);
 const LeadCounts = z.strictObject({

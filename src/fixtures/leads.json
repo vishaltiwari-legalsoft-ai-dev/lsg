@@ -43,7 +43,11 @@
           "contest": "LOW"
         },
         "contact": null,
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": [
+          "Email not verified",
+          "No owner or office manager found"
+        ]
       },
       {
         "id": "lead-fx-harbor",
@@ -97,7 +101,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-calloway",
@@ -150,7 +155,8 @@
           "email_status_display": "Unverified — vendor says verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-pineridge",
@@ -203,7 +209,8 @@
           "email_status_display": "Catch-all — failure",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       }
     ],
     "next_cursor": null,
@@ -269,7 +276,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-delgado",
@@ -322,7 +330,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-northgate",
@@ -375,7 +384,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-lakeshore",
@@ -430,7 +440,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-sunbelt",
@@ -483,7 +494,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       }
     ],
     "next_cursor": null,
@@ -549,7 +561,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-oakiron",
@@ -584,7 +597,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       }
     ],
     "next_cursor": null,
@@ -650,7 +664,8 @@
           "email_status_display": null,
           "phone": "+1 205-555-0142"
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-coastal",
@@ -685,7 +700,8 @@
           "email_status_display": "Invalid — failure",
           "phone": "+1 305-555-0187"
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       }
     ],
     "next_cursor": null,
@@ -751,7 +767,8 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": []
       },
       {
         "id": "lead-fx-summit",
@@ -804,7 +821,10 @@
           "email_status_display": "Verified",
           "phone": null
         },
-        "scored_at": "2026-09-11T02:10:00Z"
+        "scored_at": "2026-09-11T02:10:00Z",
+        "blockers": [
+          "Email not verified"
+        ]
       }
     ],
     "next_cursor": null,
@@ -842,7 +862,11 @@
         "grade": null,
         "proof": null,
         "contact": null,
-        "scored_at": null
+        "scored_at": null,
+        "blockers": [
+          "Email not verified",
+          "No owner or office manager found"
+        ]
       },
       {
         "id": "lead-fx-prairie",
@@ -867,7 +891,11 @@
         "grade": null,
         "proof": null,
         "contact": null,
-        "scored_at": null
+        "scored_at": null,
+        "blockers": [
+          "Email not verified",
+          "No owner or office manager found"
+        ]
       }
     ],
     "next_cursor": null,

@@ -118,6 +118,7 @@ function toRow(detail: LeadDetail): LeadRow {
     proof: detail.proof,
     contact: detail.contact,
     scored_at: detail.scored_at,
+    blockers: detail.blockers,
   };
 }
 

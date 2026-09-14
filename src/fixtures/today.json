@@ -41,7 +41,11 @@
       "contest": "LOW"
     },
     "contact": null,
-    "scored_at": "2026-09-11T02:10:00Z"
+    "scored_at": "2026-09-11T02:10:00Z",
+    "blockers": [
+      "Email not verified",
+      "No owner or office manager found"
+    ]
   },
   "first_draft": {
     "subject": "Spanish-language intake",
@@ -100,7 +104,8 @@
         "email_status_display": "Verified",
         "phone": null
       },
-      "scored_at": "2026-09-11T02:10:00Z"
+      "scored_at": "2026-09-11T02:10:00Z",
+      "blockers": []
     },
     {
       "id": "lead-fx-calloway",
@@ -153,7 +158,8 @@
         "email_status_display": "Unverified — vendor says verified",
         "phone": null
       },
-      "scored_at": "2026-09-11T02:10:00Z"
+      "scored_at": "2026-09-11T02:10:00Z",
+      "blockers": []
     },
     {
       "id": "lead-fx-pineridge",
@@ -206,7 +212,8 @@
         "email_status_display": "Catch-all — failure",
         "phone": null
       },
-      "scored_at": "2026-09-11T02:10:00Z"
+      "scored_at": "2026-09-11T02:10:00Z",
+      "blockers": []
     }
   ],
   "attention": {

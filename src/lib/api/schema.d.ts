@@ -585,6 +585,8 @@ export interface components {
         LeadDetail: {
             /** Band */
             band: ("STRIKE" | "SEQUENCE" | "NURTURE" | "HOLD") | null;
+            /** Blockers */
+            blockers: string[];
             contact: components["schemas"]["ContactSummary"] | null;
             /** Contacts */
             contacts: components["schemas"]["ContactSummary"][];
@@ -643,6 +645,8 @@ export interface components {
         LeadRow: {
             /** Band */
             band: ("STRIKE" | "SEQUENCE" | "NURTURE" | "HOLD") | null;
+            /** Blockers */
+            blockers: string[];
             contact: components["schemas"]["ContactSummary"] | null;
             /** Contest */
             contest: ("NONE" | "LOW" | "MED" | "HIGH") | null;
