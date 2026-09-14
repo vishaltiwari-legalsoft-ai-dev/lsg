@@ -67,8 +67,8 @@ _PROBE_PATHS = ("/careers", "/jobs", "/employment-opportunities", "/join-our-tea
 # Bump whenever parse_careers_page can produce different postings for the same HTML.
 # careers_sweep.parser_version joins the content hash in the skip-unchanged rule, so a
 # parser fix re-parses pages already swept (v2: page-level job context, soft-404s;
-# v3: a page that is itself the posting).
-PARSER_VERSION = "3"
+# v3: a page that is itself the posting; v4: scripts and styles are not page text).
+PARSER_VERSION = "4"
 
 # Deliberately excluded -- context/70-decisions/02-deliberate-exclusions.md.
 # Never fetched; a link to one is recorded on whatever posting we found and
@@ -487,11 +487,18 @@ def _section_text(heading: lxml.html.HtmlElement, limit: int = 3000) -> str:
     return " ".join(" ".join(parts).split())[:limit]
 
 
+def visible_text(el: lxml.html.HtmlElement) -> str:
+    """The element's text with a space between text nodes, so "<h1>Paralegal</h1>
+    <p>Butler Kahn…" does not read "ParalegalButler Kahn" (text_content() glues
+    adjacent elements when the HTML has no whitespace between them)."""
+    return " ".join(" ".join(el.itertext()).split())
+
+
 def single_posting_from_page(tree: lxml.html.HtmlElement, page_text: str) -> dict | None:
     """The one posting a page announces in its h1 or <title> ("We are Hiring a
     Paralegal"), or None. Only support roles: "Is hiring a lawyer worth it?" names
     an attorney and is an article."""
-    candidates = [" ".join((h.text_content() or "").split()) for h in tree.iter("h1")]
+    candidates = [visible_text(h) for h in tree.iter("h1")]
     title = " ".join((tree.findtext(".//title") or "").split())
     if title:
         candidates.append(re.split(r"\s[-–—|]\s", title)[0])  # drop the " - Site Name" suffix
@@ -503,7 +510,10 @@ def single_posting_from_page(tree: lxml.html.HtmlElement, page_text: str) -> dic
         role = normalize_title(role_text)
         if not role or not is_support_role(role):
             continue
-        body = page_text[:3000]
+        # The body starts where the announcement does, not at the nav bar, so the
+        # first sentence (the quote) is the firm's own words about the role.
+        start = page_text.find(text)
+        body = page_text[start if start >= 0 else 0 :][:3000]
         return {
             "title": role_text,
             "body": body,
@@ -532,7 +542,7 @@ def html_heuristic_postings(tree: lxml.html.HtmlElement) -> list[dict]:
     v1 rule stands: the job word must be inside the heading or list item itself.
     A page that is itself one posting is read from its h1/title (v3).
     """
-    page_text = " ".join((tree.text_content() or "").split())
+    page_text = visible_text(tree)
     page_context = bool(_PAGE_JOB_CONTEXT_RE.search(page_text))
     page_email = _extract_apply_email(page_text)
     seen: set[str] = set()
@@ -600,6 +610,12 @@ def parse_careers_page(html: str, url: str) -> ParsedCareers:
         tree = lxml.html.fromstring(html)
     except (lxml.etree.ParserError, ValueError):
         tree = None
+
+    if tree is not None:
+        # Invisible text is not page text: butlerfirm.com's posting body came
+        # back as "async function cache(e,t){...}" and that became the quote (v4).
+        for el in tree.xpath("//script|//style|//noscript|//template|//svg"):
+            el.drop_tree()
 
     if tree is not None and is_soft_404(tree):
         return ParsedCareers(method="soft_404")

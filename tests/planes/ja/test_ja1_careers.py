@@ -142,7 +142,9 @@ def test_single_posting_page_is_one_posting():
     # butlerfirm.com's shape (D-026): the page is the posting, not a list of them.
     html = (
         "<html><head><title>B|K is Hiring a Personal Injury Paralegal - Butler Kahn</title>"
-        "</head><body><h1>We are Hiring a Paralegal</h1>"
+        "<script>async function cache(e,t){try{if(-1!=e.indexOf('x'))return}catch(r){}}"
+        "</script></head><body><nav>Home About Contact</nav>"
+        "<h1>We are Hiring a Paralegal</h1>"
         "<p>Butler Kahn is looking for an experienced paralegal to join our Atlanta "
         "office. Send your resume to jobs@butlerfirm.com.</p></body></html>"
     )
@@ -151,8 +153,12 @@ def test_single_posting_page_is_one_posting():
     )
     assert parsed.method == "html"
     assert [p["payload"]["role"] for p in parsed.postings] == ["paralegal"]
-    assert parsed.postings[0]["title"] == "Paralegal"
-    assert parsed.postings[0]["apply_email"] == "jobs@butlerfirm.com"
+    posting = parsed.postings[0]
+    assert posting["title"] == "Paralegal"
+    assert posting["apply_email"] == "jobs@butlerfirm.com"
+    # the body is the firm's own words from the announcement on: no script, no nav
+    assert posting["body"].startswith("We are Hiring a Paralegal Butler Kahn is looking")
+    assert "function" not in posting["body"]
 
 
 @pytest.mark.parametrize(

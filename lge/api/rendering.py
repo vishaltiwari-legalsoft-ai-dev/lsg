@@ -28,6 +28,7 @@ from lge.api.models import ContactSummary, FirmRef, LeadRow, Proof
 from lge.export.list import best_email
 from lge.journey.model import Signal
 from lge.journey.tokens import days_open as _days_open
+from lge.planes.ja.ja6_signals import first_sentence
 
 
 def build_firm_ref(row: dict[str, Any]) -> FirmRef:
@@ -64,11 +65,13 @@ def build_proof(
         single = evidence.get("source")
         sources = [single] if single else []
     days_raw = _days_open(signal.first_seen, at)
+    latest_body = scores.get("latest_body")
+    quote = first_sentence(latest_body) if latest_body else None
     return Proof(
         signal_id=signal.id,
         kind=signal.kind,
         headline=proof_headline(signal.kind, evidence, signal.first_seen, at, signal.repost_count),
-        quote=evidence.get("quote"),
+        quote=quote or evidence.get("quote"),
         source_label=source_label(sources[0] if sources else None),
         source_url=evidence.get("url"),
         first_seen=signal.first_seen,
@@ -117,14 +120,27 @@ def fetch_signal_scores(
     if not ids:
         return {}
     with conn.cursor() as cur:
+        # `latest_body`: the newest stored posting behind the signal. Signal
+        # evidence is immutable (I6) and is the record of what was first seen;
+        # the quote a person reads is re-derived from the raw posting, so a
+        # parser fix reaches the screen without touching the record.
         cur.execute(
             """
             SELECT s.id,
                    signal_weight(s.kind, s.first_seen, s.closed_at, s.repost_count, %(at)s)
                      AS weight,
                    decay(EXTRACT(EPOCH FROM (%(at)s - s.last_seen)) / 86400.0) AS decay,
-                   contest_level(s.kind) AS contest
-            FROM signal s WHERE s.id = ANY(%(ids)s)
+                   contest_level(s.kind) AS contest,
+                   q.body AS latest_body
+            FROM signal s
+            LEFT JOIN LATERAL (
+              SELECT rp.body
+              FROM signal_sighting ss JOIN raw_posting rp ON rp.id = ss.raw_posting_id
+              WHERE ss.signal_id = s.id AND rp.body IS NOT NULL
+              ORDER BY rp.fetched_at DESC, rp.id DESC
+              LIMIT 1
+            ) q ON true
+            WHERE s.id = ANY(%(ids)s)
             """,
             {"at": at, "ids": ids},
         )
