@@ -44,6 +44,23 @@ def test_team_page_yields_people_with_their_printed_titles():
     assert len(people) == 5
 
 
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Founding Partner & Trial Attorney", True),
+        ("Senior Litigation Paralegal", True),
+        ("View Attorney Bio", False),  # a link label, seen on lipkinapter.com
+        ("Read Full Profile", False),
+        ("Meet Our Attorneys", False),
+        ("Personal Injury Attorneys Serving Atlanta", False),
+        ("Contact an Attorney", False),
+        ("Margaret has tried over 40 cases to verdict and leads the litigation practice.", False),
+    ],
+)
+def test_looks_like_title(text, expected):
+    assert sf.looks_like_title(text) is expected
+
+
 def test_title_class_reads_support_before_attorney():
     assert sf.title_class("Senior Litigation Paralegal") == "support"
     assert sf.title_class("Office Manager") == "support"

@@ -47,7 +47,7 @@ from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 _COMPONENT = "px_site_facts"
-_VERSION = "px_facts:v1"
+_VERSION = "px_facts:v2"  # v2: link labels ("View Attorney Bio") are not titles
 _SOURCE = "site:page"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "site_facts.yml"
 

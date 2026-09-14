@@ -201,6 +201,8 @@ def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
     try:
         rows = DDGS().text(query, max_results=max_results) or []
     except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
+        if "no results" in str(exc).lower():
+            return []  # the engine answered: nothing matches. Not a failure to retry.
         return [{"title": "", "href": "", "body": f"search failed: {type(exc).__name__}: {exc}"}]
     return [
         {"title": r.get("title", ""), "href": r.get("href", ""), "body": r.get("body", "")}

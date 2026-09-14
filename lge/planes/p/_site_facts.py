@@ -215,10 +215,23 @@ def name_like(text: str) -> str | None:
     return name
 
 
+# "View Attorney Bio", "Read Full Profile", "Meet Our Attorneys": link labels
+# and headings that contain a job word without being anyone's title.
+_NOT_A_TITLE_RE = re.compile(
+    r"^(?:view|read|see|learn|meet|click|more|our|the|all|contact|email|call)\b"
+    r"|\b(?:bio|bios|profile|profiles|biography|more|page|team|firm|us)$"
+    r"|\b(?:near|serving|in|for|with)\b",
+    re.I,
+)
+
+
 def looks_like_title(text: str) -> bool:
-    """A short line naming a job -- not a sentence about one."""
+    """A short line naming a job -- not a sentence about one, and not a link
+    to one."""
     text = clean(text)
     if not text or len(text) > _MAX_TITLE_CHARS or text.count(".") > 2:
+        return False
+    if _NOT_A_TITLE_RE.search(text):
         return False
     return bool(_title_re().search(text))
 

@@ -87,6 +87,26 @@ def test_page_identity_reads_title_and_jsonld():
     assert "injured people" in ident["text"]
 
 
+def test_ddg_no_results_is_an_empty_answer_not_a_failure(monkeypatch):
+    import ddgs
+    from ddgs.exceptions import DDGSException
+
+    class _NoResults:
+        def text(self, query, max_results):
+            raise DDGSException("No results found.")
+
+    class _Broken:
+        def text(self, query, max_results):
+            raise DDGSException("Ratelimit")
+
+    monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    monkeypatch.setattr(ddgs, "DDGS", _NoResults)
+    assert webcheck.ddg_search('"Nobody Law" Atlanta GA law firm') == []
+    monkeypatch.setattr(ddgs, "DDGS", _Broken)
+    failed = webcheck.ddg_search('"Nobody Law" Atlanta GA law firm')
+    assert failed[0]["body"].startswith("search failed: DDGSException: Ratelimit")
+
+
 def test_build_query():
     assert build_query("Doe & Roe", "Atlanta", "GA") == '"Doe & Roe" Atlanta GA law firm'
     assert build_query("Doe & Roe", None, None) == '"Doe & Roe" law firm'
