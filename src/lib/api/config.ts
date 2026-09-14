@@ -5,9 +5,10 @@
  */
 export type ApiMode = "api" | "fixtures";
 
-export const API_BASE: string = (
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000"
-).replace(/\/+$/, "");
+// Default "" = same origin: the browser calls /api/* on this app, and next.config.ts
+// rewrites it to the engine. No CORS, and the app runs on any port. Set
+// NEXT_PUBLIC_API_BASE only to talk to an engine directly.
+export const API_BASE: string = (process.env.NEXT_PUBLIC_API_BASE ?? "").replace(/\/+$/, "");
 
 export const API_MODE: ApiMode =
   process.env.NEXT_PUBLIC_API_MODE === "fixtures" ? "fixtures" : "api";

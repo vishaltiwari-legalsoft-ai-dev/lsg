@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:fixtures": "cross-env NEXT_PUBLIC_API_MODE=fixtures next dev",
+    "dev": "next dev -p 3100",
+    "dev:fixtures": "cross-env NEXT_PUBLIC_API_MODE=fixtures next dev -p 3100",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3100",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
