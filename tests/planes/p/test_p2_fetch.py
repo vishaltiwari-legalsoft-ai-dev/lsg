@@ -160,6 +160,34 @@ def test_slow_host_gets_only_what_fits_the_budget(db, tmp_path, monkeypatch):
 
 
 @respx.mock
+@respx.mock
+def test_crawl_respects_the_per_host_time_budget(db, tmp_path, monkeypatch):
+    # A host with a Crawl-delay gets only what fits the per-host budget, pages
+    # found by crawling included -- found on the probe: one host at 30s took
+    # fifteen minutes for its thirty pages.
+    monkeypatch.setattr(p2_fetch, "HOST_TIME_BUDGET_S", 4)  # 4s / 2s delay -> 2 pages
+    respx.get("https://slow.example/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nCrawl-delay: 2\n")
+    )
+    respx.get("https://slow.example/").mock(return_value=httpx.Response(200, html=(
+        '<html><body><a href="/testimonials/">Testimonials</a>'
+        ' <a href="/our-offices/">Our Offices</a> <a href="/blog/">Blog</a></body></html>'
+    )))
+    for path in ("/testimonials/", "/our-offices/", "/blog/"):
+        respx.get(f"https://slow.example{path}").mock(
+            return_value=httpx.Response(200, html=f"<html><body>{path} page text</body></html>")
+        )
+    firm_id = make_firm(db, domain="slow.example")
+    make_lead(db, firm_id)
+    insert_site_map(db, firm_id, "https://slow.example/", "home")
+
+    p2_fetch.run(ctx(db, live=True, user_agent=UA), limit=10, store=ObjectStore(tmp_path))
+    fetched = [d["url"] for d in get_documents(db, firm_id) if d["fetch_ok"]]
+    assert len(fetched) == 2  # the home page and one discovered page
+    assert "https://slow.example/" in fetched
+
+
+@respx.mock
 def test_links_on_fetched_pages_are_crawled_within_caps(db, tmp_path):
     # D-030: the firm's testimonials, offices and news live a click or two
     # away from the homepage. Duplicate bytes are written once; a 200 that is

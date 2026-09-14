@@ -132,6 +132,11 @@ async def _fetch_one_firm(
         ))
 
     caps = load_crawl_config()["caps"]
+    # The per-host time budget bounds the crawl too, not only the map: a host
+    # asking Crawl-delay 30s gets 10 pages this run, not 30 pages in 15 minutes.
+    page_budget = caps["total"]
+    if policy.crawl_delay_s:
+        page_budget = min(page_budget, max(1, int(HOST_TIME_BUDGET_S // policy.crawl_delay_s)))
     counts: Counter[str] = Counter(kind for _u, kind in urls)
     seen_urls = {u for u, _k in urls}
     seen_hashes: dict[str, str] = {}
@@ -176,7 +181,7 @@ async def _fetch_one_firm(
                         for link, lkind in extract_homepage_links(doc.body, base, domain):  # type: ignore[arg-type]
                             if link in seen_urls or lkind not in WANTED_KINDS:
                                 continue
-                            if len(seen_urls) >= caps["total"]:
+                            if len(seen_urls) >= page_budget:
                                 break
                             if counts[lkind] >= caps.get(lkind, caps["other"]):
                                 continue

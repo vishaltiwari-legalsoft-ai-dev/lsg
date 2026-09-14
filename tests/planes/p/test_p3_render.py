@@ -99,6 +99,38 @@ def test_404_is_never_flagged_even_with_low_word_count(db):
     assert get_document(db, doc_id)["render_needed"] is False
 
 
+def test_only_a_javascript_shell_is_flagged_a_thin_static_page_is_not(db, tmp_path):
+    # With 30 pages per firm the map holds contact and office pages that say
+    # little on purpose; a browser would give back the same words. Only an
+    # application shell (root element, scripts, no text) is worth a render.
+    store = ObjectStore(tmp_path)
+    firm_id = make_firm(db, domain="example.com")
+    make_lead(db, firm_id)
+    shell = store.put(
+        b'<html><body><div id="root"></div><script src="/a.js"></script>'
+        b"<script>window.__NEXT_DATA__={}</script></body></html>"
+    )
+    static = store.put(b"<html><body><h1>Contact</h1><p>Call us at 555-0100.</p></body></html>")
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO document (firm_id, url, status_code, content_hash, object_key, bytes, "
+            "word_count, fetch_ok, page_kind, rendered) VALUES "
+            "(%s, 'https://example.com/', 200, %s, %s, 100, 3, true, 'home', false), "
+            "(%s, 'https://example.com/contact/', 200, %s, %s, 100, 5, true, 'contact', false)",
+            (firm_id, shell, shell, firm_id, static, static),
+        )
+
+    result = p3_render.run(ctx(db, live=False), limit=10, store=store)
+    assert result.processed == 1
+    with db.cursor() as cur:
+        cur.execute(
+            "SELECT url, render_needed FROM document WHERE firm_id = %s ORDER BY url", (firm_id,)
+        )
+        flagged = {r["url"]: r["render_needed"] for r in cur.fetchall()}
+    assert flagged == {"https://example.com/": True, "https://example.com/contact/": False}
+    assert "1 thin page(s) are static" in " ".join(result.notes)
+
+
 def test_reports_render_unavailable_with_a_count(db, monkeypatch):
     monkeypatch.setattr(p3_render, "render_available", lambda: False)  # no browser here
     firm_id = make_firm(db, domain="example.com")

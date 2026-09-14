@@ -25,8 +25,9 @@ import psycopg
 
 from lge.fetch.client import EmptyUserAgentError
 from lge.fetch.decode import decode_html
-from lge.fetch.pagecheck import visible_words
+from lge.fetch.pagecheck import looks_like_js_shell, visible_words
 from lge.fetch.selection import select_firm_ids
+from lge.planes.p._claims import read_html
 from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
@@ -92,7 +93,7 @@ def _select_render_candidates(conn: psycopg.Connection, firm_ids: list[str]) -> 
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, firm_id, url, content_hash, word_count
+            SELECT id, firm_id, url, content_hash, word_count, object_key
             FROM document
             WHERE firm_id = ANY(%s)
               AND fetch_ok = true
@@ -105,6 +106,17 @@ def _select_render_candidates(conn: psycopg.Connection, firm_ids: list[str]) -> 
             (firm_ids, WORD_COUNT_GATE),
         )
         return list(cur.fetchall())
+
+
+def worth_rendering(store: ObjectStore, row: dict) -> bool:
+    """A thin page is worth a browser only when it is an application shell --
+    a root element and scripts, almost no text. A contact page that simply
+    says little is static; rendering it would give back the same words. With
+    nothing stored to judge by, the word-count gate alone decides."""
+    html = read_html(store, row.get("object_key"))
+    if not html:
+        return True
+    return looks_like_js_shell(html)
 
 
 def _input_hash(rows: list[dict]) -> str:
@@ -164,9 +176,14 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         result.notes.append("no firms selected")
         return result
 
-    candidates = _select_render_candidates(ctx.conn, firm_ids)
+    thin = _select_render_candidates(ctx.conn, firm_ids)
+    candidates = [row for row in thin if worth_rendering(store, row)]
+    static_thin = len(thin) - len(candidates)
     if not candidates:
-        result.notes.append("no documents under the 500-word gate need flagging")
+        result.notes.append(
+            f"no JavaScript shells under the {WORD_COUNT_GATE}-word gate need flagging "
+            f"({static_thin} thin page(s) are static -- nothing to render)"
+        )
         return result
 
     by_firm: dict[str, list[dict]] = {}
@@ -200,6 +217,8 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
             result.processed += 1
         ctx.checkpoint()
 
+    if static_thin:
+        result.notes.append(f"{static_thin} thin page(s) are static -- nothing to render")
     if have_browser:
         if live:
             result.notes.append(
