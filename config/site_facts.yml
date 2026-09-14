@@ -1,0 +1,191 @@
+# px_site_facts config: what a firm's own pages say about it, read straight
+# off stored HTML (never re-fetched). See lge/planes/p/px_site_facts.py and
+# the parsers in lge/planes/p/_site_facts.py. Patterns are case-insensitive
+# regex unless a key says otherwise.
+
+# A line of text is a job title when it is short and names one of these.
+# Order does not matter; the whole list is one alternation.
+title_words:
+  - 'attorney'
+  - 'lawyer'
+  - 'partner'
+  - 'of\s+counsel'
+  - 'counsel'
+  - 'associate'
+  - 'shareholder'
+  - 'principal'
+  - 'founder'
+  - 'owner'
+  - 'president'
+  - 'chief\s+\w+\s+officer'
+  - '\bceo\b'
+  - '\bcoo\b'
+  - '\bcfo\b'
+  - 'managing'
+  - 'director'
+  - 'manager'
+  - 'administrator'
+  - 'paralegal'
+  - 'legal\s+assistant'
+  - 'legal\s+secretary'
+  - 'assistant'
+  - 'secretary'
+  - 'receptionist'
+  - 'intake'
+  - 'case\s+manager'
+  - 'coordinator'
+  - 'clerk'
+  - 'investigator'
+  - 'bookkeeper'
+  - 'specialist'
+  - 'nurse'
+  - 'consultant'
+  - 'analyst'
+  - 'negotiator'
+  - 'esq\.?'
+  - '\bj\.?d\.?\b'
+
+# Titles that are support work (the need model's delegable roles), as
+# opposed to attorneys and owners. A person whose title matches none of
+# these and none of `attorney_titles` counts as 'other'.
+support_titles:
+  - 'paralegal'
+  - 'legal\s+assistant'
+  - 'legal\s+secretary'
+  - 'administrative\s+assistant'
+  - '\bassistant\b'
+  - '\bsecretary\b'
+  - 'receptionist'
+  - 'intake'
+  - 'case\s+manager'
+  - 'case\s+coordinator'
+  - 'office\s+manager'
+  - 'office\s+administrator'
+  - 'records'
+  - 'file\s+clerk'
+  - '\bclerk\b'
+  - 'bookkeeper'
+  - 'billing'
+  - 'investigator'
+  - 'nurse'
+  - 'negotiator'
+  - 'client\s+(?:relations|services?|care)'
+  - 'marketing'
+  - 'operations'
+
+attorney_titles:
+  - 'attorney'
+  - 'lawyer'
+  - 'partner'
+  - 'of\s+counsel'
+  - '\bcounsel\b'
+  - 'associate'
+  - 'shareholder'
+  - 'principal'
+  - 'founder'
+  - 'esq\.?'
+  - '\bj\.?d\.?\b'
+
+# URL paths that are one person's profile: /attorneys/jane-doe, /team/john-smith.
+profile_path: '/(?:attorneys?|lawyers?|team|our-team|staff|people|profiles?|bios?|meet|professionals|members?|leadership|about-us)/[a-z][a-z0-9-]+/?$'
+
+# Where a firm's social and review presence lives. host -> platform.
+link_platforms:
+  social:
+    'facebook.com': facebook
+    'linkedin.com': linkedin
+    'twitter.com': twitter
+    'x.com': twitter
+    'instagram.com': instagram
+    'youtube.com': youtube
+    'tiktok.com': tiktok
+  review:
+    'avvo.com': avvo
+    'yelp.com': yelp
+    'lawyers.com': lawyers_com
+    'justia.com': justia
+    'martindale.com': martindale
+    'superlawyers.com': superlawyers
+    'findlaw.com': findlaw
+    'bbb.org': bbb
+    'birdeye.com': birdeye
+    'trustpilot.com': trustpilot
+  maps:
+    - 'google\.com/maps'
+    - 'maps\.google\.'
+    - 'maps\.app\.goo\.gl'
+    - 'goo\.gl/maps'
+    - 'g\.page/'
+    - 'search\.google\.com/local'
+    - 'google\.com/search\?.*(?:ludocid|lrd=)'
+
+# Live-chat vendors: a script or iframe from one of these means the firm
+# already pays someone to answer the site. pattern -> vendor.
+chat_vendors:
+  'intaker': Intaker
+  'ngage(?:live|ics|\.)': Ngage
+  'apexchat|apex\.chat': ApexChat
+  'liveperson|lpsnmedia|lptag': LivePerson
+  'tawk\.to': tawk.to
+  'drift\.com|driftt\.com': Drift
+  'intercom(?:cdn|\.io)': Intercom
+  'smith\.ai': Smith.ai
+  'zopim|zdassets\.com/ekr|zendesk\.com/embeddable': Zendesk Chat
+  'olark': Olark
+  'tidio': Tidio
+  'podium\.com|podiumwebchat': Podium
+  'birdeye\.com': Birdeye
+  'livechatinc|livechat\.com': LiveChat
+  'js\.hs-scripts|hubspot.*conversations|hs-chat': HubSpot Chat
+  'crisp\.chat': Crisp
+  'chatra\.io': Chatra
+  'freshchat': Freshchat
+  'juvoleads': Juvo Leads
+  'clientchatlive': Client Chat Live
+  'captivated\.chat|captivated\.com': Captivated
+  'lawmatics.*chat': Lawmatics
+  'chatbot\.com|chatbot-widget': ChatBot
+  'gorgias': Gorgias
+  'kommunicate': Kommunicate
+  'chat\.leadconnectorhq|leadconnector': LeadConnector
+
+# An online intake form on the contact/home page: form builders and CRM
+# embeds count, as does a plain <form> with an email/phone field.
+intake_form_markers:
+  - 'wpcf7'
+  - 'gform_wrapper|gravityforms'
+  - 'formstack'
+  - 'jotform'
+  - 'typeform'
+  - 'hsforms|hubspot.*forms'
+  - 'lawmatics'
+  - 'clio(?:grow|\.com/grow)'
+  - 'leaddocket'
+  - 'lead-docket'
+  - 'ninja-forms|nf-form'
+  - 'wpforms'
+  - 'elementor-form'
+  - 'fluentform'
+  - 'formidable'
+  - 'cognitoforms'
+  - 'salesforce.*web-to-lead|webtolead'
+  - 'zohoforms|zoho\.com/forms'
+  - 'filevine.*intake|leadsdocket'
+
+# News/blog headlines that describe growth: a new office, a lateral hire, a
+# promotion. Part D turns these into `new_office_or_lateral` signals.
+growth_cues:
+  - '\bnew\s+(?:\w+\s+){0,2}(?:office|location)s?\b'
+  - '\bopens?\s+(?:a\s+|its\s+|our\s+)?(?:new\s+)?(?:\w+\s+){0,2}(?:office|location|doors)\b'
+  - '\b(?:second|third|fourth)\s+(?:\w+\s+)?(?:office|location)\b'
+  - '\bopening\s+(?:of\s+)?(?:our|a|its)\s+(?:new\s+)?(?:office|location)'
+  - '\bexpan(?:ds|sion|ding)\b'
+  - '\bwelcomes?\b'
+  - '\bjoins?\b|\bjoined\b|\bjoining\b'
+  - '\bnamed\s+(?:as\s+)?(?:a\s+)?(?:partner|shareholder|managing)'
+  - '\bpromot(?:ed|es|ion)\b'
+  - '\bhires?\b|\bhired\b|\bhiring\b'
+  - '\badds?\s+(?:attorney|associate|partner|paralegal)'
+  - '\bnew\s+(?:attorney|associate|partner|paralegal|hire)s?\b'
+  - '\bgrow(?:s|th|ing)\b'
+  - '\bmerg(?:es|er|ed)\b'

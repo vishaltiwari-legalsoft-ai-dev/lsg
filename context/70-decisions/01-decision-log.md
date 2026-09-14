@@ -576,6 +576,38 @@ Part A is the reading; parts B-D (per-page facts, searches, intent signals) buil
   Crawl-delay), the edge block is still not circumvented (D-026). A robust scraper is one that
   reads more of what it is allowed to read, not one that reads what it is not.
 
+## D-031 · Step 2, part B: the site's facts are read, not guessed
+
+**Asked for (15 Sep 2026):** from the site, the careers landing page, the contact page, the
+locations, the important names and their designations, recent developments and testimonials;
+the emails, names and links that outreach needs.
+
+**Rulings:**
+- **`px_site_facts`** (source `site:page`) reads every stored page once, contact page first:
+  `phone_e164`, `address`, `city` (reconciled onto the firm after `site:jsonld`);
+  `office_locations`/`office_count`; `site_people` (name, printed title, profile URL) and
+  `staff_listed` (attorneys / support / other); `testimonials` and `site_review_summary`;
+  `social_links`, `review_profiles`, `google_maps_url`; `recent_posts`, `latest_post_date`,
+  `growth_news`; `live_chat_vendor`, `online_intake_form`, `copyright_year`; and `site_gaps`.
+  Config in `config/site_facts.yml`; a config edit re-reads every firm.
+- **A person on a page is a Title-Case name with no job word in it.** `person_name()` alone
+  let "Learn more" and "Senior Litigation Paralegal" through; the page rule (`name_like`)
+  does not. The title is the first job-looking line after the name and before the next
+  person's name in the smallest container that holds both. A profile link whose label is not
+  a name takes its name from the slug.
+- **`r_site_contacts` consumes `site_people`** the way it consumes P5's `jsonld_people`: role
+  from the printed title via `classify_role`, source `site:page`, upgrade-not-duplicate
+  against the vendor row. A person named without a title is kept at the extractor's own
+  confidence so a printed email can still attach to them.
+- **A gap is claimed only where the page that would carry the thing was read.** No home
+  page fetched, no gap list. The gaps: no careers page, no online intake form, no live chat,
+  no Spanish, stale copyright (two years or older), no testimonials, no or stale blog (a year),
+  no support staff listed among the people named, no social profile, no review link. Part D
+  reads these as pain.
+- **A previous office's zip is never the next office's house number**: the street name in an
+  address is words, never a bare number. Found on the fixture, would have been found on the
+  first real contact page.
+
 ---
 
 ## Standing rulings that were never in dispute

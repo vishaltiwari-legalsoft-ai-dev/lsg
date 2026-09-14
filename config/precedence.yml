@@ -66,6 +66,7 @@ precedence:
   phone_e164:
     - site:jsonld
     - rules:site
+    - site:page
     - places
     - bar
 
@@ -81,6 +82,7 @@ precedence:
     - places
     - site:jsonld
     - rules:site
+    - site:page
     - bar
 
   # Standalone, not merely address's city sub-field: site:jsonld and
@@ -88,6 +90,7 @@ precedence:
   city:
     - site:jsonld
     - places
+    - site:page
     - internal_firms
 
   # ---- qualification columns -----------------------------------------

@@ -59,6 +59,7 @@ flows:
       - component: p6_fee
       - component: p7_tech
       - component: px_site_rules
+      - component: px_site_facts
       - component: p8_llm
       - component: reconcile
       - component: p9_escalate

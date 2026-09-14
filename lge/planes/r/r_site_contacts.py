@@ -12,6 +12,11 @@ Reads two `firm_attribute` claim kinds and creates/updates `contact` rows:
   * `jsonld_people` (source 'site:jsonld') -- P5's deterministic
     {name, jobTitle} list, informational until now. `classify_role()`
     supplies the role P5 itself never assigns.
+  * `site_people` (source 'site:page') -- px_site_facts' {name, title, url,
+    confidence} list read off the team and attorneys pages (D-031). Role
+    from the printed title via `classify_role()`; a person named without a
+    title is kept at the extractor's own (lower) confidence so a printed
+    email can still be attached to them.
 
 Only the MOST RECENT claim of each kind per firm is used (a prompt-rev bump
 or a P9 escalation supersedes an older pass rather than stacking on top of
@@ -93,7 +98,7 @@ def _select_firm_ids(conn, opts: dict[str, Any]) -> list[Any]:
 
     query = (
         "SELECT DISTINCT firm_id FROM firm_attribute "
-        "WHERE attr IN ('decision_makers', 'jsonld_people') ORDER BY firm_id"
+        "WHERE attr IN ('decision_makers', 'jsonld_people', 'site_people') ORDER BY firm_id"
     )
     params: list[Any] = []
     limit = opts.get("limit")
@@ -216,7 +221,7 @@ def _apply_claim_entries(
 
 @component(
     "r_site_contacts", "R",
-    "Turns team-page findings (LLM decision_makers + P5 jsonld_people) into contact rows.",
+    "Turns team-page findings (LLM decision_makers, P5 jsonld_people, site_people) into contacts",
 )
 def run(ctx: RunContext, **opts: Any) -> RunResult:
     conn = ctx.conn
@@ -227,8 +232,9 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
         try:
             dm_claim = _latest_claim(conn, firm_id, "decision_makers", "llm:%")
             people_claim = _latest_claim(conn, firm_id, "jsonld_people", "site:jsonld")
+            site_claim = _latest_claim(conn, firm_id, "site_people", "site:page")
 
-            if dm_claim is None and people_claim is None:
+            if dm_claim is None and people_claim is None and site_claim is None:
                 result.skipped += 1
                 continue
 
@@ -238,6 +244,8 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
                 "people": [
                     people_claim["value"], people_claim["source"], str(people_claim["observed_at"])
                 ] if people_claim else None,
+                "site": [site_claim["value"], str(site_claim["observed_at"])]
+                if site_claim else None,
             }
             input_hash = hashlib.sha256(
                 json.dumps(hash_payload, sort_keys=True, default=str).encode("utf-8")
@@ -273,6 +281,19 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
                     _apply_claim_entries(
                         conn, firm_id, existing_by_key, people_claim["value"],
                         classify=_classify_jsonld, source="site:jsonld", now=now, counts=counts,
+                    )
+
+                if site_claim:
+                    def _classify_site(entry: dict[str, Any]) -> tuple[str | None, str, float]:
+                        title = entry.get("title")
+                        if not title:
+                            return None, "unknown", float(entry.get("confidence") or 0.5)
+                        role_result = classify_role(title)
+                        return title, role_result.role, role_result.confidence
+
+                    _apply_claim_entries(
+                        conn, firm_id, existing_by_key, site_claim["value"],
+                        classify=_classify_site, source="site:page", now=now, counts=counts,
                     )
 
                 result.notes.append(

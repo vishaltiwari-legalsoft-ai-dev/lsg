@@ -346,7 +346,92 @@ _ATTR_LABELS: dict[str, str] = {
     "site_emails": "Emails on the site (not used for tier)",
     "general_email": "General inbox",
     "hiring_email": "Hiring inbox",
+    # px_site_facts (D-031): what the firm's own pages say.
+    "office_locations": "Offices on the site",
+    "office_count": "Office count",
+    "site_people": "People named on the site",
+    "staff_listed": "Staff listed on the site",
+    "testimonials": "Client testimonials on the site",
+    "site_review_summary": "Reviews the site advertises",
+    "social_links": "Social profiles",
+    "review_profiles": "Review profiles",
+    "google_maps_url": "Google Maps listing",
+    "recent_posts": "Recent posts",
+    "latest_post_date": "Latest post",
+    "growth_news": "Growth news",
+    "live_chat_vendor": "Live chat vendor",
+    "online_intake_form": "Online intake form",
+    "copyright_year": "Copyright year in the footer",
+    "site_gaps": "What the site lacks",
 }
+
+_GAP_LABELS: dict[str, str] = {
+    "no_careers_page": "No careers page",
+    "no_online_intake": "No online intake form",
+    "no_live_chat": "No live chat",
+    "no_spanish": "No Spanish-language page",
+    "stale_copyright": "Copyright year is stale",
+    "no_testimonials": "No client testimonials",
+    "no_news": "No blog or news page",
+    "stale_news": "Blog not updated in a year",
+    "no_support_staff_listed": "No support staff listed",
+    "no_social_presence": "No social profiles linked",
+    "no_review_link": "No link to reviews",
+}
+
+
+def gap_label(gap: str) -> str:
+    return _GAP_LABELS.get(gap, gap.replace("_", " ").capitalize())
+
+
+def _more(shown: int, total: int) -> str:
+    return f" (+{total - shown} more)" if total > shown else ""
+
+
+def _format_site_fact(attr: str, value: Any) -> str | None:
+    """The list- and dict-shaped site facts, read as a person would say them."""
+    if attr == "site_people" and isinstance(value, list):
+        parts = [
+            f"{p.get('name')} ({p['title']})" if p.get("title") else str(p.get("name"))
+            for p in value[:8] if isinstance(p, dict)
+        ]
+        return "; ".join(parts) + _more(len(parts), len(value)) if parts else None
+    if attr == "staff_listed" and isinstance(value, dict):
+        return (
+            f"{value.get('attorneys', 0)} attorneys, {value.get('support', 0)} support, "
+            f"{value.get('other', 0)} other"
+        )
+    if attr == "testimonials" and isinstance(value, list):
+        if not value:
+            return None
+        first = value[0] if isinstance(value[0], dict) else {}
+        quote = str(first.get("quote") or "")[:120]
+        who = f" — {first['author']}" if first.get("author") else ""
+        return f"{len(value)} quote(s); “{quote}”{who}"
+    if attr == "site_review_summary" and isinstance(value, dict):
+        bits = []
+        if value.get("rating") is not None:
+            bits.append(f"{value['rating']} stars")
+        if value.get("count") is not None:
+            bits.append(f"{value['count']} reviews")
+        return ", ".join(bits) or None
+    if attr in ("social_links", "review_profiles") and isinstance(value, dict):
+        return ", ".join(sorted(value)) or None
+    if attr in ("recent_posts", "growth_news") and isinstance(value, list):
+        parts = [
+            f"{p.get('date')}: {p.get('title')}" for p in value[:3] if isinstance(p, dict)
+        ]
+        return "; ".join(parts) + _more(len(parts), len(value)) if parts else None
+    if attr == "office_locations" and isinstance(value, list):
+        parts = [
+            f"{o.get('city')}, {o.get('state')}" for o in value[:6] if isinstance(o, dict)
+        ]
+        return "; ".join(parts) + _more(len(parts), len(value)) if parts else None
+    if attr == "site_gaps" and isinstance(value, list):
+        if not value:
+            return "Nothing missing among the pages read"
+        return ", ".join(gap_label(g["gap"]) for g in value if isinstance(g, dict))
+    return None
 
 
 def attr_label(attr: str) -> str:
@@ -365,6 +450,9 @@ def format_attr_value(attr: str, value: Any) -> str | None:
         return practice_display(value)
     if attr == "cms_detected":
         return cms_display(value)
+    site_fact = _format_site_fact(attr, value)
+    if site_fact is not None:
+        return site_fact
     if isinstance(value, bool):
         return "Yes" if value else "No"
     if isinstance(value, (list, tuple)):
