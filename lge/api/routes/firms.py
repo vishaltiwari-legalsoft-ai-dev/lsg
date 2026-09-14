@@ -181,8 +181,10 @@ def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
         build_proof(s, repost_by_signal_id.get(s.id), signal_scores, at) for s in signals_typed
     ]
 
-    contacts_by_firm = fetch_contacts(conn, [firm_id])
-    firm_contacts = contacts_by_firm.get(firm_id, [])
+    # fetch_contacts keys by the row's uuid; the path gives a str. Looking up
+    # with the str hid every contact on every firm page (found 15 Sep 2026).
+    contacts_by_firm = fetch_contacts(conn, [firm["id"]])
+    firm_contacts = contacts_by_firm.get(firm["id"], [])
     emails_by_contact = fetch_emails(conn, [c["id"] for c in firm_contacts])
     contacts = [build_contact_summary(c, emails_by_contact) for c in firm_contacts]
 

@@ -6,9 +6,29 @@ import pytest
 
 from tests.conftest import make_firm
 
-from .conftest import make_firm_attribute
+from .conftest import make_contact, make_firm_attribute
 
 pytestmark = pytest.mark.db
+
+
+def test_firm_detail_lists_the_firm_contacts_with_linkedin(client, db):
+    # The route looked contacts up by the path string while the query keyed
+    # them by uuid: every firm page showed no contacts (found 15 Sep 2026).
+    firm_id = make_firm(db, canonical_name="People Firm")
+    make_contact(
+        db, firm_id, full_name="Margaret Hartley", title="Founding Partner",
+        role="owner", source="site:page",
+        linkedin_url="https://www.linkedin.com/in/mhartley/",
+    )
+    make_contact(db, firm_id, full_name="Priya Raman", title="Office Manager", role="admin")
+
+    resp = client.get(f"/api/firms/{firm_id}")
+    assert resp.status_code == 200
+    contacts = {c["full_name"]: c for c in resp.json()["contacts"]}
+    assert set(contacts) == {"Margaret Hartley", "Priya Raman"}
+    assert contacts["Margaret Hartley"]["linkedin_url"] == "https://www.linkedin.com/in/mhartley/"
+    assert contacts["Margaret Hartley"]["source_label"] == "Firm website (page text)"
+    assert contacts["Priya Raman"]["linkedin_url"] is None
 
 
 def test_list_firms_search_by_name_and_domain(client, db):
