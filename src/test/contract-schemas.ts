@@ -32,7 +32,7 @@ export const Proof = z.strictObject({
 export const ContactSummary = z.strictObject({
   id: s, full_name: s, title: ns, role: Role, source_label: s, email: ns,
   email_status: EmailStatus.nullable(), email_status_display: ns, phone: ns,
-  linkedin_url: ns.optional(),
+  linkedin_url: ns.optional(), linkedin_headline: ns.optional(),
 });
 const Stage = z.enum([
   "researching", "no_website", "needs_review", "needs_contact", "ready", "parked",

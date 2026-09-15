@@ -480,7 +480,7 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
         role: body.role ?? "unknown", source_label: "Added by hand", email: body.email?.toLowerCase() ?? null,
         email_status: body.email ? "unverified" : null,
         email_status_display: body.email ? "Not verified yet" : null, phone: body.phone ?? null,
-        linkedin_url: body.linkedin_url ?? null,
+        linkedin_url: body.linkedin_url ?? null, linkedin_headline: null,
       };
       for (const lead of Object.values(db.leadDetails)) if (lead.firm.id === firmId) lead.contacts.push(contact);
       return { contact } satisfies ContactResponse;

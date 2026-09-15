@@ -153,15 +153,20 @@ function Person({
       </div>
       {contact.phone ? <p className="text-table text-ink tabular-nums">{contact.phone}</p> : null}
       {contact.linkedin_url ? (
-        <a
-          href={contact.linkedin_url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-0.5 text-meta text-cobalt hover:underline"
-        >
-          LinkedIn profile
-          <ArrowUpRightIcon className="size-3" aria-hidden="true" />
-        </a>
+        <span className="grid gap-0.5">
+          <a
+            href={contact.linkedin_url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-0.5 text-meta text-cobalt hover:underline"
+          >
+            LinkedIn profile
+            <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+          </a>
+          {contact.linkedin_headline ? (
+            <span className="text-meta text-slate">{contact.linkedin_headline}</span>
+          ) : null}
+        </span>
       ) : null}
       <p className="text-meta text-slate">From {contact.source_label}</p>
       <div className="flex flex-wrap gap-1">

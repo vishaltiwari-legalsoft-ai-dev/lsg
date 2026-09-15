@@ -165,6 +165,9 @@ function People({ contacts }: { contacts: FirmDetail["contacts"] }) {
                         <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     ) : null}
+                    {c.linkedin_headline ? (
+                      <span className="block text-meta text-slate">{c.linkedin_headline}</span>
+                    ) : null}
                   </td>
                   <td className="py-2.5 pr-4 text-ink">{ROLE_LABEL[c.role]}</td>
                   <td className="py-2.5 pr-4">

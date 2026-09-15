@@ -759,6 +759,8 @@ export interface components {
             full_name: string;
             /** Id */
             id: string;
+            /** Linkedin Headline */
+            linkedin_headline?: string | null;
             /** Linkedin Url */
             linkedin_url?: string | null;
             /** Phone */
