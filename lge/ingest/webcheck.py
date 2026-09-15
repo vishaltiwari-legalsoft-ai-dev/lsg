@@ -188,6 +188,16 @@ SearchFn = Callable[[str, int], list[dict[str, str]]]
 _last_search_at = 0.0
 
 
+SEARCH_BACKOFF_S: tuple[float, ...] = (15.0, 45.0)
+
+
+def _transient(exc: Exception) -> bool:
+    """A dropped connection, a timeout, a rate limit: worth a second try."""
+    text = f"{type(exc).__name__}: {exc}".lower()
+    words = ("connect", "timeout", "timed out", "ratelimit", "rate limit", "503", "502")
+    return any(w in text for w in words)
+
+
 def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
     """DuckDuckGo text results as {title, href, body}. Throttled so a batch
     of corrections never hammers the engine."""
@@ -197,13 +207,23 @@ def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
     wait = SEARCH_INTERVAL_S - (time.monotonic() - _last_search_at)
     if wait > 0:
         time.sleep(wait)
-    _last_search_at = time.monotonic()
-    try:
-        rows = DDGS().text(query, max_results=max_results) or []
-    except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
-        if "no results" in str(exc).lower():
-            return []  # the engine answered: nothing matches. Not a failure to retry.
-        return [{"title": "", "href": "", "body": f"search failed: {type(exc).__name__}: {exc}"}]
+    last_exc: Exception | None = None
+    for attempt, pause in enumerate((0, *SEARCH_BACKOFF_S)):
+        if pause:
+            time.sleep(pause)  # a dropped connection or a timeout: wait, then try again
+        _last_search_at = time.monotonic()
+        try:
+            rows = DDGS().text(query, max_results=max_results) or []
+            break
+        except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
+            if "no results" in str(exc).lower():
+                return []  # the engine answered: nothing matches. Not a failure to retry.
+            last_exc = exc
+            if attempt == len(SEARCH_BACKOFF_S) or not _transient(exc):
+                failure = f"search failed: {type(exc).__name__}: {exc}"
+                return [{"title": "", "href": "", "body": failure}]
+    else:  # pragma: no cover -- the loop always breaks or returns
+        return [{"title": "", "href": "", "body": f"search failed: {last_exc}"}]
     return [
         {"title": r.get("title", ""), "href": r.get("href", ""), "body": r.get("body", "")}
         for r in rows

@@ -204,6 +204,20 @@ def test_nothing_runs_without_live(db):
     assert _search_log(db, firm_id) == []
 
 
+def test_five_failures_in_a_row_stop_the_run(db):
+    # Three firms, four people each: twelve queries would be asked. With the
+    # network gone the run stops after five, and says so.
+    dead = Recorder({"": [{"title": "", "href": "", "body": "search failed: ConnectError"}]})
+    for i in range(3):
+        firm_id = make_firm(db, canonical_name=f"Dead Firm {i}")
+        for j in range(4):
+            _insert_contact(db, firm_id, full_name=f"Person Number{i}{j}", role="attorney",
+                            confidence=0.5)
+    result = r_search_links.run(ctx(db, live=True), search=dead)
+    assert len(dead.queries) == 5
+    assert "stopped early" in " ".join(result.notes)
+
+
 def test_a_failed_search_is_logged_as_failed_and_retried_next_run(db):
     firm_id = make_firm(db, canonical_name="Flaky Firm")
     _insert_contact(db, firm_id, full_name="Fay Flaky", role="owner", confidence=0.9)

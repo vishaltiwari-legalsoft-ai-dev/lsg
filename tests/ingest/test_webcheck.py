@@ -100,11 +100,45 @@ def test_ddg_no_results_is_an_empty_answer_not_a_failure(monkeypatch):
             raise DDGSException("Ratelimit")
 
     monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    monkeypatch.setattr(webcheck, "SEARCH_BACKOFF_S", ())
     monkeypatch.setattr(ddgs, "DDGS", _NoResults)
     assert webcheck.ddg_search('"Nobody Law" Atlanta GA law firm') == []
     monkeypatch.setattr(ddgs, "DDGS", _Broken)
     failed = webcheck.ddg_search('"Nobody Law" Atlanta GA law firm')
     assert failed[0]["body"].startswith("search failed: DDGSException: Ratelimit")
+
+
+def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
+    import ddgs
+    from ddgs.exceptions import DDGSException
+
+    calls: list[int] = []
+    slept: list[float] = []
+
+    class _Flaky:
+        def text(self, query, max_results):
+            calls.append(1)
+            if len(calls) < 3:
+                raise DDGSException("ConnectError: error sending request")
+            return [{"title": "ok", "href": "https://x/", "body": ""}]
+
+    monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    monkeypatch.setattr(webcheck, "SEARCH_BACKOFF_S", (1.0, 2.0))
+    monkeypatch.setattr(webcheck.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(ddgs, "DDGS", _Flaky)
+    assert webcheck.ddg_search("x")[0]["title"] == "ok"
+    assert slept == [1.0, 2.0]  # waited before each retry
+
+    calls.clear()
+    slept.clear()
+
+    class _Dead:
+        def text(self, query, max_results):
+            raise DDGSException("ConnectError: error sending request")
+
+    monkeypatch.setattr(ddgs, "DDGS", _Dead)
+    assert webcheck.ddg_search("x")[0]["body"].startswith("search failed")
+    assert slept == [1.0, 2.0]  # two retries, then the failure is reported
 
 
 def test_build_query():

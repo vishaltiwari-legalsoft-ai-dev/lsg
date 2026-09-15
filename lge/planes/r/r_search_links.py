@@ -39,6 +39,7 @@ _SOURCE = "search:ddg"
 _RECHECK_DAYS_DEFAULT = 90
 _MAX_PEOPLE_PER_FIRM = 4
 _MAX_RESULTS = 8
+_MAX_CONSECUTIVE_FAILURES = 5
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
 _CONFIDENCE_LINKEDIN = 0.8
 _CONFIDENCE_REVIEWS = 0.6
@@ -283,8 +284,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     recheck_days = int(opts.get("recheck_days") or _RECHECK_DAYS_DEFAULT)
     now = datetime.now(UTC)
     linkedin_found = linkedin_missed = reviews_read = 0
+    # Five failures in a row is the network or the engine refusing us, not
+    # five unlucky queries: stop, leave the rest for the next run.
+    consecutive_failures = 0
 
     for firm_id in _firm_ids(conn, opts, recheck_days):
+        if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+            result.notes.append(
+                f"stopped early: {consecutive_failures} searches failed in a row "
+                "(network or rate limit) -- the rest wait for the next run"
+            )
+            break
         try:
             with conn.cursor() as cur:
                 cur.execute(
@@ -298,13 +308,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             did_something = False
 
             for person in _people_to_search(conn, firm_id, recheck_days):
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                    break
                 query = linkedin_query(firm_name, person["full_name"])
                 results = search(query, _MAX_RESULTS)
                 did_something = True
                 if _failed(results):
+                    consecutive_failures += 1
                     _log(conn, firm_id, "linkedin", query, "failed", results,
                          contact_id=person["id"])
                     continue
+                consecutive_failures = 0
                 url, _evidence = pick_linkedin(person["full_name"], firm_name, results)
                 if url:
                     with conn.cursor() as cur:
@@ -318,13 +332,16 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                 _log(conn, firm_id, "linkedin", query, "found" if url else "not_found", results,
                      contact_id=person["id"], url=url)
 
-            if not _reviews_searched_recently(conn, firm_id, recheck_days):
+            if (not _reviews_searched_recently(conn, firm_id, recheck_days)
+                    and consecutive_failures < _MAX_CONSECUTIVE_FAILURES):
                 query = reviews_query(firm_name, firm["city"], firm["state"])
                 results = search(query, _MAX_RESULTS)
                 did_something = True
                 if _failed(results):
+                    consecutive_failures += 1
                     _log(conn, firm_id, "reviews", query, "failed", results)
                 else:
+                    consecutive_failures = 0
                     found = read_reviews(results)
                     if found["maps_url"]:
                         write_claim(conn, firm_id, "google_business_url", found["maps_url"],

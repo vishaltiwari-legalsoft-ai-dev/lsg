@@ -1,6 +1,108 @@
 {
   "components": {
     "schemas": {
+      "ActionJob": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "firm_id": {
+            "title": "Firm Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "research",
+              "find_contacts"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "lead_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/JobStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "firm_id",
+          "lead_id",
+          "status",
+          "steps",
+          "error",
+          "created_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "ActionJob",
+        "type": "object"
+      },
       "AlertItem": {
         "properties": {
           "detail": {
@@ -337,6 +439,118 @@
         "title": "AttributeRow",
         "type": "object"
       },
+      "BatchRequest": {
+        "properties": {
+          "action": {
+            "enum": [
+              "research",
+              "find_contacts",
+              "disqualify",
+              "hold",
+              "assign"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "lead_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lead Ids",
+            "type": "array"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "lead_ids",
+          "action"
+        ],
+        "title": "BatchRequest",
+        "type": "object"
+      },
+      "BatchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BatchResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "BatchResponse",
+        "type": "object"
+      },
+      "BatchResult": {
+        "properties": {
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "lead_id": {
+            "title": "Lead Id",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lead_id",
+          "ok",
+          "message"
+        ],
+        "title": "BatchResult",
+        "type": "object"
+      },
       "BenchStatus": {
         "properties": {
           "message": {
@@ -382,6 +596,187 @@
           "file"
         ],
         "title": "Body_upload_import_api_imports_post",
+        "type": "object"
+      },
+      "ContactCreate": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "linkedin_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Url"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "owner",
+                  "admin",
+                  "attorney",
+                  "unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "full_name"
+        ],
+        "title": "ContactCreate",
+        "type": "object"
+      },
+      "ContactPatch": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "linkedin_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Url"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "owner",
+                  "admin",
+                  "attorney",
+                  "unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ContactPatch",
+        "type": "object"
+      },
+      "ContactRemove": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "ContactRemove",
+        "type": "object"
+      },
+      "ContactResponse": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactSummary"
+          }
+        },
+        "required": [
+          "contact"
+        ],
+        "title": "ContactResponse",
         "type": "object"
       },
       "ContactSummary": {
@@ -494,6 +889,66 @@
           "phone"
         ],
         "title": "ContactSummary",
+        "type": "object"
+      },
+      "DecisionRequest": {
+        "properties": {
+          "action": {
+            "enum": [
+              "qualify",
+              "disqualify",
+              "hold",
+              "reopen",
+              "handoff"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "DecisionRequest",
+        "type": "object"
+      },
+      "DecisionResponse": {
+        "properties": {
+          "lead": {
+            "$ref": "#/components/schemas/LeadDetail"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lead",
+          "message"
+        ],
+        "title": "DecisionResponse",
         "type": "object"
       },
       "DocumentRow": {
@@ -1628,6 +2083,69 @@
         "title": "ImportsResponse",
         "type": "object"
       },
+      "JobResponse": {
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ActionJob"
+          }
+        },
+        "required": [
+          "job"
+        ],
+        "title": "JobResponse",
+        "type": "object"
+      },
+      "JobStep": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "title": "JobStep",
+        "type": "object"
+      },
+      "JobsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActionJob"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "JobsResponse",
+        "type": "object"
+      },
       "LeadDetail": {
         "properties": {
           "band": {
@@ -1739,6 +2257,16 @@
             ],
             "title": "Intent"
           },
+          "job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActionJob"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "missing_roles": {
             "items": {
               "enum": [
@@ -1750,12 +2278,34 @@
             "title": "Missing Roles",
             "type": "array"
           },
+          "next_action": {
+            "title": "Next Action",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/LeadNote"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
           "outcomes": {
             "items": {
               "$ref": "#/components/schemas/LeadOutcome"
             },
             "title": "Outcomes",
             "type": "array"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
           },
           "proof": {
             "anyOf": [
@@ -1781,6 +2331,30 @@
               }
             ],
             "title": "Scored At"
+          },
+          "stage": {
+            "enum": [
+              "researching",
+              "no_website",
+              "needs_review",
+              "needs_contact",
+              "ready",
+              "parked",
+              "in_outreach",
+              "replied",
+              "handed_off",
+              "won",
+              "lost",
+              "disqualified",
+              "do_not_contact",
+              "needs_refresh"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "stage_display": {
+            "title": "Stage Display",
+            "type": "string"
           },
           "state": {
             "title": "State",
@@ -1812,14 +2386,49 @@
           "contact",
           "scored_at",
           "blockers",
+          "stage",
+          "stage_display",
+          "next_action",
+          "owner",
           "contacts",
           "missing_roles",
           "score",
           "exclusion_reasons",
           "outcomes",
-          "timeline"
+          "timeline",
+          "notes",
+          "job"
         ],
         "title": "LeadDetail",
+        "type": "object"
+      },
+      "LeadNote": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "actor",
+          "at"
+        ],
+        "title": "LeadNote",
         "type": "object"
       },
       "LeadOutcome": {
@@ -1987,6 +2596,21 @@
             ],
             "title": "Intent"
           },
+          "next_action": {
+            "title": "Next Action",
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
           "proof": {
             "anyOf": [
               {
@@ -2008,6 +2632,30 @@
               }
             ],
             "title": "Scored At"
+          },
+          "stage": {
+            "enum": [
+              "researching",
+              "no_website",
+              "needs_review",
+              "needs_contact",
+              "ready",
+              "parked",
+              "in_outreach",
+              "replied",
+              "handed_off",
+              "won",
+              "lost",
+              "disqualified",
+              "do_not_contact",
+              "needs_refresh"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "stage_display": {
+            "title": "Stage Display",
+            "type": "string"
           },
           "state": {
             "title": "State",
@@ -2031,7 +2679,11 @@
           "proof",
           "contact",
           "scored_at",
-          "blockers"
+          "blockers",
+          "stage",
+          "stage_display",
+          "next_action",
+          "owner"
         ],
         "title": "LeadRow",
         "type": "object"
@@ -2129,6 +2781,19 @@
         "title": "MappingRequest",
         "type": "object"
       },
+      "NoteRequest": {
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "NoteRequest",
+        "type": "object"
+      },
       "OutcomeRequest": {
         "properties": {
           "action": {
@@ -2194,6 +2859,39 @@
           "message"
         ],
         "title": "OutcomeResponse",
+        "type": "object"
+      },
+      "OwnerRequest": {
+        "properties": {
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          }
+        },
+        "required": [
+          "owner"
+        ],
+        "title": "OwnerRequest",
+        "type": "object"
+      },
+      "PrimaryContactRequest": {
+        "properties": {
+          "contact_id": {
+            "title": "Contact Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contact_id"
+        ],
+        "title": "PrimaryContactRequest",
         "type": "object"
       },
       "Proof": {
@@ -2385,6 +3083,21 @@
           "discovery"
         ],
         "title": "QueueCounts",
+        "type": "object"
+      },
+      "ResearchRequest": {
+        "properties": {
+          "scope": {
+            "default": "full",
+            "enum": [
+              "full",
+              "contacts"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "title": "ResearchRequest",
         "type": "object"
       },
       "ScoreBreakdown": {
@@ -2638,6 +3351,110 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/contacts/{contact_id}": {
+      "patch": {
+        "operationId": "patch_contact_api_contacts__contact_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contact_id",
+            "required": true,
+            "schema": {
+              "title": "Contact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Contact",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
+    "/api/contacts/{contact_id}/remove": {
+      "post": {
+        "operationId": "remove_contact_api_contacts__contact_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contact_id",
+            "required": true,
+            "schema": {
+              "title": "Contact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactRemove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Contact",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
     "/api/firms": {
       "get": {
         "operationId": "list_firms_api_firms_get",
@@ -2802,6 +3619,162 @@
         "summary": "Get Firm",
         "tags": [
           "firms"
+        ]
+      }
+    },
+    "/api/firms/{firm_id}/contacts": {
+      "post": {
+        "operationId": "post_contact_api_firms__firm_id__contacts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firm_id",
+            "required": true,
+            "schema": {
+              "title": "Firm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Contact",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
+    "/api/firms/{firm_id}/jobs": {
+      "get": {
+        "operationId": "get_firm_jobs_api_firms__firm_id__jobs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firm_id",
+            "required": true,
+            "schema": {
+              "title": "Firm Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Firm Jobs",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
+    "/api/firms/{firm_id}/research": {
+      "post": {
+        "operationId": "post_research_api_firms__firm_id__research_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "firm_id",
+            "required": true,
+            "schema": {
+              "title": "Firm Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Research",
+        "tags": [
+          "actions"
         ]
       }
     },
@@ -3092,6 +4065,48 @@
         "summary": "Put Mapping"
       }
     },
+    "/api/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_api_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
     "/api/leads": {
       "get": {
         "operationId": "list_leads_api_leads_get",
@@ -3260,6 +4275,47 @@
         ]
       }
     },
+    "/api/leads/batch": {
+      "post": {
+        "operationId": "post_batch_api_leads_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Batch",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
     "/api/leads/export.csv": {
       "get": {
         "operationId": "export_csv_api_leads_export_csv_get",
@@ -3344,6 +4400,110 @@
         ]
       }
     },
+    "/api/leads/{lead_id}/contact": {
+      "put": {
+        "operationId": "put_primary_contact_api_leads__lead_id__contact_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrimaryContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Primary Contact",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}/decision": {
+      "post": {
+        "operationId": "post_decision_api_leads__lead_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Decision",
+        "tags": [
+          "actions"
+        ]
+      }
+    },
     "/api/leads/{lead_id}/drafts": {
       "get": {
         "operationId": "get_drafts_api_leads__lead_id__drafts_get",
@@ -3383,6 +4543,58 @@
         "summary": "Get Drafts",
         "tags": [
           "leads"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}/notes": {
+      "post": {
+        "operationId": "post_note_api_leads__lead_id__notes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Note",
+        "tags": [
+          "actions"
         ]
       }
     },
@@ -3435,6 +4647,58 @@
         "summary": "Post Outcome",
         "tags": [
           "leads"
+        ]
+      }
+    },
+    "/api/leads/{lead_id}/owner": {
+      "put": {
+        "operationId": "put_owner_api_leads__lead_id__owner_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Owner",
+        "tags": [
+          "actions"
         ]
       }
     },

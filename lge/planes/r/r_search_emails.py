@@ -52,6 +52,7 @@ _SOURCE = "search:ddg"
 _RECHECK_DAYS_DEFAULT = 90
 _MAX_PEOPLE_PER_FIRM = 4
 _MAX_RESULTS = 8
+_MAX_CONSECUTIVE_FAILURES = 5
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
 _CONFIDENCE = 0.7
 
@@ -230,8 +231,15 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     recheck_days = int(opts.get("recheck_days") or _RECHECK_DAYS_DEFAULT)
     now = datetime.now(UTC)
     attached_total = found_total = 0
+    consecutive_failures = 0  # five in a row: the network, not the queries -- stop
 
     for firm_id in _firm_ids(conn, opts, recheck_days):
+        if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+            result.notes.append(
+                f"stopped early: {consecutive_failures} searches failed in a row "
+                "(network or rate limit) -- the rest wait for the next run"
+            )
+            break
         try:
             with conn.cursor() as cur:
                 cur.execute("SELECT canonical_name, domain FROM firm WHERE id = %s", (firm_id,))
@@ -251,8 +259,10 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                 results = search(query, _MAX_RESULTS)
                 did_something = True
                 if _failed(results):
+                    consecutive_failures += 1
                     _log(conn, firm_id, "emails", query, "failed", results)
                 else:
+                    consecutive_failures = 0
                     on, off = emails_in_results(results, domain)
                     found.update(on)
                     off_domain.update(off)
@@ -265,13 +275,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             people.sort(key=lambda c: (_ROLE_ORDER.get(c["role"] or "unknown", 3),
                                        -float(c["confidence"] or 0)))
             for person in people[:_MAX_PEOPLE_PER_FIRM]:
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                    break
                 query = person_query(firm["canonical_name"], person["full_name"])
                 results = search(query, _MAX_RESULTS)
                 did_something = True
                 if _failed(results):
+                    consecutive_failures += 1
                     _log(conn, firm_id, "person_email", query, "failed", results,
                          contact_id=person["id"])
                     continue
+                consecutive_failures = 0
                 on, off = emails_in_results(results, domain)
                 found.update(on)
                 off_domain.update(off)

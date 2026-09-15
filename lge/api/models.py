@@ -110,7 +110,7 @@ class LeadRow(BaseModel):
     stage: Stage
     stage_display: str
     next_action: str
-    owner: str | None = None
+    owner: str | None
 
 
 # =============================================================================
@@ -263,8 +263,8 @@ class LeadDetail(LeadRow):
     exclusion_reasons: list[str]
     outcomes: list[LeadOutcome]
     timeline: list[TimelineEvent]
-    notes: list[LeadNote] = []
-    job: ActionJob | None = None
+    notes: list[LeadNote]
+    job: ActionJob | None
 
 
 # =============================================================================
