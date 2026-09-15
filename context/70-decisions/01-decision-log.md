@@ -729,6 +729,36 @@ it does not give any power to the user" and "prepare a better lead life cycle jo
 - **Not done here:** authentication (actor is always `ui`), journey copy for the new signal
   kinds, and a stage-grouped work queue screen. The band tabs still lead.
 
+## D-037 · The pipeline is the interface
+
+**Asked for (15 Sep 2026):** "redesign the whole UI ... make a landing page for this what it
+does and everything, as of now I'm too confused."
+
+**Rulings:**
+- **The screens are organised around the five steps the team thinks in** -- Lists, Research,
+  Qualify, People, Outreach -- not around the engine's internals. `GET /api/overview` tells
+  that story with live counts; the home page renders it as five stations on one track, then
+  what needs a person, what the engine is doing, and a glossary. The rail carries the same
+  five counts on every screen.
+- **The work queue groups leads by what they need next**, not by band. `GET /api/leads?stage=`
+  pages every open lead at one of the fourteen stages (`stage_sql`, the same rule as
+  `stage_of`), with the band as a "priority" filter in plain words. The band views and the
+  CSV exports still exist; they are no longer the primary navigation.
+- **Every engine word gets a plain name on screen** and the engine's own label is kept where
+  it is precise: Band → Priority (Strike / Sequence / Nurture / Hold, each with a one-line
+  meaning), Proof → Why now, Case file → Lead, Docket → Work queue, Hand-check → Accuracy
+  check, Imports → Lists, Fit / Intent / Contest → Fit / Urgency / Competition, The record →
+  History. The contract's fields are unchanged; only the copy moved.
+- **The firm page opens with what outreach needs**: at a glance (practice, fee model, size,
+  staff listed, phone, address, offices, inboxes, chat, intake form, software, reviews, social),
+  the research buttons with the job's progress, why now, people, what the site says; every
+  claim and every page read fold away. A list fact read and found empty says "none on the
+  pages read", never "unknown".
+- **Visual language kept, extended**: the brand base (Rubik, cobalt, the yellow evidence mark)
+  stays; a display type step and a live-number step were added for the home page, and one new
+  hue -- signal amber -- is reserved for urgency. No card grids; ruled sections and one panel
+  style.
+
 ---
 
 ## Standing rulings that were never in dispute
