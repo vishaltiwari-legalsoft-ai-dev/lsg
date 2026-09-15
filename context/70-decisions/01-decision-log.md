@@ -759,6 +759,26 @@ does and everything, as of now I'm too confused."
   hue -- signal amber -- is reserved for urgency. No card grids; ruled sections and one panel
   style.
 
+## D-038 · Every named person gets a LinkedIn profile; LinkedIn is still never fetched
+
+**Asked for (15 Sep 2026):** "create a LinkedIn profile scraper so the list of individuals we are
+getting from every website ... we will try to find their LinkedIn accounts."
+
+**Rulings:**
+- **Every named person is searched**, not only four decision-makers: `r_search_links` asks
+  `"<firm>" "<person>" linkedin` for each contact without a profile, owners first, up to
+  `max_people` per firm (12) and `max_queries` per run (600); the rest wait for the next run.
+- **The profile is read off the search result, never off LinkedIn.** The result's title is
+  "Name - Headline | LinkedIn" and its snippet carries "Experience: … · Location: … · 500+
+  connections"; the headline and location are kept on the contact (migration 099), and a
+  title the site never printed is filled from the headline ("Partner at X" → "Partner", role
+  classified from it). Fetching LinkedIn pages would breach its terms and get the crawler
+  banned, which would cost the search route too; the standing rule stands. Full profile data,
+  when it is wanted, comes through LinkedIn's own APIs or a licensed provider, as an adapter.
+- **The firm's company page** is found the same way (`"<firm>" linkedin company`), with the
+  headcount the snippet prints ("51-200 employees") as `linkedin_headcount` -- a second
+  reading of firm size beside the sheet's and the site's.
+
 ---
 
 ## Standing rulings that were never in dispute

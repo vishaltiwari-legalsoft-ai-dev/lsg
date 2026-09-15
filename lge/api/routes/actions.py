@@ -294,8 +294,8 @@ def get_firm_jobs(firm_id: str, conn: ConnDep, limit: int = 5) -> JobsResponse:
 def _contact_row(conn: psycopg.Connection, contact_id: str) -> dict | None:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, source, "
-            "removed_at FROM contact WHERE id = %s",
+            "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, "
+            "linkedin_headline, source, removed_at FROM contact WHERE id = %s",
             (contact_id,),
         )
         return cur.fetchone()

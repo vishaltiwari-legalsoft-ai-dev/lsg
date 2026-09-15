@@ -829,6 +829,17 @@
             "title": "Id",
             "type": "string"
           },
+          "linkedin_headline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedin Headline"
+          },
           "linkedin_url": {
             "anyOf": [
               {

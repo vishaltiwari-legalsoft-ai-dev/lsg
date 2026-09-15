@@ -1,11 +1,19 @@
-"""r_search_links -- the two web searches outreach needs (Plane R, D-032).
+"""r_search_links -- the web searches outreach needs (Plane R, D-032, D-038).
 
-  * For each decision-maker without a LinkedIn URL (owner first, then admin,
-    then attorney; at most four per firm):  "<firm>" "<person>" linkedin
+  * For every named person without a LinkedIn URL (owner first, then admin,
+    then attorney, then the rest; `max_people` per firm, default 12):
+        "<firm>" "<person>" linkedin
     The result adopted must be a linkedin.com/in/ profile whose title names
     the person (both name tokens) -- a namesake at another firm is not this
-    person. Only the URL is kept on contact.linkedin_url; LinkedIn itself is
-    never fetched (standing rule).
+    person. What the search engine shows about the profile is read off the
+    result -- the headline ("Partner at Freehill Hogan & Mahar"), the
+    location, the company -- and kept on the contact; a title the site never
+    printed is filled from the headline. LinkedIn itself is never fetched
+    (standing rule).
+  * For the firm:  "<firm>" linkedin company
+    The company page's URL and the headcount its snippet prints
+    ("11-50 employees") become claims: linkedin_company_url,
+    linkedin_headcount.
   * For the firm:  "<firm>" <city> <state> google business reviews
     The result snippets are read for the listing's rating and review count
     ("4.8 (312)", "Rated 4.9 · 312 reviews") and the Google Maps URL when one
@@ -14,9 +22,11 @@
     search_review_snippets, which Part D reads for pain.
 
 Every query is logged once in `search_log` with the results considered, and
-a person or firm is not searched again for `recheck_days` (default 90).
-Searching is network work: it runs only under live=1, throttled the same
-way the website check's searches are.
+a person or firm is not searched again for `recheck_days` (default 90); a
+failed query is asked again next run. A run stops after `max_queries`
+(default 600) or five consecutive failures. Searching is network work: it
+runs only under live=1, throttled the same way the website check's searches
+are.
 """
 
 from __future__ import annotations
@@ -30,14 +40,17 @@ from urllib.parse import urlsplit, urlunsplit
 
 from psycopg.types.json import Jsonb
 
+from lge.classify.roles import classify_role
 from lge.ingest.webcheck import ddg_search
 from lge.planes.p._claims import write_claim
+from lge.planes.p._site_facts import looks_like_title
 from lge.registry import RunContext, RunResult, component
 
 _COMPONENT = "r_search_links"
 _SOURCE = "search:ddg"
 _RECHECK_DAYS_DEFAULT = 90
-_MAX_PEOPLE_PER_FIRM = 4
+_MAX_PEOPLE_PER_FIRM = 12
+_MAX_QUERIES_PER_RUN = 600
 _MAX_RESULTS = 8
 _MAX_CONSECUTIVE_FAILURES = 5
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
@@ -47,6 +60,14 @@ _CONFIDENCE_REVIEWS = 0.6
 SearchFn = Callable[[str, int], list[dict[str, str]]]
 
 _LINKEDIN_PROFILE_RE = re.compile(r"^/(?:in|pub)/[^/]+/?", re.I)
+_LINKEDIN_COMPANY_RE = re.compile(r"^/company/[^/]+/?", re.I)
+_HEADLINE_RE = re.compile(
+    r"^(?P<name>[^|]+?)\s+[-–—]\s+(?P<headline>.+?)(?:\s*[|·-]\s*LinkedIn.*)?$", re.I
+)
+_LOCATION_RE = re.compile(r"Location:\s*([^·]+?)\s*(?:·|$)")
+_EXPERIENCE_RE = re.compile(r"Experience:\s*([^·]+?)\s*(?:·|$)")
+_CONNECTIONS_RE = re.compile(r"(\d[\d,]*\+?)\s+connections", re.I)
+_HEADCOUNT_RE = re.compile(r"\b(\d[\d,]*(?:\s*[-–]\s*\d[\d,]*)?\+?)\s+employees\b", re.I)
 _RATING_RE = re.compile(
     r"\b([1-5](?:\.\d)?)\s*(?:/\s*5|out\s+of\s+5|[- ]?stars?\b|star\s+rating|·|\(\d)", re.I
 )
@@ -77,6 +98,10 @@ def linkedin_query(firm_name: str, person: str) -> str:
     return f'"{firm_name}" "{person}" linkedin'
 
 
+def company_query(firm_name: str) -> str:
+    return f'"{firm_name}" linkedin company'
+
+
 def reviews_query(firm_name: str, city: str | None, state: str | None) -> str:
     return " ".join(p for p in (f'"{firm_name}"', city, state, "google business reviews") if p)
 
@@ -90,18 +115,62 @@ def _firm_tokens(firm_name: str) -> set[str]:
             if len(t) > 2}
 
 
+def _is_linkedin(host: str) -> bool:
+    return host == "linkedin.com" or host.endswith(".linkedin.com")
+
+
 def canonical_linkedin(url: str) -> str:
     parts = urlsplit(url)
     path = parts.path.rstrip("/") + "/"
     return urlunsplit(("https", "www.linkedin.com", path, "", ""))
 
 
+def read_profile(result: dict[str, str]) -> dict[str, str | None]:
+    """What the search engine shows about a profile: headline, company,
+    location, connections. The title is "Name - Headline | LinkedIn"; the
+    body carries "Experience: … · Location: … · 500+ connections"."""
+    title = " ".join((result.get("title") or "").split())
+    body = " ".join((result.get("body") or "").split())
+    headline: str | None = None
+    m = _HEADLINE_RE.match(title.split("| LinkedIn")[0] if "| LinkedIn" in title else title)
+    if m:
+        headline = m.group("headline").strip(" -–—|·")[:160] or None
+    company = None
+    em = _EXPERIENCE_RE.search(body)
+    if em:
+        company = em.group(1).strip()[:120]
+    elif headline and " at " in headline:
+        company = headline.rsplit(" at ", 1)[-1].strip()[:120]
+    location = None
+    lm = _LOCATION_RE.search(body)
+    if lm:
+        location = lm.group(1).strip()[:120]
+    cm = _CONNECTIONS_RE.search(body)
+    return {
+        "headline": headline, "company": company, "location": location,
+        "connections": cm.group(1) if cm else None,
+    }
+
+
+def title_from_headline(headline: str | None) -> str | None:
+    """The job title in a headline: "Partner at X" -> "Partner"; "Lawyer at X"
+    -> "Lawyer"; a headline that is not a title ("Helping firms grow") -> None."""
+    if not headline:
+        return None
+    part = re.split(r"\s+(?:at|@)\s+", headline, maxsplit=1)[0]
+    part = re.split(r"\s*[|·]\s*", part)[0].strip(" ,")
+    if not part or len(part) > 80 or not looks_like_title(part):
+        return None
+    return part
+
+
 def pick_linkedin(
     person: str, firm_name: str, results: list[dict[str, str]]
 ) -> tuple[str | None, dict[str, Any]]:
-    """The profile URL that is this person, or None. A linkedin.com/in/ result
-    whose title (or slug) carries the person's first and last name; the firm's
-    name in the title or snippet breaks ties between namesakes."""
+    """The profile URL that is this person, or None, with what the result
+    shows about them. A linkedin.com/in/ result whose title (or slug) carries
+    the person's first and last name; the firm's name in the title or snippet
+    breaks ties between namesakes."""
     tokens = _name_tokens(person)
     if len(tokens) < 2:
         return None, {"reason": "name too short to match"}
@@ -113,9 +182,7 @@ def pick_linkedin(
         href = r.get("href") or ""
         parts = urlsplit(href)
         host = (parts.hostname or "").lower()
-        if not (host == "linkedin.com" or host.endswith(".linkedin.com")):
-            continue
-        if not _LINKEDIN_PROFILE_RE.match(parts.path):
+        if not _is_linkedin(host) or not _LINKEDIN_PROFILE_RE.match(parts.path):
             continue
         title = (r.get("title") or "").casefold()
         slug = parts.path.casefold()
@@ -128,13 +195,36 @@ def pick_linkedin(
         if firm_tokens and any(t in title or t in body for t in firm_tokens):
             score += 0.2
         if score > best[0]:
-            best = (score, href, {"title": r.get("title"), "href": href, "score": score})
+            best = (score, href, {"title": r.get("title"), "href": href, "score": score,
+                                  **read_profile(r)})
     score, href, evidence = best
     if href is None or score < 0.8:
         return None, {**evidence, "reason": "no result names this person"} if evidence else {
             "reason": "no linkedin profile in the results"
         }
     return canonical_linkedin(href), evidence
+
+
+def pick_company(firm_name: str, results: list[dict[str, str]]) -> dict[str, Any]:
+    """The firm's LinkedIn company page and the headcount its snippet prints."""
+    firm_tokens = _firm_tokens(firm_name)
+    for r in results:
+        href = r.get("href") or ""
+        parts = urlsplit(href)
+        host = (parts.hostname or "").lower()
+        if not _is_linkedin(host) or not _LINKEDIN_COMPANY_RE.match(parts.path):
+            continue
+        text = f"{r.get('title') or ''} {r.get('body') or ''}"
+        low = text.casefold()
+        if firm_tokens and not any(t in low for t in firm_tokens):
+            continue
+        hm = _HEADCOUNT_RE.search(text)
+        return {
+            "url": canonical_linkedin(href),
+            "headcount": hm.group(1).replace(" ", "") if hm else None,
+            "evidence": " ".join(text.split())[:200],
+        }
+    return {"url": None, "headcount": None, "evidence": None}
 
 
 def read_reviews(results: list[dict[str, str]]) -> dict[str, Any]:
@@ -186,6 +276,14 @@ def read_reviews(results: list[dict[str, str]]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _not_searched(kind: str, column: str) -> str:
+    return (
+        f"NOT EXISTS (SELECT 1 FROM search_log s WHERE s.{column} = {{ref}} "
+        f"AND s.kind = '{kind}' AND s.outcome <> 'failed' "
+        "AND s.searched_at > now() - make_interval(days => %(days)s))"
+    )
+
+
 def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
     firm_ids_file = opts.get("firm_ids_file")
     if firm_ids_file:
@@ -194,54 +292,51 @@ def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
             for line in Path(str(firm_ids_file)).read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
-    query = """
+    person = _not_searched("linkedin", "contact_id").format(ref="c.id")
+    company = _not_searched("company", "firm_id").format(ref="f.id")
+    reviews = _not_searched("reviews", "firm_id").format(ref="f.id")
+    query = f"""
         SELECT DISTINCT f.id AS firm_id
         FROM firm f
-        JOIN contact c ON c.firm_id = f.id
-        WHERE (c.linkedin_url IS NULL
-               AND NOT EXISTS (SELECT 1 FROM search_log s WHERE s.contact_id = c.id
-                               AND s.kind = 'linkedin' AND s.outcome <> 'failed'
-                               AND s.searched_at > now() - make_interval(days => %s)))
-           OR NOT EXISTS (SELECT 1 FROM search_log s WHERE s.firm_id = f.id
-                          AND s.kind = 'reviews' AND s.outcome <> 'failed'
-                          AND s.searched_at > now() - make_interval(days => %s))
+        LEFT JOIN contact c ON c.firm_id = f.id AND c.removed_at IS NULL
+        WHERE (c.id IS NOT NULL AND c.linkedin_url IS NULL AND {person})
+           OR {company} OR {reviews}
         ORDER BY f.id
-    """
-    params: list[Any] = [recheck_days, recheck_days]
+    """  # noqa: S608 -- fixed fragments; the day count is a bound parameter
+    params: dict[str, Any] = {"days": recheck_days}
     limit = opts.get("limit")
     if limit not in (None, ""):
-        query += " LIMIT %s"
-        params.append(int(limit))
+        query += " LIMIT %(limit)s"
+        params["limit"] = int(limit)
     with conn.cursor() as cur:
         cur.execute(query, params)
         return [r["firm_id"] for r in cur.fetchall()]
 
 
-def _people_to_search(conn: Any, firm_id: Any, recheck_days: int) -> list[dict]:
+def _people_to_search(conn: Any, firm_id: Any, recheck_days: int, max_people: int) -> list[dict]:
+    not_searched = _not_searched("linkedin", "contact_id").format(ref="c.id")
     with conn.cursor() as cur:
         cur.execute(
-            """
+            f"""
             SELECT c.id, c.full_name, c.role, c.title, c.confidence
             FROM contact c
-            WHERE c.firm_id = %s AND c.linkedin_url IS NULL
-              AND NOT EXISTS (SELECT 1 FROM search_log s WHERE s.contact_id = c.id
-                              AND s.kind = 'linkedin' AND s.outcome <> 'failed'
-                              AND s.searched_at > now() - make_interval(days => %s))
-            """,
-            (firm_id, recheck_days),
+            WHERE c.firm_id = %(firm_id)s AND c.linkedin_url IS NULL AND c.removed_at IS NULL
+              AND {not_searched}
+            """,  # noqa: S608 -- fixed fragments; values are bound parameters
+            {"firm_id": firm_id, "days": recheck_days},
         )
         rows = cur.fetchall()
     rows.sort(key=lambda r: (_ROLE_ORDER.get(r["role"] or "unknown", 3),
                              -float(r["confidence"] or 0)))
-    return rows[:_MAX_PEOPLE_PER_FIRM]
+    return rows[:max_people]
 
 
-def _reviews_searched_recently(conn: Any, firm_id: Any, recheck_days: int) -> bool:
+def _searched_recently(conn: Any, firm_id: Any, kind: str, recheck_days: int) -> bool:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT 1 FROM search_log WHERE firm_id = %s AND kind = 'reviews' "
+            "SELECT 1 FROM search_log WHERE firm_id = %s AND kind = %s "
             "AND outcome <> 'failed' AND searched_at > now() - make_interval(days => %s) LIMIT 1",
-            (firm_id, recheck_days),
+            (firm_id, kind, recheck_days),
         )
         return cur.fetchone() is not None
 
@@ -264,6 +359,26 @@ def _failed(results: list[dict]) -> bool:
     return len(results) == 1 and (results[0].get("body") or "").startswith("search failed")
 
 
+def _record_profile(conn: Any, person: dict, url: str, profile: dict[str, Any], now: Any) -> None:
+    """The URL and what the result showed; a title the site never printed is
+    filled from the headline, and the role classified from it."""
+    title = person.get("title")
+    role = person.get("role") or "unknown"
+    if not title:
+        filled = title_from_headline(profile.get("headline"))
+        if filled:
+            title = filled
+            if role == "unknown":
+                role = classify_role(filled).role
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE contact SET linkedin_url = %s, linkedin_headline = %s, "
+            "linkedin_location = %s, title = %s, role = %s, enriched_at = %s WHERE id = %s",
+            (url, profile.get("headline"), profile.get("location"), title, role, now,
+             person["id"]),
+        )
+
+
 # ---------------------------------------------------------------------------
 # Component
 # ---------------------------------------------------------------------------
@@ -271,7 +386,7 @@ def _failed(results: list[dict]) -> bool:
 
 @component(
     _COMPONENT, "R",
-    "Web search: LinkedIn profiles for named decision-makers, Google reviews for the firm",
+    "Web search: LinkedIn profiles for every named person, the firm's company page, Google reviews",
 )
 def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunResult:
     conn = ctx.conn
@@ -282,17 +397,30 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
         result.notes.append("live=0: web search is network work -- nothing searched")
         return result
     recheck_days = int(opts.get("recheck_days") or _RECHECK_DAYS_DEFAULT)
+    max_people = int(opts.get("max_people") or _MAX_PEOPLE_PER_FIRM)
+    max_queries = int(opts.get("max_queries") or _MAX_QUERIES_PER_RUN)
     now = datetime.now(UTC)
-    linkedin_found = linkedin_missed = reviews_read = 0
+    counts = {"found": 0, "not_found": 0, "titles": 0, "companies": 0, "reviews": 0}
+    queries = 0
     # Five failures in a row is the network or the engine refusing us, not
     # five unlucky queries: stop, leave the rest for the next run.
     consecutive_failures = 0
 
+    def ask(query: str) -> list[dict[str, str]]:
+        nonlocal queries
+        queries += 1
+        return search(query, _MAX_RESULTS)
+
+    def budget_left() -> bool:
+        return queries < max_queries and consecutive_failures < _MAX_CONSECUTIVE_FAILURES
+
     for firm_id in _firm_ids(conn, opts, recheck_days):
-        if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+        if not budget_left():
             result.notes.append(
-                f"stopped early: {consecutive_failures} searches failed in a row "
-                "(network or rate limit) -- the rest wait for the next run"
+                f"stopped early: {consecutive_failures} searches failed in a row"
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES
+                else f"stopped at the run's budget of {max_queries} queries"
+                " -- the rest wait for the next run"
             )
             break
         try:
@@ -307,11 +435,11 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             firm_name = firm["canonical_name"]
             did_something = False
 
-            for person in _people_to_search(conn, firm_id, recheck_days):
-                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+            for person in _people_to_search(conn, firm_id, recheck_days, max_people):
+                if not budget_left():
                     break
                 query = linkedin_query(firm_name, person["full_name"])
-                results = search(query, _MAX_RESULTS)
+                results = ask(query)
                 did_something = True
                 if _failed(results):
                     consecutive_failures += 1
@@ -319,23 +447,40 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                          contact_id=person["id"])
                     continue
                 consecutive_failures = 0
-                url, _evidence = pick_linkedin(person["full_name"], firm_name, results)
+                url, profile = pick_linkedin(person["full_name"], firm_name, results)
                 if url:
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "UPDATE contact SET linkedin_url = %s, enriched_at = %s WHERE id = %s",
-                            (url, now, person["id"]),
-                        )
-                    linkedin_found += 1
+                    _record_profile(conn, person, url, profile, now)
+                    counts["found"] += 1
+                    if not person.get("title") and title_from_headline(profile.get("headline")):
+                        counts["titles"] += 1
                 else:
-                    linkedin_missed += 1
+                    counts["not_found"] += 1
                 _log(conn, firm_id, "linkedin", query, "found" if url else "not_found", results,
                      contact_id=person["id"], url=url)
 
-            if (not _reviews_searched_recently(conn, firm_id, recheck_days)
-                    and consecutive_failures < _MAX_CONSECUTIVE_FAILURES):
+            if budget_left() and not _searched_recently(conn, firm_id, "company", recheck_days):
+                query = company_query(firm_name)
+                results = ask(query)
+                did_something = True
+                if _failed(results):
+                    consecutive_failures += 1
+                    _log(conn, firm_id, "company", query, "failed", results)
+                else:
+                    consecutive_failures = 0
+                    page = pick_company(firm_name, results)
+                    if page["url"]:
+                        write_claim(conn, firm_id, "linkedin_company_url", page["url"], _SOURCE,
+                                    _CONFIDENCE_LINKEDIN, page["evidence"], now)
+                        counts["companies"] += 1
+                    if page["headcount"]:
+                        write_claim(conn, firm_id, "linkedin_headcount", page["headcount"],
+                                    _SOURCE, _CONFIDENCE_LINKEDIN, page["evidence"], now)
+                    _log(conn, firm_id, "company", query, "found" if page["url"] else "not_found",
+                         results, url=page["url"])
+
+            if budget_left() and not _searched_recently(conn, firm_id, "reviews", recheck_days):
                 query = reviews_query(firm_name, firm["city"], firm["state"])
-                results = search(query, _MAX_RESULTS)
+                results = ask(query)
                 did_something = True
                 if _failed(results):
                     consecutive_failures += 1
@@ -359,7 +504,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                     _log(conn, firm_id, "reviews", query, "found" if got else "not_found",
                          results, url=found["maps_url"], rating=found["rating"],
                          review_count=found["count"])
-                    reviews_read += 1 if got else 0
+                    counts["reviews"] += 1 if got else 0
 
             if did_something:
                 result.processed += 1
@@ -371,7 +516,8 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
         ctx.checkpoint()
 
     result.notes.append(
-        f"linkedin profiles found {linkedin_found}, not found {linkedin_missed}; "
-        f"review listings read {reviews_read}"
+        f"linkedin profiles found {counts['found']}, not found {counts['not_found']}, "
+        f"titles filled from headlines {counts['titles']}; company pages {counts['companies']}; "
+        f"review listings read {counts['reviews']}; {queries} queries"
     )
     return result

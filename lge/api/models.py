@@ -88,6 +88,8 @@ class ContactSummary(BaseModel):
     email_status_display: str | None
     phone: str | None
     linkedin_url: str | None = None
+    # What the search engine showed about the profile ("Partner at X · New York").
+    linkedin_headline: str | None = None
 
 
 class LeadRow(BaseModel):

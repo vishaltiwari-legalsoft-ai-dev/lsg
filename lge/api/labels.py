@@ -369,6 +369,8 @@ _ATTR_LABELS: dict[str, str] = {
     "google_rating": "Google rating",
     "search_review_snippets": "Review snippets from search (not used for tier)",
     "search_emails": "Addresses found by search (not used for tier)",
+    "linkedin_company_url": "LinkedIn company page",
+    "linkedin_headcount": "Headcount on LinkedIn",
 }
 
 _GAP_LABELS: dict[str, str] = {

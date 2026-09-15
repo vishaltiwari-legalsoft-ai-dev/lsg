@@ -192,7 +192,8 @@ def fetch_contacts(conn, firm_ids: list[str]) -> dict[str, list[dict]]:
         return {}
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, source "
+            "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, "
+            "linkedin_headline, source "
             "FROM contact WHERE firm_id = ANY(%s) AND removed_at IS NULL",
             (firm_ids,),
         )
