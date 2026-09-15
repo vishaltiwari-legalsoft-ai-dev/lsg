@@ -779,6 +779,29 @@ getting from every website ... we will try to find their LinkedIn accounts."
   headcount the snippet prints ("51-200 employees") as `linkedin_headcount` -- a second
   reading of firm size beside the sheet's and the site's.
 
+## D-039 · A bot check is not "no results"; the search backs off and stops
+
+**Seen (15 Sep 2026):** twenty minutes into the LinkedIn pass at one query every 2 s,
+DuckDuckGo began answering HTTP 202 -- its anomaly page -- instead of results. The `ddgs`
+library folds that into "No results found.", so 251 people, company pages and review
+listings were logged `not_found`, which the planes do not ask again for 90 days.
+
+**Rulings:**
+- **The wrapper reads the status itself.** `webcheck._raw_search` sends the one request
+  through the library's DuckDuckGo engine and raises `SearchBlocked` on 202/403/429; a 200
+  with no result nodes is the only thing that counts as an empty answer.
+- **A bot check means slow down and stop, never work around.** On the first check the
+  wrapper waits 90 s and asks once more; on the second it fails every later query for
+  20 minutes, so the planes' five-failure breaker halts the run and its note says why.
+  No identity rotation, no proxies, no solving the page -- the standing rule.
+- **One query every 5 s**, not 2: the rate that tripped the check is not a rate we run at.
+- **Tonight's empty `not_found` rows were re-marked `failed`** (241 LinkedIn, 47 company,
+  27 reviews, 4 emails) so the next run asks again; a false "not found" hides a person for
+  90 days, a retry costs one query.
+- **Headlines end at the first "LinkedIn" or ellipsis**: the engine glues several page
+  titles into one ("... | LinkedInJoe Bloggs posted on LinkedIn ..."), and the glued tail
+  was landing on the contact.
+
 ---
 
 ## Standing rulings that were never in dispute

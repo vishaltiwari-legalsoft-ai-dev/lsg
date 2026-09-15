@@ -55,7 +55,7 @@ from lge.norm import norm_domain, norm_name
 from lge.registry import RunContext, RunResult, component
 
 SEARCH_SOURCE = "search:ddg"
-SEARCH_INTERVAL_S = 2.0
+SEARCH_INTERVAL_S = 5.0  # at 2 s DuckDuckGo starts answering with a bot check within ~20 minutes
 DEFAULT_RECHECK_DAYS = 30
 NAME_MATCH_OK = 0.5
 
@@ -189,6 +189,17 @@ _last_search_at = 0.0
 
 
 SEARCH_BACKOFF_S: tuple[float, ...] = (15.0, 45.0)
+# A bot check is the engine asking us to slow down. We do: wait, ask once
+# more, and if it is still checking, leave the engine alone for the rest of
+# the run (every later query fails at once, so the planes' breaker stops it).
+BLOCK_BACKOFF_S = 90.0
+BLOCK_COOLDOWN_S = 20 * 60.0
+_blocked_until = 0.0
+_BLOCKED_STATUSES = frozenset({202, 403, 429})  # 202 is DuckDuckGo's anomaly page
+
+
+class SearchBlocked(Exception):
+    """The engine answered with a bot check instead of results."""
 
 
 def _transient(exc: Exception) -> bool:
@@ -198,39 +209,63 @@ def _transient(exc: Exception) -> bool:
     return any(w in text for w in words)
 
 
+def _engine() -> Any:
+    from ddgs.engines.duckduckgo import Duckduckgo
+
+    return Duckduckgo(timeout=10)
+
+
+def _raw_search(query: str, max_results: int) -> list[dict[str, str]]:
+    """One request to DuckDuckGo through the ddgs engine (pinned: the
+    library's "auto" tries Google and Brave first, which rate-limit us).
+    The library folds a bot check into "No results found."; we read the
+    status ourselves, because an empty answer under a bot check proves
+    nothing and must not be logged as "not found" for 90 days."""
+    engine = _engine()
+    payload = engine.build_payload(
+        query=query, region="us-en", safesearch="moderate", timelimit=None, page=1
+    )
+    resp = engine.http_client.request(engine.search_method, engine.search_url, data=payload)
+    if resp.status_code in _BLOCKED_STATUSES:
+        raise SearchBlocked(f"DuckDuckGo answered {resp.status_code} (bot check), not results")
+    if resp.status_code != 200:
+        raise RuntimeError(f"DuckDuckGo answered {resp.status_code}")
+    rows = engine.post_extract_results(engine.extract_results(resp.text))
+    return [{"title": r.title, "href": r.href, "body": r.body} for r in rows[:max_results]]
+
+
+def _failure(text: str) -> list[dict[str, str]]:
+    return [{"title": "", "href": "", "body": text}]
+
+
 def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
     """DuckDuckGo text results as {title, href, body}. Throttled so a batch
-    of corrections never hammers the engine."""
-    global _last_search_at  # noqa: PLW0603
-    from ddgs import DDGS
+    of corrections never hammers the engine. A failure comes back as one row
+    whose body starts with "search failed"; an empty list is a real answer."""
+    global _last_search_at, _blocked_until  # noqa: PLW0603
 
+    if time.monotonic() < _blocked_until:
+        return _failure("search failed: blocked -- DuckDuckGo asked for a bot check earlier; "
+                        "leaving it alone for now")
     wait = SEARCH_INTERVAL_S - (time.monotonic() - _last_search_at)
     if wait > 0:
         time.sleep(wait)
-    last_exc: Exception | None = None
-    for attempt, pause in enumerate((0, *SEARCH_BACKOFF_S)):
-        if pause:
-            time.sleep(pause)  # a dropped connection or a timeout: wait, then try again
+    pauses = list(SEARCH_BACKOFF_S)
+    blocked_once = False
+    while True:
         _last_search_at = time.monotonic()
         try:
-            # backend pinned: the library's "auto" tries Google and Brave first,
-            # which rate-limit us (429) and cost seconds per query before the
-            # DuckDuckGo fallback answers.
-            rows = DDGS().text(query, max_results=max_results, backend="duckduckgo") or []
-            break
+            return _raw_search(query, max_results)
+        except SearchBlocked as exc:
+            if blocked_once or not BLOCK_BACKOFF_S:
+                _blocked_until = time.monotonic() + BLOCK_COOLDOWN_S
+                return _failure(f"search failed: blocked -- {exc}")
+            blocked_once = True
+            time.sleep(BLOCK_BACKOFF_S)  # the check usually clears if we stop asking
         except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
-            if "no results" in str(exc).lower():
-                return []  # the engine answered: nothing matches. Not a failure to retry.
-            last_exc = exc
-            if attempt == len(SEARCH_BACKOFF_S) or not _transient(exc):
-                failure = f"search failed: {type(exc).__name__}: {exc}"
-                return [{"title": "", "href": "", "body": failure}]
-    else:  # pragma: no cover -- the loop always breaks or returns
-        return [{"title": "", "href": "", "body": f"search failed: {last_exc}"}]
-    return [
-        {"title": r.get("title", ""), "href": r.get("href", ""), "body": r.get("body", "")}
-        for r in rows
-    ]
+            if not pauses or not _transient(exc):
+                return _failure(f"search failed: {type(exc).__name__}: {exc}")
+            time.sleep(pauses.pop(0))  # a dropped connection or a timeout: wait, then try again
 
 
 def build_query(firm_name: str, city: str | None, state: str | None) -> str:

@@ -132,10 +132,14 @@ def read_profile(result: dict[str, str]) -> dict[str, str | None]:
     body carries "Experience: … · Location: … · 500+ connections"."""
     title = " ".join((result.get("title") or "").split())
     body = " ".join((result.get("body") or "").split())
+    # The engine glues several page titles into one string ("… | LinkedInJoe
+    # Bloggs posted on LinkedIn…"): the headline ends at the first "LinkedIn"
+    # or ellipsis.
+    title = re.split(r"\s*(?:\|\s*)?LinkedIn|\s*(?:\.\.\.|…)", title, maxsplit=1)[0].strip()
     headline: str | None = None
-    m = _HEADLINE_RE.match(title.split("| LinkedIn")[0] if "| LinkedIn" in title else title)
+    m = _HEADLINE_RE.match(title)
     if m:
-        headline = m.group("headline").strip(" -–—|·")[:160] or None
+        headline = m.group("headline").strip(" -–—|·")[:120] or None
     company = None
     em = _EXPERIENCE_RE.search(body)
     if em:
@@ -417,11 +421,15 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     # Five failures in a row is the network or the engine refusing us, not
     # five unlucky queries: stop, leave the rest for the next run.
     consecutive_failures = 0
+    last_failure = ""
 
     def ask(query: str) -> list[dict[str, str]]:
-        nonlocal queries
+        nonlocal queries, last_failure
         queries += 1
-        return search(query, _MAX_RESULTS)
+        results = search(query, _MAX_RESULTS)
+        if _failed(results):
+            last_failure = results[0].get("body") or ""
+        return results
 
     def budget_left() -> bool:
         return queries < max_queries and consecutive_failures < _MAX_CONSECUTIVE_FAILURES
@@ -429,7 +437,8 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     for firm_id in _firm_ids(conn, opts, recheck_days):
         if not budget_left():
             result.notes.append(
-                f"stopped early: {consecutive_failures} searches failed in a row"
+                f"stopped early: {consecutive_failures} searches failed in a row "
+                f"({last_failure})"
                 if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES
                 else f"stopped at the run's budget of {max_queries} queries"
                 " -- the rest wait for the next run"

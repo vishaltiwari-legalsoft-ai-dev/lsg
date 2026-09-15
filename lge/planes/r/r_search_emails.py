@@ -232,12 +232,20 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     now = datetime.now(UTC)
     attached_total = found_total = 0
     consecutive_failures = 0  # five in a row: the network, not the queries -- stop
+    last_failure = ""
+
+    def ask(query: str) -> list[dict[str, str]]:
+        nonlocal last_failure
+        results = search(query, _MAX_RESULTS)
+        if _failed(results):
+            last_failure = results[0].get("body") or ""
+        return results
 
     for firm_id in _firm_ids(conn, opts, recheck_days):
         if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
             result.notes.append(
                 f"stopped early: {consecutive_failures} searches failed in a row "
-                "(network or rate limit) -- the rest wait for the next run"
+                f"({last_failure}) -- the rest wait for the next run"
             )
             break
         try:
@@ -256,7 +264,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
 
             if not _searched(conn, "emails", recheck_days, firm_id=firm_id):
                 query = firm_query(domain)
-                results = search(query, _MAX_RESULTS)
+                results = ask(query)
                 did_something = True
                 if _failed(results):
                     consecutive_failures += 1
@@ -278,7 +286,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                 if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
                     break
                 query = person_query(firm["canonical_name"], person["full_name"])
-                results = search(query, _MAX_RESULTS)
+                results = ask(query)
                 did_something = True
                 if _failed(results):
                     consecutive_failures += 1

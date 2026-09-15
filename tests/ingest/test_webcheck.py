@@ -87,58 +87,121 @@ def test_page_identity_reads_title_and_jsonld():
     assert "injured people" in ident["text"]
 
 
+def _quiet_search(monkeypatch):
+    monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    monkeypatch.setattr(webcheck, "_last_search_at", 0.0)
+    monkeypatch.setattr(webcheck, "_blocked_until", 0.0)
+
+
 def test_ddg_no_results_is_an_empty_answer_not_a_failure(monkeypatch):
-    import ddgs
     from ddgs.exceptions import DDGSException
 
-    class _NoResults:
-        def text(self, query, max_results, **kw):
-            raise DDGSException("No results found.")
+    def broken(query, n):
+        raise DDGSException("Ratelimit")
 
-    class _Broken:
-        def text(self, query, max_results, **kw):
-            raise DDGSException("Ratelimit")
-
-    monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    _quiet_search(monkeypatch)
     monkeypatch.setattr(webcheck, "SEARCH_BACKOFF_S", ())
-    monkeypatch.setattr(ddgs, "DDGS", _NoResults)
+    monkeypatch.setattr(webcheck, "_raw_search", lambda query, n: [])
     assert webcheck.ddg_search('"Nobody Law" Atlanta GA law firm') == []
-    monkeypatch.setattr(ddgs, "DDGS", _Broken)
+    monkeypatch.setattr(webcheck, "_raw_search", broken)
     failed = webcheck.ddg_search('"Nobody Law" Atlanta GA law firm')
     assert failed[0]["body"].startswith("search failed: DDGSException: Ratelimit")
 
 
 def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
-    import ddgs
     from ddgs.exceptions import DDGSException
 
     calls: list[int] = []
     slept: list[float] = []
 
-    class _Flaky:
-        def text(self, query, max_results, **kw):
-            calls.append(1)
-            if len(calls) < 3:
-                raise DDGSException("ConnectError: error sending request")
-            return [{"title": "ok", "href": "https://x/", "body": ""}]
+    def flaky(query, n):
+        calls.append(1)
+        if len(calls) < 3:
+            raise DDGSException("ConnectError: error sending request")
+        return [{"title": "ok", "href": "https://x/", "body": ""}]
 
-    monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    _quiet_search(monkeypatch)
     monkeypatch.setattr(webcheck, "SEARCH_BACKOFF_S", (1.0, 2.0))
     monkeypatch.setattr(webcheck.time, "sleep", lambda s: slept.append(s))
-    monkeypatch.setattr(ddgs, "DDGS", _Flaky)
+    monkeypatch.setattr(webcheck, "_raw_search", flaky)
     assert webcheck.ddg_search("x")[0]["title"] == "ok"
     assert slept == [1.0, 2.0]  # waited before each retry
 
     calls.clear()
     slept.clear()
 
-    class _Dead:
-        def text(self, query, max_results, **kw):
-            raise DDGSException("ConnectError: error sending request")
+    def dead(query, n):
+        raise DDGSException("ConnectError: error sending request")
 
-    monkeypatch.setattr(ddgs, "DDGS", _Dead)
+    monkeypatch.setattr(webcheck, "_raw_search", dead)
     assert webcheck.ddg_search("x")[0]["body"].startswith("search failed")
     assert slept == [1.0, 2.0]  # two retries, then the failure is reported
+
+
+def test_ddg_bot_check_backs_off_once_then_leaves_the_engine_alone(monkeypatch):
+    """A bot check is not "no results": wait, ask once more, and if the engine
+    is still checking, fail every later query at once so the run stops."""
+    calls: list[str] = []
+    slept: list[float] = []
+
+    def challenged(query, n):
+        calls.append(query)
+        raise webcheck.SearchBlocked("DuckDuckGo answered 202 (bot check), not results")
+
+    _quiet_search(monkeypatch)
+    monkeypatch.setattr(webcheck, "BLOCK_BACKOFF_S", 90.0)
+    monkeypatch.setattr(webcheck, "BLOCK_COOLDOWN_S", 1200.0)
+    monkeypatch.setattr(webcheck.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(webcheck, "_raw_search", challenged)
+    out = webcheck.ddg_search("x")
+    assert out[0]["body"].startswith("search failed: blocked -- DuckDuckGo answered 202")
+    assert slept == [90.0] and calls == ["x", "x"]  # one long wait, one more try
+    # the next query in the run never reaches the engine
+    assert webcheck.ddg_search("y")[0]["body"].startswith("search failed: blocked")
+    assert calls == ["x", "x"]
+
+
+def test_raw_search_reads_the_status_before_the_page(monkeypatch):
+    """The library folds a 202 into "No results found."; we read the status."""
+    from ddgs.engines.duckduckgo import Duckduckgo
+
+    class _Resp:
+        def __init__(self, status, text):
+            self.status_code, self.text = status, text
+
+    class _Client:
+        def __init__(self, status, text):
+            self.answer = _Resp(status, text)
+            self.sent: list[dict] = []
+
+        def request(self, method, url, **kw):
+            self.sent.append({"method": method, "url": url, **kw})
+            return self.answer
+
+    def engine_with(status, text):
+        eng = Duckduckgo.__new__(Duckduckgo)  # no primp client: nothing here touches the network
+        eng.http_client = _Client(status, text)
+        eng.results = []
+        return eng
+
+    page = (
+        '<html><body><div class="result__body"><h2>Doe Law</h2>'
+        '<a href="https://doe.law/">Doe Law is a firm in Atlanta</a></div>'
+        '<div class="result__body"><h2>Roe</h2><a href="https://roe.law/">Roe</a></div>'
+        "</body></html>"
+    )
+    eng = engine_with(200, page)
+    monkeypatch.setattr(webcheck, "_engine", lambda: eng)
+    rows = webcheck._raw_search('"Doe Law" Atlanta', 1)
+    assert rows == [{"title": "Doe Law", "href": "https://doe.law/",
+                     "body": "Doe Law is a firm in Atlanta"}]
+    assert eng.http_client.sent[0]["data"]["q"] == '"Doe Law" Atlanta'
+
+    monkeypatch.setattr(webcheck, "_engine", lambda: engine_with(202, "<html>anomaly</html>"))
+    with pytest.raises(webcheck.SearchBlocked):
+        webcheck._raw_search("x", 5)
+    monkeypatch.setattr(webcheck, "_engine", lambda: engine_with(200, "<html></html>"))
+    assert webcheck._raw_search("x", 5) == []  # a real empty answer
 
 
 def test_build_query():

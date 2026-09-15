@@ -250,6 +250,11 @@ def test_the_run_stops_at_its_query_budget(db):
         ("Joseph Farella, Esq. - Farella Mascolo PLLC | LinkedIn", "",
          {"headline": "Farella Mascolo PLLC", "company": None, "location": None,
           "connections": None}),
+        # several page titles glued together: the headline ends at the first "LinkedIn"
+        ("Joseph Appio - Associate Attorney at Tanenbaum Keale LLP ...Joseph Appio posted on "
+         "LinkedInTanenbaum Keale LLP associates Joseph Appio ...", "Location: Montclair",
+         {"headline": "Associate Attorney at Tanenbaum Keale LLP", "company": "Tanenbaum Keale LLP",
+          "location": "Montclair", "connections": None}),
     ],
 )
 def test_read_profile_reads_the_snippet(title, body, expected):
