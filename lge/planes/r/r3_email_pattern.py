@@ -51,7 +51,14 @@ from lge.registry import RunContext, RunResult, component
 _COMPONENT_NAME = "r3_email_pattern"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "resolvers.yml"
 
-_PATTERN_CHOICES = ("first.last", "flast", "first", "firstl", "last")
+# Order matters only as a tie-break. The last six were added when search
+# results started supplying real addresses (D-035): jsmith@ and john.smith@
+# are the common law-firm schemes, but johnsmith@, john_smith@, smithj@,
+# j.smith@, smith.john@ and smithjohn@ are all seen on the probe.
+_PATTERN_CHOICES = (
+    "first.last", "flast", "first", "firstl", "last",
+    "firstlast", "first_last", "lastf", "f.last", "last.first", "lastfirst",
+)
 _NAME_TOKEN_RE = re.compile(r"[^A-Za-z]")
 
 
@@ -81,17 +88,26 @@ def infer_pattern(full_name: str | None, email: str) -> str:
     if not first or not last:
         return "other"
     local = email.split("@", 1)[0].lower()
-    if local == f"{first}.{last}":
-        return "first.last"
-    if local == f"{first[0]}{last}":
-        return "flast"
-    if local == first:
-        return "first"
-    if local == f"{first}{last[0]}":
-        return "firstl"
-    if local == last:
-        return "last"
+    for pattern in _PATTERN_CHOICES:
+        if local == _render(first, last, pattern):
+            return pattern
     return "other"
+
+
+def _render(first: str, last: str, pattern: str) -> str:
+    return {
+        "first.last": f"{first}.{last}",
+        "flast": f"{first[0]}{last}",
+        "first": first,
+        "firstl": f"{first}{last[0]}",
+        "last": last,
+        "firstlast": f"{first}{last}",
+        "first_last": f"{first}_{last}",
+        "lastf": f"{last}{first[0]}",
+        "f.last": f"{first[0]}.{last}",
+        "last.first": f"{last}.{first}",
+        "lastfirst": f"{last}{first}",
+    }[pattern]
 
 
 def render_pattern(full_name: str, pattern: str) -> str | None:
@@ -103,13 +119,7 @@ def render_pattern(full_name: str, pattern: str) -> str | None:
     first, last = parts
     if not first or not last:
         return None
-    return {
-        "first.last": f"{first}.{last}",
-        "flast": f"{first[0]}{last}",
-        "first": first,
-        "firstl": f"{first}{last[0]}",
-        "last": last,
-    }[pattern]
+    return _render(first, last, pattern)
 
 
 def _learn_pattern(rows: list[dict]) -> tuple[str, int, float] | None:

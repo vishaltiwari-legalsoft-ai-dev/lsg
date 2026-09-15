@@ -157,6 +157,31 @@ def test_single_known_email_accepted_at_support_one(db):
     assert owner_emails[0]["email"] == "new.owner@soloshop.com"
 
 
+@pytest.mark.parametrize(
+    "email,pattern",
+    [
+        ("john.smith@x.com", "first.last"),
+        ("jsmith@x.com", "flast"),
+        ("john@x.com", "first"),
+        ("johns@x.com", "firstl"),
+        ("smith@x.com", "last"),
+        ("johnsmith@x.com", "firstlast"),
+        ("john_smith@x.com", "first_last"),
+        ("smithj@x.com", "lastf"),
+        ("j.smith@x.com", "f.last"),
+        ("smith.john@x.com", "last.first"),
+        ("smithjohn@x.com", "lastfirst"),
+        ("jls@x.com", "other"),
+    ],
+)
+def test_infer_and_render_cover_the_schemes_seen_on_the_probe(email, pattern):
+    from lge.planes.r.r3_email_pattern import infer_pattern, render_pattern
+
+    assert infer_pattern("John Q. Smith", email) == pattern
+    if pattern != "other":
+        assert render_pattern("John Q. Smith", pattern) == email.split("@")[0]
+
+
 def test_idempotent_rerun_applies_nothing_new(db):
     firm_id = make_firm(db, domain="rerunfirm.com", country="US")
     smith = _insert_contact(db, firm_id, "John Smith", source="internal_firms")

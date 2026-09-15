@@ -68,6 +68,7 @@ flows:
       - component: r_site_contacts
       - component: r_site_emails
       - component: r_search_links
+      - component: r_search_emails
       - component: r3_email_pattern
       - component: r4_verify
       - component: classify
