@@ -134,9 +134,14 @@ def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
     attributes = build_attributes_for_firm(conn, firm, cfg, at)
 
     with conn.cursor() as cur:
+        # One row per URL, its latest fetch: a page read in two crawls is one
+        # page on the record (and one React key on the screen).
         cur.execute(
-            "SELECT url, page_kind, status_code, word_count AS words, robots_decision, fetched_at "
-            "FROM document WHERE firm_id = %s ORDER BY fetched_at DESC",
+            "SELECT url, page_kind, status_code, words, robots_decision, fetched_at FROM ("
+            "  SELECT DISTINCT ON (url) url, page_kind, status_code, word_count AS words, "
+            "         robots_decision, fetched_at"
+            "  FROM document WHERE firm_id = %s ORDER BY url, fetched_at DESC"
+            ") latest ORDER BY fetched_at DESC",
             (firm_id,),
         )
         documents = [DocumentRow(**r) for r in cur.fetchall()]

@@ -11,6 +11,26 @@ from .conftest import make_contact, make_firm_attribute
 pytestmark = pytest.mark.db
 
 
+def test_firm_detail_lists_each_page_once_at_its_latest_fetch(client, db):
+    firm_id = make_firm(db, canonical_name="Twice Crawled")
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO document (firm_id, url, status_code, content_hash, bytes, word_count, "
+            "fetch_ok, page_kind, fetched_at) VALUES "
+            "(%s, 'https://tc.example/contact', 200, 'h1', 10, 50, true, 'contact', "
+            " now() - interval '30 days'), "
+            "(%s, 'https://tc.example/contact', 200, 'h2', 12, 80, true, 'contact', now()), "
+            "(%s, 'https://tc.example/', 200, 'h3', 10, 400, true, 'home', now())",
+            (firm_id, firm_id, firm_id),
+        )
+    resp = client.get(f"/api/firms/{firm_id}")
+    assert resp.status_code == 200
+    docs = resp.json()["documents"]
+    assert [d["url"] for d in docs].count("https://tc.example/contact") == 1
+    contact = next(d for d in docs if d["url"] == "https://tc.example/contact")
+    assert contact["words"] == 80  # the latest fetch
+
+
 def test_firm_detail_lists_the_firm_contacts_with_linkedin(client, db):
     # The route looked contacts up by the path string while the query keyed
     # them by uuid: every firm page showed no contacts (found 15 Sep 2026).
