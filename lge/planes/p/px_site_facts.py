@@ -47,7 +47,7 @@ from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 _COMPONENT = "px_site_facts"
-_VERSION = "px_facts:v3"  # v3: headings, places and practice areas are not people
+_VERSION = "px_facts:v4"  # v4: a bare name on the attorneys page is an attorney
 _MAX_PEOPLE_PER_FIRM = 60
 _SOURCE = "site:page"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "site_facts.yml"
@@ -129,6 +129,11 @@ def read_firm(docs: list[dict], domain: str | None, store: ObjectStore) -> Facts
 
         if kind in _PEOPLE_KINDS:
             for person in sf.find_people(tree, url, strict=kind not in _LOOSE_PEOPLE_KINDS):
+                if kind == "attorneys" and not person["title"]:
+                    # The page itself is the designation: a name listed on the
+                    # attorneys page is an attorney (hallandlampros.com lists
+                    # eight with no title printed beside them).
+                    person = {**person, "title": "Attorney", "title_inferred": True}
                 key = person["name"].casefold()
                 if key not in people:
                     people[key] = {**person, "page_url": url}

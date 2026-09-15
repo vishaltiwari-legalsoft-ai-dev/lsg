@@ -211,3 +211,12 @@ def test_a_failed_search_is_logged_as_failed_and_retried_next_run(db):
     r_search_links.run(ctx(db, live=True), search=failing)
     log = _search_log(db, firm_id)
     assert [r["outcome"] for r in log] == ["failed", "failed"]
+
+    # a failed query is asked again next run; a found/not-found one is not
+    working = Recorder({"linkedin": [_li("Fay Flaky - Owner - Flaky Firm", "fay-flaky")]})
+    r_search_links.run(ctx(db, live=True), search=working)
+    assert len(working.queries) == 2
+    outcomes = [r["outcome"] for r in _search_log(db, firm_id)]
+    assert outcomes.count("found") == 1 and outcomes.count("not_found") == 1
+    r_search_links.run(ctx(db, live=True), search=working)
+    assert len(working.queries) == 2  # nothing asked a third time

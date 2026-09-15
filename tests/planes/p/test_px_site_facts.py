@@ -101,6 +101,26 @@ def test_the_site_becomes_claims(db, tmp_path):
     assert all(c["source"] == "site:page" for c in claims.values())
 
 
+def test_a_bare_name_on_the_attorneys_page_is_an_attorney(db, tmp_path):
+    store = ObjectStore(tmp_path)
+    firm_id = make_firm(db, domain="listed.example")
+    make_lead(db, firm_id)
+    page = (
+        "<html><body><h1>Our Attorneys</h1>"
+        "<a href='/attorneys/christopher-hall/'><h3>Christopher B. Hall</h3></a>"
+        "<a href='/attorneys/andrew-lampros/'><h3>Andrew Lampros</h3></a>"
+        "<h3>Practice Areas</h3></body></html>"
+    )
+    insert_document(db, store, firm_id, page, url="https://listed.example/attorneys/",
+                    page_kind="attorneys")
+    px_site_facts.run(ctx(db), store=store)
+    people = {p["name"]: p for p in _claims(db, firm_id)["site_people"]["value"]}
+    assert set(people) == {"Christopher B. Hall", "Andrew Lampros"}
+    assert people["Andrew Lampros"]["title"] == "Attorney"
+    assert people["Andrew Lampros"]["title_inferred"] is True
+    assert _claims(db, firm_id)["staff_listed"]["value"]["attorneys"] == 2
+
+
 def test_gaps_name_what_the_pages_read_lack(db, tmp_path):
     store = ObjectStore(tmp_path)
     firm_id = make_firm(db, domain="quiet.example")

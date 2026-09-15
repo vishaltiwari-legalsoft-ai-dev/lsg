@@ -199,10 +199,10 @@ def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
         JOIN contact c ON c.firm_id = f.id
         WHERE (c.linkedin_url IS NULL
                AND NOT EXISTS (SELECT 1 FROM search_log s WHERE s.contact_id = c.id
-                               AND s.kind = 'linkedin'
+                               AND s.kind = 'linkedin' AND s.outcome <> 'failed'
                                AND s.searched_at > now() - make_interval(days => %s)))
            OR NOT EXISTS (SELECT 1 FROM search_log s WHERE s.firm_id = f.id
-                          AND s.kind = 'reviews'
+                          AND s.kind = 'reviews' AND s.outcome <> 'failed'
                           AND s.searched_at > now() - make_interval(days => %s))
         ORDER BY f.id
     """
@@ -224,7 +224,7 @@ def _people_to_search(conn: Any, firm_id: Any, recheck_days: int) -> list[dict]:
             FROM contact c
             WHERE c.firm_id = %s AND c.linkedin_url IS NULL
               AND NOT EXISTS (SELECT 1 FROM search_log s WHERE s.contact_id = c.id
-                              AND s.kind = 'linkedin'
+                              AND s.kind = 'linkedin' AND s.outcome <> 'failed'
                               AND s.searched_at > now() - make_interval(days => %s))
             """,
             (firm_id, recheck_days),
@@ -239,7 +239,7 @@ def _reviews_searched_recently(conn: Any, firm_id: Any, recheck_days: int) -> bo
     with conn.cursor() as cur:
         cur.execute(
             "SELECT 1 FROM search_log WHERE firm_id = %s AND kind = 'reviews' "
-            "AND searched_at > now() - make_interval(days => %s) LIMIT 1",
+            "AND outcome <> 'failed' AND searched_at > now() - make_interval(days => %s) LIMIT 1",
             (firm_id, recheck_days),
         )
         return cur.fetchone() is not None
