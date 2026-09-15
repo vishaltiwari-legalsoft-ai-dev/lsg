@@ -131,7 +131,7 @@ def _fetch_open_scored_leads(conn, at: datetime) -> list[dict]:
             SELECT
               l.id AS lead_id, l.grade, l.band, l.contest, l.wedge_sku,
               l.fit_score, l.intent_score, l.arming_signal, l.contact_id,
-              l.state AS lead_state, l.scored_at, l.cooldown_until,
+              l.state AS lead_state, l.scored_at, l.cooldown_until, l.owner,
               f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
               f.tier, f.fee_model, f.primary_practice, f.cms_detected,
               COALESCE(ft.track, 'cold') AS firm_track,
@@ -193,7 +193,7 @@ def fetch_contacts(conn, firm_ids: list[str]) -> dict[str, list[dict]]:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, source "
-            "FROM contact WHERE firm_id = ANY(%s)",
+            "FROM contact WHERE firm_id = ANY(%s) AND removed_at IS NULL",
             (firm_ids,),
         )
         by_firm: dict[str, list[dict]] = {}

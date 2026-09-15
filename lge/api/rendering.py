@@ -25,6 +25,7 @@ from lge.api.labels import (
     tier_display,
 )
 from lge.api.models import ContactSummary, FirmRef, LeadRow, Proof
+from lge.api.stage import STAGE_DISPLAY, stage_of
 from lge.export.list import best_email
 from lge.journey.model import Signal
 from lge.journey.tokens import days_open as _days_open
@@ -154,8 +155,18 @@ def build_lead_row(
     contact: ContactSummary | None,
     blockers: Sequence[str] = (),
 ) -> LeadRow:
+    stage, next_action = stage_of(
+        row.get("lead_state"),
+        cooldown_until=row.get("cooldown_until"),
+        contact_name=contact.full_name if contact else None,
+        has_email=bool(contact and contact.email),
+    )
     return LeadRow(
         blockers=[reason_display(b) for b in blockers],
+        stage=stage,
+        stage_display=STAGE_DISPLAY[stage],
+        next_action=next_action,
+        owner=row.get("owner"),
         id=str(row["lead_id"]),
         firm=build_firm_ref(row),
         state=row.get("lead_state") or "",

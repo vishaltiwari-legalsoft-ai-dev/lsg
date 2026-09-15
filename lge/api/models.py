@@ -18,6 +18,15 @@ EmailStatus = Literal["valid", "catch_all", "risky", "invalid", "unverified"]
 Role = Literal["owner", "admin", "attorney", "unknown"]
 LeadView = Literal["STRIKE", "SEQUENCE", "NURTURE", "PHONE", "EXCLUDED", "UNSCORED"]
 OutcomeAction = Literal["sent", "replied", "meeting", "won", "lost", "not_now", "opt_out"]
+Stage = Literal[
+    "researching", "no_website", "needs_review", "needs_contact", "ready", "parked",
+    "in_outreach", "replied", "handed_off", "won", "lost", "disqualified", "do_not_contact",
+    "needs_refresh",
+]
+DecisionAction = Literal["qualify", "disqualify", "hold", "reopen", "handoff"]
+BatchAction = Literal["research", "find_contacts", "disqualify", "hold", "assign"]
+JobKind = Literal["research", "find_contacts"]
+JobStatus = Literal["queued", "running", "done", "failed"]
 AttributeState = Literal["resolved", "unknown", "conflict", "stale"]
 AlertState = Literal["ok", "firing", "no_data"]
 
@@ -97,6 +106,11 @@ class LeadRow(BaseModel):
     # What still keeps this lead off the email list, in plain words ("Email not
     # verified", "Fee model unknown — not tiered yet"). Empty when it is on the list.
     blockers: list[str]
+    # Where the lead is as a person works it, and what to do next (lge/api/stage.py).
+    stage: Stage
+    stage_display: str
+    next_action: str
+    owner: str | None = None
 
 
 # =============================================================================
@@ -216,6 +230,32 @@ class TimelineEvent(BaseModel):
     at: datetime
 
 
+class LeadNote(BaseModel):
+    id: int
+    text: str
+    actor: str
+    at: datetime
+
+
+class JobStep(BaseModel):
+    name: str
+    status: Literal["pending", "running", "done", "failed"]
+    note: str | None = None
+
+
+class ActionJob(BaseModel):
+    id: str
+    kind: JobKind
+    firm_id: str
+    lead_id: str | None
+    status: JobStatus
+    steps: list[JobStep]
+    error: str | None
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+
+
 class LeadDetail(LeadRow):
     contacts: list[ContactSummary]
     missing_roles: list[Literal["owner", "admin"]]
@@ -223,6 +263,93 @@ class LeadDetail(LeadRow):
     exclusion_reasons: list[str]
     outcomes: list[LeadOutcome]
     timeline: list[TimelineEvent]
+    notes: list[LeadNote] = []
+    job: ActionJob | None = None
+
+
+# =============================================================================
+# Actions -- POST /api/firms/{id}/research, /api/leads/{id}/decision, ...
+# =============================================================================
+
+
+class ResearchRequest(BaseModel):
+    scope: Literal["full", "contacts"] = "full"
+
+
+class JobResponse(BaseModel):
+    job: ActionJob
+
+
+class JobsResponse(BaseModel):
+    items: list[ActionJob]
+
+
+class ContactCreate(BaseModel):
+    full_name: str
+    title: str | None = None
+    role: Role | None = None
+    email: str | None = None
+    phone: str | None = None
+    linkedin_url: str | None = None
+
+
+class ContactPatch(BaseModel):
+    full_name: str | None = None
+    title: str | None = None
+    role: Role | None = None
+    email: str | None = None
+    phone: str | None = None
+    linkedin_url: str | None = None
+
+
+class ContactRemove(BaseModel):
+    reason: str | None = None
+
+
+class ContactResponse(BaseModel):
+    contact: ContactSummary
+
+
+class PrimaryContactRequest(BaseModel):
+    contact_id: str
+
+
+class DecisionRequest(BaseModel):
+    action: DecisionAction
+    reason: str | None = None
+    until: date | None = None
+
+
+class DecisionResponse(BaseModel):
+    lead: LeadDetail
+    message: str
+
+
+class NoteRequest(BaseModel):
+    text: str
+
+
+class OwnerRequest(BaseModel):
+    owner: str | None
+
+
+class BatchRequest(BaseModel):
+    lead_ids: list[str]
+    action: BatchAction
+    reason: str | None = None
+    until: date | None = None
+    owner: str | None = None
+
+
+class BatchResult(BaseModel):
+    lead_id: str
+    ok: bool
+    message: str
+    job_id: str | None = None
+
+
+class BatchResponse(BaseModel):
+    results: list[BatchResult]
 
 
 # =============================================================================

@@ -29,6 +29,7 @@ from lge.api.labels import reason_display, state_display
 from lge.api.models import (
     DraftsResponse,
     LeadDetail,
+    LeadNote,
     LeadOutcome,
     LeadRow,
     LeadsResponse,
@@ -164,7 +165,7 @@ def _fetch_unscored_page(
 
     sql = f"""
         SELECT l.id AS lead_id, l.grade, l.band, l.contest, l.fit_score, l.intent_score,
-               l.arming_signal, l.state AS lead_state, l.scored_at,
+               l.arming_signal, l.state AS lead_state, l.scored_at, l.cooldown_until, l.owner,
                f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
                f.tier, f.fee_model, f.primary_practice, f.cms_detected
         FROM lead l JOIN firm f ON f.id = l.firm_id
@@ -299,7 +300,7 @@ def _fetch_lead_row(conn: psycopg.Connection, lead_id: str) -> dict | None:
             SELECT l.id AS lead_id, l.grade, l.band, l.contest, l.wedge_sku,
                    l.fit_score, l.intent_score, l.arming_signal, l.contact_id,
                    l.state AS lead_state, l.scored_at, l.cooldown_until,
-                   l.closed_at, l.close_reason,
+                   l.closed_at, l.close_reason, l.owner,
                    f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
                    f.tier, f.fee_model, f.primary_practice, f.cms_detected,
                    f.entity_kind, f.country, f.attorney_count, f.staff_ratio,
@@ -433,6 +434,15 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
             for r in cur.fetchall()
         ]
 
+        cur.execute(
+            "SELECT id, text, actor, at FROM lead_note WHERE lead_id = %s "
+            "ORDER BY at DESC, id DESC",
+            (lead_id,),
+        )
+        notes = [LeadNote(**r) for r in cur.fetchall()]
+
+    from lge.api.routes.actions import latest_job  # local: actions imports this module's helpers
+
     lead_row = build_lead_row(
         row, proof, build_contact_summary(primary_contact, emails_by_contact), blockers
     )
@@ -444,6 +454,8 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
         exclusion_reasons=exclusion_reasons,
         outcomes=outcomes,
         timeline=timeline,
+        notes=notes,
+        job=latest_job(conn, row["firm_id"]),
     )
 
 
