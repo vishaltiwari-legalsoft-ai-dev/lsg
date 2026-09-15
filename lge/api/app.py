@@ -44,7 +44,13 @@ _HTTP_STATUS_CODE: dict[int, str] = {
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    get_pool()  # open the pool eagerly, not on the first request
+    pool = get_pool()  # open the pool eagerly, not on the first request
+    # A job left queued or running belonged to the process that just died:
+    # fail it, so the screen stops waiting and the firm can be asked again.
+    with pool.connection() as conn:
+        swept = actions.sweep_orphaned_jobs(conn)
+    if swept:
+        logger.warning("failed %d job(s) orphaned by the last restart", swept)
     yield
     close_pool()
 

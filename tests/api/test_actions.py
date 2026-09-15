@@ -199,7 +199,8 @@ def test_contact_at_another_firm_cannot_be_the_primary(client, db):
 
 def test_research_creates_a_job_with_the_flow_steps(client, db, monkeypatch):
     started: list[str] = []
-    monkeypatch.setattr(actions, "_run_job_in_background", lambda job_id: started.append(job_id))
+    # the launch commits and starts a thread: neither belongs under a test transaction
+    monkeypatch.setattr(actions, "_launch_jobs", lambda conn, ids: started.extend(ids))
     firm_id = make_firm(db, canonical_name="Crawl Firm", domain="crawl.example")
     lead_id = make_lead(db, firm_id, state="DISCOVERED")
 
@@ -271,7 +272,7 @@ def test_run_job_records_each_step(db, monkeypatch, tmp_path):
 
 
 def test_batch_applies_per_lead_and_reports_each(client, db, monkeypatch):
-    monkeypatch.setattr(actions, "_run_job_in_background", lambda job_id: None)
+    monkeypatch.setattr(actions, "_launch_jobs", lambda conn, ids: None)
     firm_a = make_firm(db, canonical_name="Batch A", domain="a.example")
     firm_b = make_firm(db, canonical_name="Batch B", domain="b.example")
     a = str(make_lead(db, firm_a, state="CLASSIFIED"))
@@ -298,3 +299,39 @@ def test_batch_applies_per_lead_and_reports_each(client, db, monkeypatch):
 
     empty = client.post("/api/leads/batch", json={"lead_ids": [], "action": "assign"})
     assert empty.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Job launch and restart sweep
+# ---------------------------------------------------------------------------
+
+
+def test_launch_jobs_commits_first_then_runs_each_on_its_own_thread(monkeypatch):
+    ran: list[str] = []
+    events: list[str] = []
+
+    class _Conn:
+        def commit(self):
+            events.append("commit")
+
+    monkeypatch.setattr(actions, "_run_job_in_background", lambda job_id: ran.append(job_id))
+    assert actions._launch_jobs(_Conn(), []) == [] and events == []  # nothing to start
+    threads = actions._launch_jobs(_Conn(), ["a", "b"])
+    for thread in threads:
+        thread.join(timeout=5)
+    assert events == ["commit"]  # once, before any worker looks for its row
+    assert sorted(ran) == ["a", "b"]
+
+
+def test_sweep_fails_jobs_left_queued_or_running_by_a_dead_process(db):
+    firm_id = make_firm(db, canonical_name="Orphan Firm", domain="orphan.example")
+    queued = actions._create_job(db, firm_id, None, "research", actions.FULL_STEPS)
+    running = actions._create_job(db, firm_id, None, "find_contacts", actions.CONTACT_STEPS)
+    actions._set_job(running.id, {"status": "running"}, db)
+    done = actions._create_job(db, firm_id, None, "find_contacts", actions.CONTACT_STEPS)
+    actions._set_job(done.id, {"status": "done"}, db)
+
+    assert actions.sweep_orphaned_jobs(db) == 2
+    assert actions._fetch_job(db, queued.id).status == "failed"
+    assert "restarted" in actions._fetch_job(db, running.id).error
+    assert actions._fetch_job(db, done.id).status == "done"

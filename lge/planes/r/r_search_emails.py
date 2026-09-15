@@ -36,6 +36,7 @@ from psycopg.types.json import Jsonb
 
 from lge.ingest.webcheck import ddg_search
 from lge.planes.p._claims import write_claim
+from lge.planes.p._site_facts import name_like
 from lge.planes.r.r3_email_pattern import infer_pattern
 from lge.planes.r.r_site_emails import (
     _GENERAL_LOCALS,
@@ -184,10 +185,12 @@ def _contacts(conn: Any, firm_id: Any) -> list[dict]:
         cur.execute(
             "SELECT c.id, c.full_name, c.role, c.confidence, "
             "EXISTS (SELECT 1 FROM contact_email e WHERE e.contact_id = c.id) AS has_email "
-            "FROM contact c WHERE c.firm_id = %s ORDER BY c.id",
+            "FROM contact c WHERE c.firm_id = %s AND c.removed_at IS NULL ORDER BY c.id",
             (firm_id,),
         )
-        return cur.fetchall()
+        # A struck-out contact is not searched for; nor is a heading the site
+        # parser once took for a person ("REAL ESTATE MATTERS").
+        return [c for c in cur.fetchall() if name_like(c["full_name"])]
 
 
 def _attach(conn: Any, contact_id: Any, email: str, pattern: str) -> int:

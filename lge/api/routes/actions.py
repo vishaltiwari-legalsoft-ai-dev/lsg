@@ -24,13 +24,14 @@ a note; the state event carries actor 'ui'.
 from __future__ import annotations
 
 import logging
+import threading
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import psycopg
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter
 from psycopg.types.json import Jsonb
 
 from lge import db as lge_db
@@ -156,6 +157,8 @@ def run_job(
             cur.execute("SELECT * FROM action_job WHERE id = %s", (job_id,))
             job = cur.fetchone()
         if job is None:
+            logger.warning("job %s: no such row -- was it committed before the worker started?",
+                           job_id)
             return
         steps = [dict(s) for s in job["steps"]]
         JOB_DIR.mkdir(parents=True, exist_ok=True)
@@ -228,6 +231,43 @@ def _run_job_in_background(job_id: str) -> None:
             logger.exception("job %s: could not record the failure", job_id)
 
 
+def _launch_jobs(conn: psycopg.Connection, job_ids: list[str]) -> list[threading.Thread]:
+    """Commit the job rows, then run each job on a thread of its own.
+
+    Not a Starlette background task: FastAPI runs those before the
+    dependency exit that commits the request connection, so a worker
+    looking for its job on a fresh connection found no row and went quiet
+    -- every job the screen ever asked for died that way. And a task that
+    runs for minutes would keep the pooled request connection checked out
+    for the whole job. Tests replace this function; nothing here runs
+    under a test transaction."""
+    if not job_ids:
+        return []
+    conn.commit()
+    threads = []
+    for job_id in job_ids:
+        thread = threading.Thread(
+            target=_run_job_in_background, args=(job_id,), name=f"job-{job_id[:8]}", daemon=True
+        )
+        thread.start()
+        threads.append(thread)
+    return threads
+
+
+def sweep_orphaned_jobs(conn: psycopg.Connection) -> int:
+    """At startup: a job still queued or running belonged to a process that
+    is gone. Mark it failed so the screen stops waiting and the firm can be
+    researched again."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE action_job SET status = 'failed', finished_at = now(), error = %s "
+            "WHERE status IN ('queued', 'running')",
+            ("interrupted: the API restarted while this job was waiting or running "
+             "-- run it again",),
+        )
+        return cur.rowcount
+
+
 def _firm_and_lead(conn: psycopg.Connection, firm_id: str) -> tuple[dict, dict | None]:
     with conn.cursor() as cur:
         cur.execute("SELECT id, canonical_name, domain FROM firm WHERE id = %s", (firm_id,))
@@ -241,8 +281,10 @@ def _firm_and_lead(conn: psycopg.Connection, firm_id: str) -> tuple[dict, dict |
 
 
 def _start_research(
-    conn: psycopg.Connection, background: BackgroundTasks, firm_id: str, scope: str
+    conn: psycopg.Connection, launches: list[str], firm_id: str, scope: str
 ) -> ActionJob:
+    """Create the job row; its id goes on `launches` for the route to hand to
+    `_launch_jobs` once it has finished writing."""
     firm, lead = _firm_and_lead(conn, firm_id)
     if scope == "full" and not firm["domain"]:
         raise api_error(
@@ -255,17 +297,16 @@ def _start_research(
     kind = "research" if scope == "full" else "find_contacts"
     steps = FULL_STEPS if scope == "full" else CONTACT_STEPS
     job = _create_job(conn, firm["id"], lead["id"] if lead else None, kind, steps)
-    # No commit here: the pooled request connection commits when the response
-    # is done, and FastAPI runs background tasks only after that.
-    background.add_task(_run_job_in_background, job.id)
+    launches.append(job.id)
     return job
 
 
 @router.post("/firms/{firm_id}/research", response_model=JobResponse, status_code=202)
-def post_research(
-    firm_id: str, body: ResearchRequest, conn: ConnDep, background: BackgroundTasks
-) -> JobResponse:
-    return JobResponse(job=_start_research(conn, background, firm_id, body.scope))
+def post_research(firm_id: str, body: ResearchRequest, conn: ConnDep) -> JobResponse:
+    launches: list[str] = []
+    job = _start_research(conn, launches, firm_id, body.scope)
+    _launch_jobs(conn, launches)
+    return JobResponse(job=job)
 
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
@@ -552,7 +593,7 @@ def put_owner(lead_id: str, body: OwnerRequest, conn: ConnDep) -> LeadDetail:
 
 
 @router.post("/leads/batch", response_model=BatchResponse)
-def post_batch(body: BatchRequest, conn: ConnDep, background: BackgroundTasks) -> BatchResponse:
+def post_batch(body: BatchRequest, conn: ConnDep) -> BatchResponse:
     from lge.api.routes.leads import _fetch_lead_row
 
     if not body.lead_ids:
@@ -560,6 +601,7 @@ def post_batch(body: BatchRequest, conn: ConnDep, background: BackgroundTasks) -
     if len(body.lead_ids) > _MAX_BATCH:
         raise api_error(400, "bad_request", f"At most {_MAX_BATCH} leads at a time.")
     results: list[BatchResult] = []
+    launches: list[str] = []
     for lead_id in body.lead_ids:
         lead = _fetch_lead_row(conn, lead_id)
         if lead is None:
@@ -568,7 +610,7 @@ def post_batch(body: BatchRequest, conn: ConnDep, background: BackgroundTasks) -
         try:
             if body.action in ("research", "find_contacts"):
                 scope = "full" if body.action == "research" else "contacts"
-                job = _start_research(conn, background, str(lead["firm_id"]), scope)
+                job = _start_research(conn, launches, str(lead["firm_id"]), scope)
                 results.append(BatchResult(
                     lead_id=lead_id, ok=True, message=f"Job {job.status}.", job_id=job.id,
                 ))
@@ -587,4 +629,5 @@ def post_batch(body: BatchRequest, conn: ConnDep, background: BackgroundTasks) -
                 detail.get("error", {}).get("message") if isinstance(detail, dict) else str(exc)
             )
             results.append(BatchResult(lead_id=lead_id, ok=False, message=text or str(exc)))
+    _launch_jobs(conn, launches)
     return BatchResponse(results=results)

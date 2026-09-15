@@ -802,6 +802,27 @@ listings were logged `not_found`, which the planes do not ask again for 90 days.
   titles into one ("... | LinkedInJoe Bloggs posted on LinkedIn ..."), and the glued tail
   was landing on the contact.
 
+## D-040 · A research job runs on its own thread, after its row is committed
+
+**Seen (16 Sep 2026):** every research job the screen asked for since D-036 stayed
+"queued" forever. FastAPI 0.141 runs a background task *before* the dependency exit that
+commits the request connection, so the worker, on a fresh connection, looked for a job row
+that was not committed yet, found nothing, and returned without a word.
+
+**Rulings:**
+- **The route commits the job rows itself, then starts one thread per job** (`_launch_jobs`).
+  Not a Starlette background task: besides the visibility race, a task that runs for
+  minutes would keep the pooled request connection checked out for the whole job.
+- **Tests replace `_launch_jobs`**, never `commit`: the API tests share one transaction
+  per test, and nothing under it may commit.
+- **A worker that finds no row says so** in the log instead of returning silently.
+- **At startup the API fails every job still queued or running** -- they belonged to the
+  process that died -- with an error that says to run it again, so the screen stops
+  waiting and the firm is not locked behind a ghost job.
+- **The email search asks only about live people**: struck-out contacts and headings the
+  site parser once took for names ("REAL ESTATE MATTERS") are skipped, as the LinkedIn
+  search already did.
+
 ---
 
 ## Standing rulings that were never in dispute
