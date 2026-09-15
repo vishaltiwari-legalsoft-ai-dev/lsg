@@ -102,6 +102,47 @@ def test_name_like(text, expected):
     assert sf.name_like(text) == expected
 
 
+@pytest.mark.parametrize(
+    "heading,expected",
+    [
+        ("Legal Staff", "Legal Staff"),
+        ("Our Attorneys", "Attorney"),
+        ("Meet the Team", "Team Member"),
+        ("Paralegals", "Paralegal"),
+        ("Of Counsel", "Of Counsel"),
+        ("Hit Hard? We Hit Back", None),
+        ("Margaret Hartley", None),
+        ("Awards and Recognition", None),
+    ],
+)
+def test_section_title(heading, expected):
+    assert sf.section_title(heading) == expected
+
+
+def test_names_listed_under_a_section_heading_inherit_its_designation():
+    # hallandlampros.com/staff/: an h1 "Legal Staff" and bare h4 names, then
+    # other sections whose h4s are not people.
+    html = (
+        "<html><body><h1>Legal Staff</h1>"
+        "<h4>Aimie Ingram</h4><p>photo</p><h4>Casey Bates</h4><h4>Leonor Flores</h4>"
+        "<h2>Hit Hard? We Hit Back</h2><h4>contact</h4><h4>Location</h4>"
+        "<h2>Our Attorneys</h2><h3>Andrew Lampros</h3><h3>Christopher Hall</h3>"
+        "<p class='title'>Managing Partner</p>"
+        "<h2>Awards and Recognition</h2><h3>Super Lawyers</h3></body></html>"
+    )
+    tree = sf.parse(html)
+    people = {p["name"]: p for p in sf.find_people(tree, _BASE + "staff/", strict=True)}
+    assert set(people) == {
+        "Aimie Ingram", "Casey Bates", "Leonor Flores", "Andrew Lampros", "Christopher Hall"
+    }
+    assert people["Aimie Ingram"]["title"] == "Legal Staff"
+    assert people["Aimie Ingram"]["title_inferred"] is True
+    assert sf.title_class("Legal Staff") == "support"
+    assert people["Andrew Lampros"]["title"] == "Attorney"
+    assert people["Christopher Hall"]["title"] == "Managing Partner"  # printed beats inferred
+    assert "title_inferred" not in people["Christopher Hall"]
+
+
 def test_a_bare_heading_is_a_person_only_when_the_page_says_so():
     html = (
         "<html><body><h2>John Carter</h2><p>John was hit by a truck on I-75 and came to us."

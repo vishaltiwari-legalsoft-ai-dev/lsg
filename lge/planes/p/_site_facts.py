@@ -299,6 +299,44 @@ def _title_near(el: lxml.html.HtmlElement, name: str) -> str | None:
     return None
 
 
+_SECTION_RE = re.compile(
+    r"\b(?:staff|team|attorneys?|lawyers?|paralegals?|associates?|partners?|counsel|support|"
+    r"people|leadership|management|professionals|members|assistants?|administrators?|"
+    r"of\s+counsel|principals?|shareholders?|founders?)\b",
+    re.I,
+)
+_SECTION_LEAD_RE = re.compile(r"^(?:meet\s+)?(?:our|the)\s+", re.I)
+_PLURAL_ROLE = {
+    "attorneys": "Attorney", "lawyers": "Lawyer", "paralegals": "Paralegal",
+    "partners": "Partner", "associates": "Associate", "assistants": "Assistant",
+    "administrators": "Administrator", "principals": "Principal", "shareholders": "Shareholder",
+    "founders": "Founder", "professionals": "Professional", "members": "Team Member",
+    "people": "Team Member", "team": "Team Member",
+}
+_MAX_SECTION_CHARS = 40
+
+
+def section_title(text: str) -> str | None:
+    """The designation a section heading gives the names listed under it:
+    "Legal Staff" -> "Legal Staff", "Our Attorneys" -> "Attorney",
+    "Meet the Team" -> "Team Member". None for any other heading."""
+    text = clean(text).rstrip(":")
+    if not text or len(text) > _MAX_SECTION_CHARS or name_like(text):
+        return None
+    if not _SECTION_RE.search(text):
+        return None
+    core = _SECTION_LEAD_RE.sub("", text)
+    words = core.split()
+    if not words:
+        return None
+    last = words[-1].lower()
+    if last in _PLURAL_ROLE:
+        words[-1] = _PLURAL_ROLE[last]
+        if len(words) == 1 or words[-1] == "Team Member":
+            return words[-1]
+    return " ".join(words)
+
+
 def _name_from_slug(url: str) -> str | None:
     slug = urlsplit(url).path.rstrip("/").rsplit("/", 1)[-1]
     words = [w for w in slug.replace("_", "-").split("-") if w]
@@ -318,16 +356,24 @@ def find_people(
     people: dict[str, dict[str, Any]] = {}
     order: list[str] = []
 
-    def add(name: str, title: str | None, url: str | None, confidence: float) -> None:
+    def add(
+        name: str, title: str | None, url: str | None, confidence: float, inferred: bool = False
+    ) -> None:
         key = name.casefold()
+        entry = {"name": name, "title": title, "url": url, "confidence": confidence}
+        if inferred:
+            entry["title_inferred"] = True
         found = people.get(key)
         if found is None:
-            people[key] = {"name": name, "title": title, "url": url, "confidence": confidence}
+            people[key] = entry
             order.append(key)
             return
-        if title and not found["title"]:
+        if title and (not found["title"] or (found.get("title_inferred") and not inferred)):
             found["title"] = title
             found["confidence"] = max(found["confidence"], confidence)
+            found.pop("title_inferred", None)
+            if inferred:
+                found["title_inferred"] = True
         if url and not found["url"]:
             found["url"] = url
 
@@ -344,27 +390,44 @@ def find_people(
         title = _title_near(a, name)
         add(name, title, absolute, 0.8 if title else 0.6)
 
+    # A section heading ("Legal Staff", "Our Attorneys") is the designation of
+    # every name heading listed under it, until a heading at or just below its
+    # level starts something else (hallandlampros.com/staff/: an h1 and ten h4s).
+    section: tuple[int, str] | None = None
     for el in tree.iter(*_NAME_TAGS):
         if el.tag == "a":
             continue
+        text = clean(el.text_content())
+        is_heading = el.tag in _HEADING_TAGS
+        if is_heading:
+            level = int(el.tag[1])
+            is_name = bool(name_like(text)) if len(text) <= 60 else False
+            if section and level <= section[0] + 1 and not is_name:
+                section = None
+            heading_title = section_title(text) if not is_name else None
+            if heading_title:
+                section = (level, heading_title)
+                continue
         name_classed = bool(
             _NAME_CLASS_RE.search((el.get("class") or "") + " " + (el.get("id") or ""))
         )
-        if el.tag not in _HEADING_TAGS and not name_classed:
+        if not is_heading and not name_classed:
             continue
-        text = clean(el.text_content())
         if len(text) > 60:
             continue
         name = name_like(text)
         if not name:
             continue
         title = _title_near(el, name)
+        inferred = False
+        if not title and section and is_heading and int(el.tag[1]) > section[0]:
+            title, inferred = section[1], True
         # A name with no title printed next to it counts only when the page
         # says it is a name (a name-classed element) or a profile link already
         # brought it in: a bare heading that looks like a name is a heading.
         if not title and name.casefold() not in people and (strict or not name_classed):
             continue
-        add(name, title, None, 0.8 if title else 0.5)
+        add(name, title, None, 0.6 if inferred else (0.8 if title else 0.5), inferred)
 
     out = [people[k] for k in order]
     return out[:_MAX_PEOPLE]

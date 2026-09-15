@@ -47,7 +47,7 @@ from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 _COMPONENT = "px_site_facts"
-_VERSION = "px_facts:v4"  # v4: a bare name on the attorneys page is an attorney
+_VERSION = "px_facts:v5"  # v5: a section heading is the designation of the names under it
 _MAX_PEOPLE_PER_FIRM = 60
 _SOURCE = "site:page"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "site_facts.yml"

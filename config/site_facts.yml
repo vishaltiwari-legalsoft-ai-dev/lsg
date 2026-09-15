@@ -49,6 +49,7 @@ title_words:
 # opposed to attorneys and owners. A person whose title matches none of
 # these and none of `attorney_titles` counts as 'other'.
 support_titles:
+  - 'legal\s+staff|support\s+staff|\bstaff\b'
   - 'paralegal'
   - 'legal\s+assistant'
   - 'legal\s+secretary'
