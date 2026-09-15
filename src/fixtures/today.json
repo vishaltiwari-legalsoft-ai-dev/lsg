@@ -45,7 +45,11 @@
     "blockers": [
       "Email not verified",
       "No owner or office manager found"
-    ]
+    ],
+    "stage": "needs_contact",
+    "stage_display": "Needs a person",
+    "next_action": "Find a decision-maker (owner or administrator)",
+    "owner": null
   },
   "first_draft": {
     "subject": "Spanish-language intake",
@@ -105,7 +109,11 @@
         "phone": null
       },
       "scored_at": "2026-09-11T02:10:00Z",
-      "blockers": []
+      "blockers": [],
+      "stage": "needs_review",
+      "stage_display": "Needs a decision",
+      "next_action": "Qualify or disqualify",
+      "owner": null
     },
     {
       "id": "lead-fx-calloway",
@@ -159,7 +167,11 @@
         "phone": null
       },
       "scored_at": "2026-09-11T02:10:00Z",
-      "blockers": []
+      "blockers": [],
+      "stage": "needs_review",
+      "stage_display": "Needs a decision",
+      "next_action": "Qualify or disqualify",
+      "owner": null
     },
     {
       "id": "lead-fx-pineridge",
@@ -213,7 +225,11 @@
         "phone": null
       },
       "scored_at": "2026-09-11T02:10:00Z",
-      "blockers": []
+      "blockers": [],
+      "stage": "needs_review",
+      "stage_display": "Needs a decision",
+      "next_action": "Qualify or disqualify",
+      "owner": null
     }
   ],
   "attention": {

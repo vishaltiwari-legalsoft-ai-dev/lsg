@@ -17,7 +17,10 @@ import { useDrafts, useLead } from "@/lib/api/hooks";
 import type { LeadDetail } from "@/lib/api/types";
 import { formatPlace } from "@/lib/format";
 import { BAND_LABEL } from "@/lib/labels";
+import { ActionBar } from "./action-bar";
 import { DraftSequence } from "./draft-sequence";
+import { JobProgress } from "./job-progress";
+import { NotesSection } from "./notes";
 import { OutcomeBar, type OutcomeBarHandle } from "./outcome-bar";
 import { PeopleSection } from "./people";
 import { RecordSection } from "./record-timeline";
@@ -168,9 +171,11 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
           ) : null}
         </div>
         <RecordFields lead={data} />
+        <ActionBar lead={data} />
       </header>
 
       <div className="grid flex-1 content-start gap-10 px-7 py-7">
+        {data.job ? <JobProgress job={data.job} leadId={data.id} /> : null}
         {data.exclusion_reasons.length > 0 ? <ExclusionNote reasons={data.exclusion_reasons} /> : null}
 
         <section aria-labelledby="proof-heading" className="grid gap-4">
@@ -192,6 +197,8 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
           isError={drafts.isError}
           expand={mode === "page" ? "all" : "first"}
         />
+
+        <NotesSection lead={data} />
 
         <RecordSection lead={data} />
 

@@ -14,9 +14,14 @@ import { toast } from "sonner";
 import { api } from "./client";
 import { describeError } from "./errors";
 import type {
+  BatchRequest,
+  ContactCreate,
+  ContactPatch,
+  DecisionRequest,
   FirmsQuery,
   HandcheckDecision,
   HandcheckResponse,
+  LeadDetail,
   LeadsQuery,
   OutcomeRequest,
 } from "./types";
@@ -34,6 +39,7 @@ export const queryKeys = {
   handcheck: ["handcheck"] as const,
   imports: ["imports"] as const,
   import: (id: string) => ["import", id] as const,
+  job: (id: string) => ["job", id] as const,
 };
 
 export const LEADS_PAGE_SIZE = 50;
@@ -202,6 +208,162 @@ export function useStartLoad(id: string) {
       toast(response.message);
       void qc.invalidateQueries({ queryKey: queryKeys.import(id) });
       void qc.invalidateQueries({ queryKey: queryKeys.imports });
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+// ── Actions: the user can act ───────────────────────────────────────────────
+
+/** Everything a lead's detail depends on, after a change to it. */
+function useLeadRefresh() {
+  const qc = useQueryClient();
+  return (leadId: string | null | undefined, firmId?: string | null) => {
+    if (leadId) {
+      void qc.invalidateQueries({ queryKey: queryKeys.lead(leadId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.drafts(leadId) });
+    }
+    if (firmId) void qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+    void qc.invalidateQueries({ queryKey: ["leads"] });
+    void qc.invalidateQueries({ queryKey: queryKeys.today });
+  };
+}
+
+/** A job's progress; polls every two seconds while it is queued or running. */
+export function useJob(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.job(id ?? ""),
+    queryFn: ({ signal }) => api.job(id!, signal),
+    enabled: Boolean(id),
+    refetchInterval: (query) => {
+      const status = query.state.data?.job.status;
+      return status === "queued" || status === "running" ? 2000 : false;
+    },
+  });
+}
+
+/** Research a firm now: the whole site, or only its people and addresses. */
+export function useResearch(firmId: string, leadId?: string | null) {
+  const qc = useQueryClient();
+  const refresh = useLeadRefresh();
+  return useMutation({
+    mutationFn: (scope: "full" | "contacts") => api.research(firmId, scope),
+    onSuccess: (response) => {
+      qc.setQueryData(queryKeys.job(response.job.id), response);
+      toast(
+        response.job.kind === "research"
+          ? "Researching the site now. Progress shows below."
+          : "Looking for people and addresses now. Progress shows below.",
+      );
+      refresh(leadId, firmId);
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+/** Qualify, disqualify, hold, reopen, hand off. The toast is the API's message. */
+export function useDecide(leadId: string) {
+  const qc = useQueryClient();
+  const refresh = useLeadRefresh();
+  return useMutation({
+    mutationFn: (request: DecisionRequest) => api.decide(leadId, request),
+    onSuccess: (response) => {
+      qc.setQueryData(queryKeys.lead(leadId), response.lead);
+      toast.success(response.message);
+      refresh(leadId, response.lead.firm.id);
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+export function useAddNote(leadId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => api.addNote(leadId, text),
+    onSuccess: (lead) => {
+      qc.setQueryData(queryKeys.lead(leadId), lead);
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+export function useSetOwner(leadId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (owner: string | null) => api.setOwner(leadId, owner),
+    onSuccess: (lead) => {
+      qc.setQueryData(queryKeys.lead(leadId), lead);
+      toast.success(lead.owner ? `Assigned to ${lead.owner}.` : "Unassigned.");
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+/** Add, correct or strike out a person; choose the lead's primary contact. */
+export function useContactEdits(firmId: string, leadId?: string | null) {
+  const qc = useQueryClient();
+  const refresh = useLeadRefresh();
+  const onError = (error: unknown) => {
+    toast.error(describeError(error));
+  };
+  const done = (message: string) => {
+    toast.success(message);
+    refresh(leadId, firmId);
+  };
+  const add = useMutation({
+    mutationFn: (body: ContactCreate) => api.addContact(firmId, body),
+    onSuccess: (r) => done(`Added ${r.contact.full_name}.`),
+    onError,
+  });
+  const patch = useMutation({
+    mutationFn: ({ contactId, body }: { contactId: string; body: ContactPatch }) =>
+      api.patchContact(contactId, body),
+    onSuccess: (r) => done(`Saved ${r.contact.full_name}.`),
+    onError,
+  });
+  const remove = useMutation({
+    mutationFn: ({ contactId, reason }: { contactId: string; reason?: string }) =>
+      api.removeContact(contactId, reason),
+    onSuccess: (r) => done(`Struck out ${r.contact.full_name}.`),
+    onError,
+  });
+  const setPrimary = useMutation({
+    mutationFn: (contactId: string) => api.setPrimaryContact(leadId!, contactId),
+    onSuccess: (lead: LeadDetail) => {
+      qc.setQueryData(queryKeys.lead(lead.id), lead);
+      toast.success(`${lead.contact?.full_name ?? "Contact"} is now the primary contact.`);
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+    onError,
+  });
+  return { add, patch, remove, setPrimary };
+}
+
+/** The same decision, research or owner for many leads at once. */
+export function useBatch() {
+  const refresh = useLeadRefresh();
+  return useMutation({
+    mutationFn: (body: BatchRequest) => api.batch(body),
+    onSuccess: (response, body) => {
+      const ok = response.results.filter((r) => r.ok).length;
+      const failed = response.results.length - ok;
+      if (failed === 0) toast.success(`Done for ${ok} lead${ok === 1 ? "" : "s"}.`);
+      else {
+        const first = response.results.find((r) => !r.ok);
+        toast(`Done for ${ok}, not for ${failed}: ${first?.message ?? ""}`);
+      }
+      for (const id of body.lead_ids) refresh(id);
     },
     onError: (error) => {
       toast.error(describeError(error));

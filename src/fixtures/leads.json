@@ -47,7 +47,11 @@
         "blockers": [
           "Email not verified",
           "No owner or office manager found"
-        ]
+        ],
+        "stage": "needs_contact",
+        "stage_display": "Needs a person",
+        "next_action": "Find a decision-maker (owner or administrator)",
+        "owner": null
       },
       {
         "id": "lead-fx-harbor",
@@ -102,7 +106,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-calloway",
@@ -156,7 +164,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-pineridge",
@@ -210,7 +222,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       }
     ],
     "next_cursor": null,
@@ -277,7 +293,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-delgado",
@@ -331,7 +351,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-northgate",
@@ -385,7 +409,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-lakeshore",
@@ -441,7 +469,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-sunbelt",
@@ -495,7 +527,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       }
     ],
     "next_cursor": null,
@@ -562,7 +598,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       },
       {
         "id": "lead-fx-oakiron",
@@ -598,7 +638,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       }
     ],
     "next_cursor": null,
@@ -665,7 +709,11 @@
           "phone": "+1 205-555-0142"
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_contact",
+        "stage_display": "Needs a person",
+        "next_action": "Find an email for Wes Calder",
+        "owner": null
       },
       {
         "id": "lead-fx-coastal",
@@ -701,7 +749,11 @@
           "phone": "+1 305-555-0187"
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "needs_review",
+        "stage_display": "Needs a decision",
+        "next_action": "Qualify or disqualify",
+        "owner": null
       }
     ],
     "next_cursor": null,
@@ -768,7 +820,11 @@
           "phone": null
         },
         "scored_at": "2026-09-11T02:10:00Z",
-        "blockers": []
+        "blockers": [],
+        "stage": "do_not_contact",
+        "stage_display": "Do not contact",
+        "next_action": "Nothing -- the firm opted out or bounced",
+        "owner": null
       },
       {
         "id": "lead-fx-summit",
@@ -824,7 +880,11 @@
         "scored_at": "2026-09-11T02:10:00Z",
         "blockers": [
           "Email not verified"
-        ]
+        ],
+        "stage": "disqualified",
+        "stage_display": "Disqualified",
+        "next_action": "Reopen if the reason was wrong",
+        "owner": null
       }
     ],
     "next_cursor": null,
@@ -866,7 +926,11 @@
         "blockers": [
           "Email not verified",
           "No owner or office manager found"
-        ]
+        ],
+        "stage": "researching",
+        "stage_display": "Researching",
+        "next_action": "Research the site",
+        "owner": null
       },
       {
         "id": "lead-fx-prairie",
@@ -895,7 +959,11 @@
         "blockers": [
           "Email not verified",
           "No owner or office manager found"
-        ]
+        ],
+        "stage": "researching",
+        "stage_display": "Researching",
+        "next_action": "Wait for research to finish",
+        "owner": null
       }
     ],
     "next_cursor": null,

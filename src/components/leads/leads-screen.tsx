@@ -21,6 +21,7 @@ import { formatCount, toDateInputValue } from "@/lib/format";
 import { VIEW_EMPTY, VIEW_LABEL, VIEWS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { BandTabs } from "./band-tabs";
+import { BatchBar } from "./batch-bar";
 import { resolveDocketKey, zoneOf } from "./docket-keys";
 import { DocketTable } from "./docket-table";
 import { FilterBar, type LeadFilters } from "./filter-bar";
@@ -122,6 +123,20 @@ export function LeadsScreen() {
   const select = useCallback((id: string) => update({ lead: id }), [update]);
   const close = useCallback(() => update({ lead: null }), [update]);
 
+  // Leads ticked for a batch action -- cleared when the band changes.
+  const [checked, setChecked] = useState<ReadonlySet<string>>(() => new Set());
+  const toggle = useCallback((id: string, on: boolean) => {
+    setChecked((prev) => {
+      if (prev.has(id) === on) return prev;
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+  const clearChecked = useCallback(() => setChecked(new Set()), []);
+  const checkedIds = useMemo(() => ids.filter((id) => checked.has(id)), [ids, checked]);
+
   const focusRow = (id: string) =>
     requestAnimationFrame(() =>
       document.querySelector<HTMLElement>(`[data-docket] [data-row-id="${CSS.escape(id)}"]`)?.focus(),
@@ -195,7 +210,10 @@ export function LeadsScreen() {
               value={view}
               counts={counts}
               controls="docket-panel"
-              onChange={(next) => update({ view: next === "STRIKE" ? null : next, lead: null })}
+              onChange={(next) => {
+                clearChecked();
+                update({ view: next === "STRIKE" ? null : next, lead: null });
+              }}
             />
           </div>
           <div className="border-b border-rule px-8 py-3">
@@ -204,6 +222,7 @@ export function LeadsScreen() {
               onChange={(patch) => update({ ...patch, lead: selectedId })}
             />
           </div>
+          {checkedIds.length > 0 ? <BatchBar ids={checkedIds} onClear={clearChecked} /> : null}
 
           <div
             id="docket-panel"
@@ -252,6 +271,8 @@ export function LeadsScreen() {
                   compact={panelOpen}
                   onSelect={select}
                   caption={`${VIEW_LABEL[view]} leads. J and K move, Enter opens the full case file.`}
+                  checked={checked}
+                  onToggle={toggle}
                 />
                 {leads.hasNextPage ? (
                   <div className="flex items-center gap-4 px-8 pt-5">

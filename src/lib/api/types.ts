@@ -71,6 +71,24 @@ export type OutcomeRequest = S["OutcomeRequest"];
 /** `message` is the toast copy, shown verbatim. */
 export type OutcomeResponse = S["OutcomeResponse"];
 
+// ── Actions: research, contacts, decisions, notes, owner, batch ─────────────
+
+export type Stage = S["LeadRow"]["stage"];
+export type LeadNote = S["LeadNote"];
+export type JobStep = S["JobStep"];
+export type ActionJob = S["ActionJob"];
+export type JobResponse = S["JobResponse"];
+export type ResearchRequest = S["ResearchRequest"];
+export type ContactCreate = S["ContactCreate"];
+export type ContactPatch = S["ContactPatch"];
+export type ContactResponse = S["ContactResponse"];
+export type DecisionAction = S["DecisionRequest"]["action"];
+export type DecisionRequest = S["DecisionRequest"];
+export type DecisionResponse = S["DecisionResponse"];
+export type BatchAction = S["BatchRequest"]["action"];
+export type BatchRequest = S["BatchRequest"];
+export type BatchResponse = S["BatchResponse"];
+
 // ── Firms ───────────────────────────────────────────────────────────────────
 
 export interface FirmsQuery {

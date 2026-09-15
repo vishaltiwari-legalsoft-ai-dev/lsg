@@ -125,7 +125,13 @@
         "actor": "engine",
         "at": "2026-09-10T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_contact",
+    "stage_display": "Needs a person",
+    "next_action": "Find a decision-maker (owner or administrator)",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-harbor": {
     "id": "lead-fx-harbor",
@@ -274,7 +280,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-calloway": {
     "id": "lead-fx-calloway",
@@ -411,7 +423,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-pineridge": {
     "id": "lead-fx-pineridge",
@@ -550,7 +568,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-brightwater": {
     "id": "lead-fx-brightwater",
@@ -689,7 +713,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-delgado": {
     "id": "lead-fx-delgado",
@@ -847,7 +877,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-northgate": {
     "id": "lead-fx-northgate",
@@ -986,7 +1022,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-lakeshore": {
     "id": "lead-fx-lakeshore",
@@ -1127,7 +1169,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-sunbelt": {
     "id": "lead-fx-sunbelt",
@@ -1266,7 +1314,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-oakiron": {
     "id": "lead-fx-oakiron",
@@ -1380,7 +1434,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-meridian": {
     "id": "lead-fx-meridian",
@@ -1519,7 +1579,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-riverbend": {
     "id": "lead-fx-riverbend",
@@ -1660,7 +1726,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_contact",
+    "stage_display": "Needs a person",
+    "next_action": "Find an email for Wes Calder",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-coastal": {
     "id": "lead-fx-coastal",
@@ -1776,7 +1848,13 @@
         "actor": "engine",
         "at": "2026-09-05T02:40:00Z"
       }
-    ]
+    ],
+    "stage": "needs_review",
+    "stage_display": "Needs a decision",
+    "next_action": "Qualify or disqualify",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-summit": {
     "id": "lead-fx-summit",
@@ -1895,7 +1973,13 @@
         "actor": "engine",
         "at": "2026-09-03T10:40:00Z"
       }
-    ]
+    ],
+    "stage": "disqualified",
+    "stage_display": "Disqualified",
+    "next_action": "Reopen if the reason was wrong",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-granite": {
     "id": "lead-fx-granite",
@@ -2045,7 +2129,13 @@
         "actor": "ops",
         "at": "2026-09-08T16:00:00Z"
       }
-    ]
+    ],
+    "stage": "do_not_contact",
+    "stage_display": "Do not contact",
+    "next_action": "Nothing -- the firm opted out or bounced",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-magnolia": {
     "id": "lead-fx-magnolia",
@@ -2096,7 +2186,13 @@
         "actor": "engine",
         "at": "2026-09-02T03:12:00Z"
       }
-    ]
+    ],
+    "stage": "researching",
+    "stage_display": "Researching",
+    "next_action": "Research the site",
+    "owner": null,
+    "notes": [],
+    "job": null
   },
   "lead-fx-prairie": {
     "id": "lead-fx-prairie",
@@ -2155,6 +2251,12 @@
         "actor": "engine",
         "at": "2026-09-03T10:05:00Z"
       }
-    ]
+    ],
+    "stage": "researching",
+    "stage_display": "Researching",
+    "next_action": "Wait for research to finish",
+    "owner": null,
+    "notes": [],
+    "job": null
   }
 }

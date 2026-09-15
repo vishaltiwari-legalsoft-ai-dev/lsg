@@ -1,8 +1,16 @@
 import { API_BASE, API_MODE } from "./config";
 import { httpTransport, type Transport } from "./transport";
 import type {
+  BatchRequest,
+  BatchResponse,
+  ContactCreate,
+  ContactPatch,
+  ContactResponse,
+  DecisionRequest,
+  DecisionResponse,
   DraftsResponse,
   FirmDetail,
+  JobResponse,
   FirmsQuery,
   FirmsResponse,
   HandcheckDecision,
@@ -112,6 +120,69 @@ export function createApi(transport: Transport) {
         method: "POST",
         path: `/api/imports/${enc(id)}/load`,
       }),
+
+    // ── Actions: the user can act ────────────────────────────────────────
+    research: (firmId: string, scope: "full" | "contacts") =>
+      transport.json<JobResponse>({
+        method: "POST",
+        path: `/api/firms/${enc(firmId)}/research`,
+        body: { scope },
+      }),
+
+    job: (id: string, signal?: AbortSignal) =>
+      transport.json<JobResponse>({ method: "GET", path: `/api/jobs/${enc(id)}`, signal }),
+
+    addContact: (firmId: string, body: ContactCreate) =>
+      transport.json<ContactResponse>({
+        method: "POST",
+        path: `/api/firms/${enc(firmId)}/contacts`,
+        body,
+      }),
+
+    patchContact: (contactId: string, body: ContactPatch) =>
+      transport.json<ContactResponse>({
+        method: "PATCH",
+        path: `/api/contacts/${enc(contactId)}`,
+        body,
+      }),
+
+    removeContact: (contactId: string, reason?: string) =>
+      transport.json<ContactResponse>({
+        method: "POST",
+        path: `/api/contacts/${enc(contactId)}/remove`,
+        body: { reason: reason ?? null },
+      }),
+
+    setPrimaryContact: (leadId: string, contactId: string) =>
+      transport.json<LeadDetail>({
+        method: "PUT",
+        path: `/api/leads/${enc(leadId)}/contact`,
+        body: { contact_id: contactId },
+      }),
+
+    decide: (leadId: string, body: DecisionRequest) =>
+      transport.json<DecisionResponse>({
+        method: "POST",
+        path: `/api/leads/${enc(leadId)}/decision`,
+        body,
+      }),
+
+    addNote: (leadId: string, text: string) =>
+      transport.json<LeadDetail>({
+        method: "POST",
+        path: `/api/leads/${enc(leadId)}/notes`,
+        body: { text },
+      }),
+
+    setOwner: (leadId: string, owner: string | null) =>
+      transport.json<LeadDetail>({
+        method: "PUT",
+        path: `/api/leads/${enc(leadId)}/owner`,
+        body: { owner },
+      }),
+
+    batch: (body: BatchRequest) =>
+      transport.json<BatchResponse>({ method: "POST", path: "/api/leads/batch", body }),
   };
 }
 

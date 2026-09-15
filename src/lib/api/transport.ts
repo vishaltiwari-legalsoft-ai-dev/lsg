@@ -3,7 +3,7 @@ import { ApiError, EngineUnreachableError, isApiErrorBody } from "./errors";
 export type QueryValue = string | number | boolean | null | undefined;
 
 export interface RequestSpec {
-  method: "GET" | "POST" | "PUT";
+  method: "GET" | "POST" | "PUT" | "PATCH";
   path: string;
   query?: Record<string, QueryValue>;
   body?: unknown;

@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Contact */
+        patch: operations["patch_contact_api_contacts__contact_id__patch"];
+        trace?: never;
+    };
+    "/api/contacts/{contact_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Contact */
+        post: operations["remove_contact_api_contacts__contact_id__remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/firms": {
         parameters: {
             query?: never;
@@ -32,6 +66,57 @@ export interface paths {
         get: operations["get_firm_api_firms__firm_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firms/{firm_id}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Contact */
+        post: operations["post_contact_api_firms__firm_id__contacts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firms/{firm_id}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Firm Jobs */
+        get: operations["get_firm_jobs_api_firms__firm_id__jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firms/{firm_id}/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Research */
+        post: operations["post_research_api_firms__firm_id__research_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -158,6 +243,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Job */
+        get: operations["get_job_api_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/leads": {
         parameters: {
             query?: never;
@@ -169,6 +271,23 @@ export interface paths {
         get: operations["list_leads_api_leads_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Batch */
+        post: operations["post_batch_api_leads_batch_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -209,6 +328,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/leads/{lead_id}/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Primary Contact */
+        put: operations["put_primary_contact_api_leads__lead_id__contact_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/{lead_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Decision */
+        post: operations["post_decision_api_leads__lead_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/leads/{lead_id}/drafts": {
         parameters: {
             query?: never;
@@ -226,6 +379,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/leads/{lead_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Note */
+        post: operations["post_note_api_leads__lead_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/leads/{lead_id}/outcome": {
         parameters: {
             query?: never;
@@ -237,6 +407,23 @@ export interface paths {
         put?: never;
         /** Post Outcome */
         post: operations["post_outcome_api_leads__lead_id__outcome_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/{lead_id}/owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Owner */
+        put: operations["put_owner_api_leads__lead_id__owner_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -315,6 +502,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActionJob */
+        ActionJob: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Firm Id */
+            firm_id: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "research" | "find_contacts";
+            /** Lead Id */
+            lead_id: string | null;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "done" | "failed";
+            /** Steps */
+            steps: components["schemas"]["JobStep"][];
+        };
         /** AlertItem */
         AlertItem: {
             /** Detail */
@@ -416,6 +635,38 @@ export interface components {
              */
             state: "resolved" | "unknown" | "conflict" | "stale";
         };
+        /** BatchRequest */
+        BatchRequest: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "research" | "find_contacts" | "disqualify" | "hold" | "assign";
+            /** Lead Ids */
+            lead_ids: string[];
+            /** Owner */
+            owner?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Until */
+            until?: string | null;
+        };
+        /** BatchResponse */
+        BatchResponse: {
+            /** Results */
+            results: components["schemas"]["BatchResult"][];
+        };
+        /** BatchResult */
+        BatchResult: {
+            /** Job Id */
+            job_id?: string | null;
+            /** Lead Id */
+            lead_id: string;
+            /** Message */
+            message: string;
+            /** Ok */
+            ok: boolean;
+        };
         /** BenchStatus */
         BenchStatus: {
             /** Message */
@@ -439,6 +690,45 @@ export interface components {
              * @default internal_firms
              */
             source_tag: string;
+        };
+        /** ContactCreate */
+        ContactCreate: {
+            /** Email */
+            email?: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Role */
+            role?: ("owner" | "admin" | "attorney" | "unknown") | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** ContactPatch */
+        ContactPatch: {
+            /** Email */
+            email?: string | null;
+            /** Full Name */
+            full_name?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Role */
+            role?: ("owner" | "admin" | "attorney" | "unknown") | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** ContactRemove */
+        ContactRemove: {
+            /** Reason */
+            reason?: string | null;
+        };
+        /** ContactResponse */
+        ContactResponse: {
+            contact: components["schemas"]["ContactSummary"];
         };
         /** ContactSummary */
         ContactSummary: {
@@ -465,6 +755,24 @@ export interface components {
             source_label: string;
             /** Title */
             title: string | null;
+        };
+        /** DecisionRequest */
+        DecisionRequest: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "qualify" | "disqualify" | "hold" | "reopen" | "handoff";
+            /** Reason */
+            reason?: string | null;
+            /** Until */
+            until?: string | null;
+        };
+        /** DecisionResponse */
+        DecisionResponse: {
+            lead: components["schemas"]["LeadDetail"];
+            /** Message */
+            message: string;
         };
         /** DocumentRow */
         DocumentRow: {
@@ -802,6 +1110,27 @@ export interface components {
             /** Items */
             items: components["schemas"]["ImportSummary"][];
         };
+        /** JobResponse */
+        JobResponse: {
+            job: components["schemas"]["ActionJob"];
+        };
+        /** JobStep */
+        JobStep: {
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "running" | "done" | "failed";
+        };
+        /** JobsResponse */
+        JobsResponse: {
+            /** Items */
+            items: components["schemas"]["ActionJob"][];
+        };
         /** LeadDetail */
         LeadDetail: {
             /** Band */
@@ -824,20 +1153,48 @@ export interface components {
             id: string;
             /** Intent */
             intent: number | null;
+            job: components["schemas"]["ActionJob"] | null;
             /** Missing Roles */
             missing_roles: ("owner" | "admin")[];
+            /** Next Action */
+            next_action: string;
+            /** Notes */
+            notes: components["schemas"]["LeadNote"][];
             /** Outcomes */
             outcomes: components["schemas"]["LeadOutcome"][];
+            /** Owner */
+            owner: string | null;
             proof: components["schemas"]["Proof"] | null;
             score: components["schemas"]["ScoreBreakdown"];
             /** Scored At */
             scored_at: string | null;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "researching" | "no_website" | "needs_review" | "needs_contact" | "ready" | "parked" | "in_outreach" | "replied" | "handed_off" | "won" | "lost" | "disqualified" | "do_not_contact" | "needs_refresh";
+            /** Stage Display */
+            stage_display: string;
             /** State */
             state: string;
             /** State Display */
             state_display: string;
             /** Timeline */
             timeline: components["schemas"]["TimelineEvent"][];
+        };
+        /** LeadNote */
+        LeadNote: {
+            /** Actor */
+            actor: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Id */
+            id: number;
+            /** Text */
+            text: string;
         };
         /** LeadOutcome */
         LeadOutcome: {
@@ -880,9 +1237,20 @@ export interface components {
             id: string;
             /** Intent */
             intent: number | null;
+            /** Next Action */
+            next_action: string;
+            /** Owner */
+            owner: string | null;
             proof: components["schemas"]["Proof"] | null;
             /** Scored At */
             scored_at: string | null;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "researching" | "no_website" | "needs_review" | "needs_contact" | "ready" | "parked" | "in_outreach" | "replied" | "handed_off" | "won" | "lost" | "disqualified" | "do_not_contact" | "needs_refresh";
+            /** Stage Display */
+            stage_display: string;
             /** State */
             state: string;
             /** State Display */
@@ -918,6 +1286,11 @@ export interface components {
                 [key: string]: string | null;
             };
         };
+        /** NoteRequest */
+        NoteRequest: {
+            /** Text */
+            text: string;
+        };
         /** OutcomeRequest */
         OutcomeRequest: {
             /**
@@ -937,6 +1310,16 @@ export interface components {
             message: string;
             /** Transition Applied */
             transition_applied: boolean;
+        };
+        /** OwnerRequest */
+        OwnerRequest: {
+            /** Owner */
+            owner: string | null;
+        };
+        /** PrimaryContactRequest */
+        PrimaryContactRequest: {
+            /** Contact Id */
+            contact_id: string;
         };
         /** Proof */
         Proof: {
@@ -1000,6 +1383,15 @@ export interface components {
             handcheck: number;
             /** Identity */
             identity: number;
+        };
+        /** ResearchRequest */
+        ResearchRequest: {
+            /**
+             * Scope
+             * @default full
+             * @enum {string}
+             */
+            scope: "full" | "contacts";
         };
         /** ScoreBreakdown */
         ScoreBreakdown: {
@@ -1089,6 +1481,76 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    patch_contact_api_contacts__contact_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_contact_api_contacts__contact_id__remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactRemove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_firms_api_firms_get: {
         parameters: {
             query?: {
@@ -1143,6 +1605,109 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FirmDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_contact_api_firms__firm_id__contacts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                firm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_firm_jobs_api_firms__firm_id__jobs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                firm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_research_api_firms__firm_id__research_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                firm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1382,6 +1947,37 @@ export interface operations {
             };
         };
     };
+    get_job_api_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_leads_api_leads_get: {
         parameters: {
             query?: {
@@ -1408,6 +2004,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeadsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_batch_api_leads_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1483,6 +2112,76 @@ export interface operations {
             };
         };
     };
+    put_primary_contact_api_leads__lead_id__contact_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrimaryContactRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_decision_api_leads__lead_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_drafts_api_leads__lead_id__drafts_get: {
         parameters: {
             query?: never;
@@ -1501,6 +2200,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DraftsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_note_api_leads__lead_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
                 };
             };
             /** @description Validation Error */
@@ -1536,6 +2270,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OutcomeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_owner_api_leads__lead_id__owner_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetail"];
                 };
             };
             /** @description Validation Error */

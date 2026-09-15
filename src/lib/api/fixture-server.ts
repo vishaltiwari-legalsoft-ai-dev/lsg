@@ -19,12 +19,22 @@ import todayJson from "@/fixtures/today.json";
 import { ApiError } from "./errors";
 import type { RequestSpec, Transport } from "./transport";
 import type {
+  ActionJob,
+  BatchRequest,
+  BatchResponse,
+  ContactCreate,
+  ContactPatch,
+  ContactResponse,
+  ContactSummary,
+  DecisionRequest,
+  DecisionResponse,
   DraftsResponse,
   FirmDetail,
   FirmsResponse,
   HandcheckDecision,
   HandcheckResponse,
   HealthResponse,
+  JobResponse,
   LeadCounts,
   LeadDetail,
   LeadRow,
@@ -119,7 +129,29 @@ function toRow(detail: LeadDetail): LeadRow {
     contact: detail.contact,
     scored_at: detail.scored_at,
     blockers: detail.blockers,
+    stage: detail.stage,
+    stage_display: detail.stage_display,
+    next_action: detail.next_action,
+    owner: detail.owner,
   };
+}
+
+const STAGE_DISPLAY: Record<LeadRow["stage"], string> = {
+  researching: "Researching", no_website: "No website", needs_review: "Needs a decision",
+  needs_contact: "Needs a person", ready: "Ready to reach", parked: "Parked",
+  in_outreach: "In outreach", replied: "Replied", handed_off: "Handed off", won: "Won",
+  lost: "Lost", disqualified: "Disqualified", do_not_contact: "Do not contact",
+  needs_refresh: "Needs a refresh",
+};
+
+function setStage(lead: LeadDetail, stage: LeadRow["stage"], next: string, state?: string) {
+  lead.stage = stage;
+  lead.stage_display = STAGE_DISPLAY[stage];
+  lead.next_action = next;
+  if (state) {
+    lead.state = state;
+    lead.state_display = STAGE_DISPLAY[stage];
+  }
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -149,6 +181,7 @@ export interface FixtureServer extends Transport {
 
 export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = {}): FixtureServer {
   let db = loadDb();
+  const jobs = new Map<string, ActionJob>();
 
   function counts(spec: RequestSpec): LeadCounts {
     return Object.fromEntries(
@@ -314,6 +347,162 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
       return recordOutcome(decodeURIComponent(m[1]), spec.body as OutcomeRequest);
     }
 
+    // ── Actions (a stand-in: the real rules live in the engine) ─────────────
+    if ((m = path.match(/^\/api\/firms\/([^/]+)\/research$/)) && method === "POST") {
+      const firmId = decodeURIComponent(m[1]);
+      const scope = (spec.body as { scope?: string })?.scope ?? "full";
+      const steps = (scope === "full"
+        ? ["p1_site_map", "p2_fetch", "px_site_facts", "r_site_contacts", "r_search_emails", "score"]
+        : ["px_site_facts", "r_site_contacts", "r_search_emails", "score"]
+      ).map((name) => ({ name, status: "done" as const, note: "processed=1 skipped=0 failed=0" }));
+      const now = new Date().toISOString();
+      const job: ActionJob = {
+        id: `job-${jobs.size + 1}`, kind: scope === "full" ? "research" : "find_contacts",
+        firm_id: firmId, lead_id: null, status: "done", steps, error: null,
+        created_at: now, started_at: now, finished_at: now,
+      };
+      jobs.set(job.id, job);
+      for (const lead of Object.values(db.leadDetails)) if (lead.firm.id === firmId) lead.job = job;
+      return { job } satisfies JobResponse;
+    }
+
+    if ((m = path.match(/^\/api\/jobs\/([^/]+)$/)) && method === "GET") {
+      const job = jobs.get(decodeURIComponent(m[1]));
+      if (!job) throw notFound("Job");
+      return { job } satisfies JobResponse;
+    }
+
+    if ((m = path.match(/^\/api\/leads\/([^/]+)\/decision$/)) && method === "POST") {
+      const lead = db.leadDetails[decodeURIComponent(m[1])];
+      if (!lead) throw notFound("Lead");
+      const body = spec.body as DecisionRequest;
+      const why = body.reason ? ` -- ${body.reason}` : "";
+      let message: string;
+      if (body.action === "disqualify") {
+        setStage(lead, "disqualified", "Reopen if the reason was wrong", "DISQUALIFIED");
+        message = "Disqualified.";
+      } else if (body.action === "qualify") {
+        setStage(lead, lead.contact?.email ? "ready" : "needs_contact",
+          lead.contact?.email ? "Send touch 1 when a signal arms it, or hand off now" : "Find a decision-maker",
+          "QUALIFIED_B");
+        message = "Qualified (grade B -- no verified email yet; phone and LinkedIn only).";
+      } else if (body.action === "hold") {
+        if (!body.until) throw new ApiError(400, "bad_request", "`until` is required to hold a lead.", null);
+        setStage(lead, "parked", `Parked until ${body.until}`);
+        message = `Parked until ${body.until}.`;
+      } else if (body.action === "handoff") {
+        setStage(lead, "handed_off", "Sales owns it -- record won or lost", "HANDOFF");
+        message = "Handed off to sales.";
+      } else {
+        setStage(lead, "needs_review", "Review the record; qualify or disqualify", "CLASSIFIED");
+        message = "Reopened -- back to needing a decision.";
+      }
+      lead.notes = [{ id: (lead.notes[0]?.id ?? 0) + 1, text: `${message.replace(/\.$/, "")}${why}`, actor: "You", at: new Date().toISOString() }, ...lead.notes];
+      replaceRow(lead);
+      return { lead: structuredClone(lead), message } satisfies DecisionResponse;
+    }
+
+    if ((m = path.match(/^\/api\/leads\/([^/]+)\/notes$/)) && method === "POST") {
+      const lead = db.leadDetails[decodeURIComponent(m[1])];
+      if (!lead) throw notFound("Lead");
+      const text = (spec.body as { text: string }).text.trim();
+      lead.notes = [{ id: (lead.notes[0]?.id ?? 0) + 1, text, actor: "You", at: new Date().toISOString() }, ...lead.notes];
+      return lead;
+    }
+
+    if ((m = path.match(/^\/api\/leads\/([^/]+)\/owner$/)) && method === "PUT") {
+      const lead = db.leadDetails[decodeURIComponent(m[1])];
+      if (!lead) throw notFound("Lead");
+      lead.owner = (spec.body as { owner: string | null }).owner || null;
+      replaceRow(lead);
+      return lead;
+    }
+
+    if ((m = path.match(/^\/api\/leads\/([^/]+)\/contact$/)) && method === "PUT") {
+      const lead = db.leadDetails[decodeURIComponent(m[1])];
+      if (!lead) throw notFound("Lead");
+      const contact = lead.contacts.find((c) => c.id === (spec.body as { contact_id: string }).contact_id);
+      if (!contact) throw new ApiError(400, "bad_request", "That contact is not at this firm.", null);
+      lead.contact = contact;
+      replaceRow(lead);
+      return lead;
+    }
+
+    if ((m = path.match(/^\/api\/firms\/([^/]+)\/contacts$/)) && method === "POST") {
+      const firmId = decodeURIComponent(m[1]);
+      const body = spec.body as ContactCreate;
+      const contact: ContactSummary = {
+        id: `contact-${Date.now()}`, full_name: body.full_name.trim(), title: body.title ?? null,
+        role: body.role ?? "unknown", source_label: "Added by hand", email: body.email?.toLowerCase() ?? null,
+        email_status: body.email ? "unverified" : null,
+        email_status_display: body.email ? "Not verified yet" : null, phone: body.phone ?? null,
+        linkedin_url: body.linkedin_url ?? null,
+      };
+      for (const lead of Object.values(db.leadDetails)) if (lead.firm.id === firmId) lead.contacts.push(contact);
+      return { contact } satisfies ContactResponse;
+    }
+
+    if ((m = path.match(/^\/api\/contacts\/([^/]+)$/)) && method === "PATCH") {
+      const id = decodeURIComponent(m[1]);
+      const body = spec.body as ContactPatch;
+      let found: ContactSummary | undefined;
+      for (const lead of Object.values(db.leadDetails)) {
+        const contact = lead.contacts.find((c) => c.id === id);
+        if (!contact) continue;
+        if (body.full_name != null) contact.full_name = body.full_name.trim();
+        if (body.title != null) contact.title = body.title || null;
+        if (body.role != null) contact.role = body.role;
+        if (body.phone != null) contact.phone = body.phone || null;
+        if (body.linkedin_url != null) contact.linkedin_url = body.linkedin_url || null;
+        if (body.email) {
+          contact.email = body.email.toLowerCase();
+          contact.email_status = "unverified";
+          contact.email_status_display = "Not verified yet";
+        }
+        found = contact;
+        if (lead.contact?.id === id) lead.contact = contact;
+      }
+      if (!found) throw notFound("Contact");
+      return { contact: found } satisfies ContactResponse;
+    }
+
+    if ((m = path.match(/^\/api\/contacts\/([^/]+)\/remove$/)) && method === "POST") {
+      const id = decodeURIComponent(m[1]);
+      let found: ContactSummary | undefined;
+      for (const lead of Object.values(db.leadDetails)) {
+        const contact = lead.contacts.find((c) => c.id === id);
+        if (!contact) continue;
+        found = contact;
+        lead.contacts = lead.contacts.filter((c) => c.id !== id);
+        if (lead.contact?.id === id) lead.contact = null;
+        replaceRow(lead);
+      }
+      if (!found) throw notFound("Contact");
+      return { contact: found } satisfies ContactResponse;
+    }
+
+    if (method === "POST" && path === "/api/leads/batch") {
+      const body = spec.body as BatchRequest;
+      const results = body.lead_ids.map((leadId) => {
+        const lead = db.leadDetails[leadId];
+        if (!lead) return { lead_id: leadId, ok: false, message: "Lead not found.", job_id: null };
+        if (body.action === "assign") {
+          lead.owner = body.owner || null;
+          replaceRow(lead);
+          return { lead_id: leadId, ok: true, message: "Assigned.", job_id: null };
+        }
+        if (body.action === "research" || body.action === "find_contacts") {
+          return { lead_id: leadId, ok: true, message: "Job done.", job_id: `job-fixture-${leadId}` };
+        }
+        const response = handle({
+          method: "POST", path: `/api/leads/${encodeURIComponent(leadId)}/decision`,
+          body: { action: body.action, reason: body.reason ?? null, until: body.until ?? null },
+        }) as DecisionResponse;
+        return { lead_id: leadId, ok: true, message: response.message, job_id: null };
+      });
+      return { results } satisfies BatchResponse;
+    }
+
     if (method === "GET" && path === "/api/firms") {
       const q = param(spec, "q")?.toLowerCase();
       const tier = param(spec, "tier");
@@ -364,6 +553,7 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
     },
     reset() {
       db = loadDb();
+      jobs.clear();
     },
   };
 }

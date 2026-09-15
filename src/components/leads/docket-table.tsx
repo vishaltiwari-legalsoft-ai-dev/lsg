@@ -43,6 +43,17 @@ function ContactLine({ row }: { row: LeadRow }) {
   );
 }
 
+/** Where the lead is as a person works it, and what to do next. */
+function StageLine({ lead, className }: { lead: LeadRow; className?: string }) {
+  return (
+    <span className={cn("block truncate text-meta", className)} title={lead.next_action}>
+      <span className="text-ink">{lead.stage_display}</span>
+      <span className="text-slate"> · {lead.next_action}</span>
+      {lead.owner ? <span className="text-slate"> · {lead.owner}</span> : null}
+    </span>
+  );
+}
+
 function FirmCell({ lead }: { lead: LeadRow }) {
   return (
     <div className="grid min-w-0 gap-0.5">
@@ -113,6 +124,7 @@ const entryColumn = helper.display({
           <ContactLine row={lead} />
         </span>
         <Blockers lead={lead} />
+        <StageLine lead={lead} />
       </div>
     );
   },
@@ -168,6 +180,7 @@ const contactColumn = helper.display({
         </span>
         <EmailStatusBadge contact={c} />
         <Blockers lead={lead} className="max-w-full" />
+        <StageLine lead={lead} className="max-w-full" />
       </div>
     );
   },
@@ -187,6 +200,7 @@ const intentColumn = helper.display({
 
 const FULL_COLUMNS = [firmColumn, tierColumn, painColumn, contactColumn, intentColumn];
 const COMPACT_COLUMNS = [entryColumn, intentColumn];
+const NO_TICKS: ReadonlySet<string> = new Set();
 
 /**
  * The docket: one entry per lead — firm, tier, the pain headline with its
@@ -200,13 +214,20 @@ export const DocketTable = memo(function DocketTable({
   compact,
   onSelect,
   caption,
+  checked,
+  onToggle,
 }: {
   rows: LeadRow[];
   selectedId: string | null;
   compact: boolean;
   onSelect: (id: string) => void;
   caption: string;
+  /** Leads ticked for a batch action; the tick is separate from the case-file selection. */
+  checked?: ReadonlySet<string>;
+  /** Without it there is no tick column (the Today screen's short list). */
+  onToggle?: (id: string, on: boolean) => void;
 }) {
+  const ticks = checked ?? NO_TICKS;
   const columns = compact ? COMPACT_COLUMNS : FULL_COLUMNS;
   const table = useTable({ features, columns, data: rows, getRowId: (row) => row.id });
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -226,12 +247,26 @@ export const DocketTable = memo(function DocketTable({
       <thead className="sticky top-0 z-10 bg-sheet">
         {table.getHeaderGroups().map((group) => (
           <tr key={group.id} className="border-b border-rule">
+            {onToggle ? (
+              <th scope="col" className="h-9 w-10 pl-5">
+                <input
+                  type="checkbox"
+                  aria-label="Select every lead shown"
+                  className="size-3.5 accent-cobalt"
+                  checked={rows.length > 0 && rows.every((r) => ticks.has(r.id))}
+                  onChange={(event) => {
+                    for (const r of rows) onToggle(r.id, event.target.checked);
+                  }}
+                />
+              </th>
+            ) : null}
             {group.headers.map((header) => (
               <th
                 key={header.id}
                 scope="col"
                 className={cn(
-                  "h-9 px-3 text-meta font-normal text-slate first:pl-8 last:pr-8",
+                  "h-9 px-3 text-meta font-normal text-slate last:pr-8",
+                  !onToggle && "first:pl-8",
                   header.column.columnDef.meta?.th,
                 )}
               >
@@ -260,13 +295,27 @@ export const DocketTable = memo(function DocketTable({
                 "cursor-pointer border-b border-rule align-top transition-colors duration-75 outline-offset-[-2px] hover:bg-paper",
                 selected &&
                   "bg-cobalt-wash hover:bg-cobalt-wash [&>td:first-child]:shadow-[inset_3px_0_0_var(--color-cobalt)]",
+                ticks.has(row.id) && !selected && "bg-paper",
               )}
             >
+              {onToggle ? (
+                <td className="w-10 py-3 pl-5 align-top">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.original.firm.name}`}
+                    className="mt-0.5 size-3.5 accent-cobalt"
+                    checked={ticks.has(row.id)}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => onToggle(row.id, event.target.checked)}
+                  />
+                </td>
+              ) : null}
               {row.getAllCells().map((cell) => (
                 <td
                   key={cell.id}
                   className={cn(
-                    "px-3 py-3 first:pl-8 last:pr-8",
+                    "px-3 py-3 last:pr-8",
+                    !onToggle && "first:pl-8",
                     cell.column.columnDef.meta?.td,
                   )}
                 >

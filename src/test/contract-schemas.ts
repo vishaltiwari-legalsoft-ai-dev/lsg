@@ -34,12 +34,27 @@ export const ContactSummary = z.strictObject({
   email_status: EmailStatus.nullable(), email_status_display: ns, phone: ns,
   linkedin_url: ns.optional(),
 });
+const Stage = z.enum([
+  "researching", "no_website", "needs_review", "needs_contact", "ready", "parked",
+  "in_outreach", "replied", "handed_off", "won", "lost", "disqualified", "do_not_contact",
+  "needs_refresh",
+]);
 const leadRowShape = {
   id: s, firm: FirmRef, state: s, state_display: s, band: Band.nullable(), fit: nn, intent: nn,
   contest: Contest.nullable(), grade: z.enum(["A", "B"]).nullable(), proof: Proof.nullable(),
   contact: ContactSummary.nullable(), scored_at: ns, blockers: z.array(s),
+  stage: Stage, stage_display: s, next_action: s, owner: ns,
 };
 export const LeadRow = z.strictObject(leadRowShape);
+const LeadNote = z.strictObject({ id: n, text: s, actor: s, at: s });
+const JobStep = z.strictObject({
+  name: s, status: z.enum(["pending", "running", "done", "failed"]), note: ns.optional(),
+});
+export const ActionJob = z.strictObject({
+  id: s, kind: z.enum(["research", "find_contacts"]), firm_id: s, lead_id: ns,
+  status: z.enum(["queued", "running", "done", "failed"]), steps: z.array(JobStep), error: ns,
+  created_at: s, started_at: ns, finished_at: ns,
+});
 const LeadCounts = z.strictObject({
   STRIKE: n, SEQUENCE: n, NURTURE: n, PHONE: n, EXCLUDED: n, UNSCORED: n,
 });
@@ -61,6 +76,8 @@ export const LeadDetail = z.strictObject({
   timeline: z.array(
     z.strictObject({ from_state: ns, to_state: s, label: s, trigger: s, actor: s, at: s }),
   ),
+  notes: z.array(LeadNote),
+  job: ActionJob.nullable(),
 });
 export const DraftsResponse = z.strictObject({
   band: Band.nullable(),
