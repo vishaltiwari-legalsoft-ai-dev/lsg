@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { TodayScreen } from "@/components/today/today-screen";
+import { HomeScreen } from "@/components/home/home-screen";
 
-export const metadata: Metadata = { title: "Today" };
+export const metadata: Metadata = { title: "Home" };
 
-// Server component shell; Today's data is live and fetched on the client
+// Server component shell; the numbers are live and fetched on the client
 // from the engine (or fixtures), so the screen itself is a client component.
-export default function TodayPage() {
-  return <TodayScreen />;
+export default function HomePage() {
+  return <HomeScreen />;
 }

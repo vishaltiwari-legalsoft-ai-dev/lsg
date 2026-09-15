@@ -11,6 +11,7 @@ import type {
   DraftsResponse,
   FirmDetail,
   JobResponse,
+  JobsResponse,
   FirmsQuery,
   FirmsResponse,
   HandcheckDecision,
@@ -26,6 +27,7 @@ import type {
   MappingRequest,
   OutcomeRequest,
   OutcomeResponse,
+  OverviewResponse,
   TodayResponse,
 } from "./types";
 
@@ -39,6 +41,9 @@ export function createApi(transport: Transport) {
 
     today: (signal?: AbortSignal) =>
       transport.json<TodayResponse>({ method: "GET", path: "/api/today", signal }),
+
+    overview: (signal?: AbortSignal) =>
+      transport.json<OverviewResponse>({ method: "GET", path: "/api/overview", signal }),
 
     leads: (query: LeadsQuery, signal?: AbortSignal) =>
       transport.json<LeadsResponse>({
@@ -131,6 +136,14 @@ export function createApi(transport: Transport) {
 
     job: (id: string, signal?: AbortSignal) =>
       transport.json<JobResponse>({ method: "GET", path: `/api/jobs/${enc(id)}`, signal }),
+
+    firmJobs: (firmId: string, signal?: AbortSignal) =>
+      transport.json<JobsResponse>({
+        method: "GET",
+        path: `/api/firms/${enc(firmId)}/jobs`,
+        query: { limit: 3 },
+        signal,
+      }),
 
     addContact: (firmId: string, body: ContactCreate) =>
       transport.json<ContactResponse>({

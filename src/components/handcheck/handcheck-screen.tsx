@@ -476,7 +476,7 @@ export function HandcheckScreen() {
   const handcheck = useHandcheck();
   return (
     <>
-      <TitleBar title="Hand-check" meta="Gate G2" />
+      <TitleBar title="Accuracy check" meta="50 firms the engine read, checked by hand — the gate before the full crawl" />
       <div className="max-w-[80rem] px-8 pt-6 pb-16">
         {handcheck.isPending ? (
           <HandcheckSkeleton />

@@ -1,99 +1,139 @@
 "use client";
 
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
+import { JobProgress } from "@/components/case-file/job-progress";
 import { Field, Panel, SectionHeading } from "@/components/layout/panel";
 import { ProofQuote } from "@/components/record/proof-quote";
 import { EmailStatusBadge } from "@/components/record/status-badge";
 import { TierMark } from "@/components/record/tier-mark";
-import { Unknown, ValueOrUnknown } from "@/components/record/unknown";
+import { isUnknownDisplay, Unknown, ValueOrUnknown } from "@/components/record/unknown";
 import { TitleBar, TitlePlaceholder } from "@/components/shell/title-bar";
 import { ErrorState } from "@/components/states/error-state";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFirm } from "@/lib/api/hooks";
-import type { FirmDetail } from "@/lib/api/types";
+import { useFirm, useFirmJobs, useResearch } from "@/lib/api/hooks";
+import type { AttributeRow, FirmDetail } from "@/lib/api/types";
 import { formatCount, formatDate, formatPlace, urlPath } from "@/lib/format";
-import { BAND_LABEL, ROLE_LABEL } from "@/lib/labels";
+import { PRIORITY_LABEL, ROLE_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { AttributeTable } from "./attribute-table";
 
 const th = "h-9 font-normal text-meta text-slate text-left";
 
-function Documents({ documents }: { documents: FirmDetail["documents"] }) {
+/* ── At a glance: the facts outreach needs, out of the claims ───────────── */
+
+const GLANCE: string[] = [
+  "primary_practice", "fee_model", "attorney_count", "staff_listed", "phone_e164", "address",
+  "office_count", "general_email", "hiring_email", "live_chat_vendor", "online_intake_form",
+  "cms_detected", "spanish_intake", "google_rating", "review_count", "social_links",
+  "copyright_year",
+];
+const SITE_SAYS: string[] = ["site_gaps", "testimonials", "site_review_summary", "recent_posts", "growth_news"];
+
+function byAttr(attributes: AttributeRow[]): Map<string, AttributeRow> {
+  return new Map(attributes.map((a) => [a.attr, a]));
+}
+
+function Glance({ attributes }: { attributes: AttributeRow[] }) {
+  const map = byAttr(attributes);
+  const rows = GLANCE.map((k) => map.get(k)).filter((r): r is AttributeRow => Boolean(r));
   return (
-    <section aria-labelledby="documents-heading" className="grid gap-3">
-      <SectionHeading id="documents-heading" aside={`${formatCount(documents.length)} pages`}>
-        Documents crawled
-      </SectionHeading>
-      {documents.length === 0 ? (
-        <p className="text-body text-slate">
-          Nothing crawled yet. Pages appear here after the probe reads the firm&apos;s site.
-        </p>
+    <section aria-labelledby="glance-heading" className="grid gap-4">
+      <SectionHeading id="glance-heading">At a glance</SectionHeading>
+      {rows.length === 0 ? (
+        <p className="text-body text-slate">Nothing read yet. Research the site to fill this in.</p>
       ) : (
-        <Panel className="overflow-x-auto">
-          <table className="w-full min-w-[40rem] border-collapse text-table">
-            <thead>
-              <tr className="border-b border-rule">
-                <th scope="col" className={cn(th, "pl-6")}>Page</th>
-                <th scope="col" className={th}>Status</th>
-                <th scope="col" className={cn(th, "text-right")}>Words</th>
-                <th scope="col" className={cn(th, "pl-6")}>Robots</th>
-                <th scope="col" className={cn(th, "pr-6 text-right")}>Fetched</th>
-              </tr>
-            </thead>
-            <tbody>
-              {documents.map((doc) => (
-                <tr key={doc.url} className="border-b border-rule last:border-b-0">
-                  <td className="py-2.5 pr-4 pl-6">
-                    <ValueOrUnknown
-                      value={doc.page_kind}
-                      unknown="Page kind not recorded"
-                      className="block text-ink"
-                    />
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-0.5 text-meta text-cobalt hover:underline"
-                    >
-                      {urlPath(doc.url)}
-                      <ArrowUpRightIcon className="size-3" aria-hidden="true" />
-                      <span className="sr-only"> (opens in a new tab)</span>
-                    </a>
-                  </td>
-                  <td className="pr-4 tabular-nums">
-                    {doc.status_code === null ? (
-                      <Unknown>No response</Unknown>
-                    ) : (
-                      <span className={doc.status_code >= 400 ? "text-redline" : "text-ink"}>{doc.status_code}</span>
-                    )}
-                  </td>
-                  <td className="pr-4 text-right tabular-nums">
-                    {doc.words === null ? <Unknown>Not counted</Unknown> : formatCount(doc.words)}
-                  </td>
-                  <td className="pr-4 pl-6 text-ink">
-                    <ValueOrUnknown value={doc.robots_decision} unknown="Not checked" />
-                  </td>
-                  <td className="pr-6 text-right text-slate tabular-nums">{formatDate(doc.fetched_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Panel>
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          {rows.map((row) => (
+            <Field key={row.attr} label={row.label}>
+              {isUnknownDisplay(row.display) ? (
+                <Unknown />
+              ) : (
+                <span className={cn(row.state === "conflict" && "text-redline")}>{row.display}</span>
+              )}
+              {row.source_label ? (
+                <span className="block truncate text-meta text-slate">From {row.source_label}</span>
+              ) : null}
+            </Field>
+          ))}
+        </dl>
       )}
     </section>
   );
 }
 
-function Contacts({ contacts }: { contacts: FirmDetail["contacts"] }) {
+function SiteSays({ attributes }: { attributes: AttributeRow[] }) {
+  const map = byAttr(attributes);
+  const rows = SITE_SAYS.map((k) => map.get(k)).filter((r): r is AttributeRow => Boolean(r));
+  if (rows.length === 0) return null;
   return (
-    <section aria-labelledby="contacts-heading" className="grid gap-3">
-      <SectionHeading id="contacts-heading">Contacts</SectionHeading>
+    <section aria-labelledby="site-says-heading" className="grid gap-4">
+      <SectionHeading id="site-says-heading">What the site says</SectionHeading>
+      <dl className="grid gap-4">
+        {rows.map((row) => (
+          <div key={row.attr} className="grid gap-1 border-l-2 border-rule pl-4">
+            <dt className="text-meta text-slate">{row.label}</dt>
+            <dd className={cn("text-body", isUnknownDisplay(row.display) ? "text-slate" : "text-ink")}>
+              {row.display}
+            </dd>
+            {row.evidence && row.evidence !== row.display && row.attr !== "site_gaps" ? (
+              <dd className="text-table text-slate">{row.evidence}</dd>
+            ) : null}
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/* ── Research: the buttons and the job ──────────────────────────────────── */
+
+function ResearchBar({ data }: { data: FirmDetail }) {
+  const research = useResearch(data.firm.id, data.lead?.id ?? null);
+  const jobs = useFirmJobs(data.firm.id);
+  const latest = jobs.data?.items[0];
+  const running = latest?.status === "queued" || latest?.status === "running";
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap gap-1.5">
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={research.isPending || running || !data.firm.domain}
+          title={data.firm.domain ? "Crawl the site again and read everything on it" : "No website on record"}
+          onClick={() => research.mutate("full")}
+        >
+          Research the site
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={research.isPending || running}
+          title="Read the team pages again, search for LinkedIn profiles and addresses"
+          onClick={() => research.mutate("contacts")}
+        >
+          Find people &amp; emails
+        </Button>
+      </div>
+      {latest ? <JobProgress job={latest} leadId={data.lead?.id} /> : null}
+    </div>
+  );
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+
+function People({ contacts }: { contacts: FirmDetail["contacts"] }) {
+  return (
+    <section aria-labelledby="people-heading" className="grid gap-3">
+      <SectionHeading id="people-heading" aside={contacts.length ? `${formatCount(contacts.length)} people` : undefined}>
+        People
+      </SectionHeading>
       {contacts.length === 0 ? (
         <p className="text-body text-slate">
-          No one found yet. Contacts appear when the engine reads a team page or a firm list names someone.
+          No one named yet. People appear when the engine reads a team page or a list names someone.
         </p>
       ) : (
         <Panel className="overflow-x-auto">
@@ -104,7 +144,7 @@ function Contacts({ contacts }: { contacts: FirmDetail["contacts"] }) {
                 <th scope="col" className={th}>Role</th>
                 <th scope="col" className={th}>Email</th>
                 <th scope="col" className={th}>Phone</th>
-                <th scope="col" className={cn(th, "pr-6")}>Source</th>
+                <th scope="col" className={cn(th, "pr-6")}>Found by</th>
               </tr>
             </thead>
             <tbody>
@@ -147,44 +187,128 @@ function Contacts({ contacts }: { contacts: FirmDetail["contacts"] }) {
   );
 }
 
-function Aliases({ aliases }: { aliases: FirmDetail["aliases"] }) {
+function Pages({ documents }: { documents: FirmDetail["documents"] }) {
+  const [open, setOpen] = useState(false);
   return (
-    <section aria-labelledby="aliases-heading" className="grid gap-3">
-      <SectionHeading id="aliases-heading">Merged records</SectionHeading>
-      {aliases.length === 0 ? (
-        <p className="text-body text-slate">No other record was merged into this firm.</p>
+    <section aria-labelledby="pages-heading" className="grid gap-3">
+      <SectionHeading id="pages-heading" aside={`${formatCount(documents.length)} pages`}>
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="inline-flex items-center gap-1.5 rounded-[4px] hover:underline"
+        >
+          <ChevronRightIcon className={cn("size-4 text-slate transition-transform", open && "rotate-90")} aria-hidden="true" />
+          Pages read
+        </button>
+      </SectionHeading>
+      {!open ? null : documents.length === 0 ? (
+        <p className="text-body text-slate">Nothing read yet. Pages appear here after the site is researched.</p>
       ) : (
         <Panel className="overflow-x-auto">
           <table className="w-full min-w-[40rem] border-collapse text-table">
             <thead>
               <tr className="border-b border-rule">
-                <th scope="col" className={cn(th, "pl-6")}>Name</th>
-                <th scope="col" className={th}>Domain</th>
-                <th scope="col" className={th}>Phone</th>
-                <th scope="col" className={th}>Merged because</th>
-                <th scope="col" className={cn(th, "pr-6")}>Source</th>
+                <th scope="col" className={cn(th, "pl-6")}>Page</th>
+                <th scope="col" className={th}>Status</th>
+                <th scope="col" className={cn(th, "text-right")}>Words</th>
+                <th scope="col" className={cn(th, "pl-6")}>Robots</th>
+                <th scope="col" className={cn(th, "pr-6 text-right")}>Read</th>
               </tr>
             </thead>
             <tbody>
-              {aliases.map((a, i) => (
-                <tr key={i} className="border-b border-rule last:border-b-0">
-                  <td className="py-2.5 pr-4 pl-6 text-ink">
-                    <ValueOrUnknown value={a.name} unknown="No name" />
+              {documents.map((doc) => (
+                <tr key={doc.url} className="border-b border-rule last:border-b-0">
+                  <td className="py-2.5 pr-4 pl-6">
+                    <ValueOrUnknown value={doc.page_kind} unknown="Page kind not recorded" className="block text-ink" />
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-0.5 text-meta text-cobalt hover:underline"
+                    >
+                      {urlPath(doc.url)}
+                      <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
                   </td>
-                  <td className="pr-4 text-ink">
-                    <ValueOrUnknown value={a.domain} unknown="No domain" />
+                  <td className="pr-4 tabular-nums">
+                    {doc.status_code === null ? (
+                      <Unknown>No response</Unknown>
+                    ) : (
+                      <span className={doc.status_code >= 400 ? "text-redline" : "text-ink"}>{doc.status_code}</span>
+                    )}
                   </td>
-                  <td className="pr-4 text-ink tabular-nums">
-                    <ValueOrUnknown value={a.phone} unknown="No phone" />
+                  <td className="pr-4 text-right tabular-nums">
+                    {doc.words === null ? <Unknown>Not counted</Unknown> : formatCount(doc.words)}
                   </td>
-                  <td className="pr-4 text-ink">{a.merge_rule ?? <span className="text-slate">The original record</span>}</td>
-                  <td className="pr-6 text-slate">{a.source_label}</td>
+                  <td className="pr-4 pl-6 text-ink">
+                    <ValueOrUnknown value={doc.robots_decision} unknown="Not checked" />
+                  </td>
+                  <td className="pr-6 text-right text-slate tabular-nums">{formatDate(doc.fetched_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </Panel>
       )}
+    </section>
+  );
+}
+
+function EveryClaim({ attributes }: { attributes: AttributeRow[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section aria-labelledby="claims-heading" className="grid gap-3">
+      <SectionHeading id="claims-heading" aside="Every source, and which one won">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="inline-flex items-center gap-1.5 rounded-[4px] hover:underline"
+        >
+          <ChevronRightIcon className={cn("size-4 text-slate transition-transform", open && "rotate-90")} aria-hidden="true" />
+          Every claim
+        </button>
+      </SectionHeading>
+      {open ? (
+        <Panel className="overflow-hidden">
+          <AttributeTable attributes={attributes} />
+        </Panel>
+      ) : null}
+    </section>
+  );
+}
+
+function Aliases({ aliases }: { aliases: FirmDetail["aliases"] }) {
+  if (aliases.length === 0) return null;
+  return (
+    <section aria-labelledby="aliases-heading" className="grid gap-3">
+      <SectionHeading id="aliases-heading">Merged records</SectionHeading>
+      <Panel className="overflow-x-auto">
+        <table className="w-full min-w-[40rem] border-collapse text-table">
+          <thead>
+            <tr className="border-b border-rule">
+              <th scope="col" className={cn(th, "pl-6")}>Name</th>
+              <th scope="col" className={th}>Domain</th>
+              <th scope="col" className={th}>Phone</th>
+              <th scope="col" className={th}>Merged because</th>
+              <th scope="col" className={cn(th, "pr-6")}>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {aliases.map((a, i) => (
+              <tr key={i} className="border-b border-rule last:border-b-0">
+                <td className="py-2.5 pr-4 pl-6 text-ink"><ValueOrUnknown value={a.name} unknown="No name" /></td>
+                <td className="pr-4 text-ink"><ValueOrUnknown value={a.domain} unknown="No domain" /></td>
+                <td className="pr-4 text-ink tabular-nums"><ValueOrUnknown value={a.phone} unknown="No phone" /></td>
+                <td className="pr-4 text-ink">{a.merge_rule ?? <span className="text-slate">The original record</span>}</td>
+                <td className="pr-6 text-slate">{a.source_label}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
     </section>
   );
 }
@@ -227,27 +351,21 @@ function FirmRecord({ data }: { data: FirmDetail }) {
               <span className="text-slate">No lead for this firm</span>
             )}
           </Field>
-          {lead ? (
-            <Field label="Band">{lead.band ? BAND_LABEL[lead.band] : <Unknown>Not scored</Unknown>}</Field>
-          ) : null}
+          {lead?.band ? <Field label="Priority">{PRIORITY_LABEL[lead.band]}</Field> : null}
         </dl>
+        <div className="pl-10">
+          <ResearchBar data={data} />
+        </div>
       </div>
 
-      <section aria-labelledby="record-heading" className="grid gap-3">
-        <SectionHeading id="record-heading" aside="Expand an attribute to see every claim">
-          The record
-        </SectionHeading>
-        <Panel className="overflow-hidden">
-          <AttributeTable attributes={data.attributes} />
-        </Panel>
-      </section>
+      <Glance attributes={data.attributes} />
 
-      <section aria-labelledby="signals-heading" className="grid gap-3">
-        <SectionHeading id="signals-heading">Signals</SectionHeading>
+      <section aria-labelledby="why-heading" className="grid gap-3">
+        <SectionHeading id="why-heading">Why now</SectionHeading>
         {data.signals.length === 0 ? (
           <p className="text-body text-slate">
-            No signal yet. A signal appears when the engine reads an open role, a campaign or a change on the
-            firm&apos;s own site.
+            No live signal yet. One appears when the engine reads an open role, a gap in the site, a
+            growth headline, or a complaint in the firm&apos;s reviews.
           </p>
         ) : (
           <div className="grid gap-4">
@@ -260,8 +378,10 @@ function FirmRecord({ data }: { data: FirmDetail }) {
         )}
       </section>
 
-      <Contacts contacts={data.contacts} />
-      <Documents documents={data.documents} />
+      <People contacts={data.contacts} />
+      <SiteSays attributes={data.attributes} />
+      <EveryClaim attributes={data.attributes} />
+      <Pages documents={data.documents} />
       <Aliases aliases={data.aliases} />
     </div>
   );
@@ -269,7 +389,7 @@ function FirmRecord({ data }: { data: FirmDetail }) {
 
 function FirmSkeleton() {
   return (
-    <div className="grid gap-10" aria-busy="true" aria-label="Loading the firm's record">
+    <div className="grid gap-10" aria-busy="true" aria-label="Loading the firm">
       <div className="grid gap-3">
         <Skeleton className="h-6 w-2/3 max-w-[36rem]" />
         <div className="flex gap-10 pl-10">
@@ -283,6 +403,7 @@ function FirmSkeleton() {
   );
 }
 
+/** A firm: what the engine read, who is there, why now, and the record behind it. */
 export function FirmScreen({ id }: { id: string }) {
   const firm = useFirm(id);
   const title = firm.data?.firm.name ?? (firm.isPending ? "" : "Firm");
@@ -291,6 +412,7 @@ export function FirmScreen({ id }: { id: string }) {
     <>
       <TitleBar
         title={title || <TitlePlaceholder />}
+        meta={firm.data?.firm.domain ?? undefined}
         actions={
           <Link href="/firms" className={buttonVariants({ variant: "ghost", size: "md" })}>
             All firms

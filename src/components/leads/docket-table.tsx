@@ -139,7 +139,7 @@ const tierColumn = helper.display({
 
 const painColumn = helper.display({
   id: "pain",
-  header: "Pain",
+  header: "Why now",
   meta: { td: "min-w-0" },
   cell: ({ row }) => {
     const proof = row.original.proof;
@@ -188,7 +188,7 @@ const contactColumn = helper.display({
 
 const intentColumn = helper.display({
   id: "intent",
-  header: () => <span className="block text-right">Intent</span>,
+  header: () => <span className="block text-right">Urgency</span>,
   meta: { th: "w-28", td: "text-right" },
   cell: ({ row }) =>
     row.original.intent === null ? (

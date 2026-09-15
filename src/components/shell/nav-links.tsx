@@ -3,22 +3,31 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useToday } from "@/lib/api/hooks";
+import { useOverview } from "@/lib/api/hooks";
 import { formatCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isActive, NAV_ITEMS } from "./nav";
 
 export function NavLinks() {
   const pathname = usePathname();
-  const today = useToday();
-  const handcheckWaiting = today.data?.attention.queues.handcheck;
+  const overview = useOverview();
+  const stages = overview.data?.stages;
+  const waiting = stages
+    ? stages
+        .filter((s) => s.stage === "needs_review" || s.stage === "needs_contact" || s.stage === "replied")
+        .reduce((n, s) => n + s.count, 0)
+    : undefined;
+  const handcheckWaiting = overview.data?.attention.queues.handcheck;
 
   return (
     <nav aria-label="Main">
       <ul className="grid gap-0.5 max-md:flex max-md:overflow-x-auto">
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
-          const count = item.href === "/review/handcheck" ? handcheckWaiting : undefined;
+          const count =
+            item.href === "/review/handcheck" ? handcheckWaiting
+            : item.href === "/leads" ? waiting
+            : undefined;
           return (
             <li key={item.href}>
               <Link

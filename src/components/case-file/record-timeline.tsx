@@ -21,7 +21,7 @@ export function RecordSection({ lead }: { lead: LeadDetail }) {
 
   return (
     <section aria-labelledby="record-heading" className="grid gap-5">
-      <SectionHeading id="record-heading">The record</SectionHeading>
+      <SectionHeading id="record-heading">History</SectionHeading>
 
       <div className="grid gap-2">
         <h3 className="text-meta text-slate">Outcomes</h3>

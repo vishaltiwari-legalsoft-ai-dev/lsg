@@ -8,18 +8,22 @@ import { buttonVariants } from "@/components/ui/button";
 import { useLead } from "@/lib/api/hooks";
 import { CaseFile } from "./case-file";
 
-/** The case file on its own page: everything expanded, keys live anywhere. */
+/** The lead on its own page: everything expanded, keys live anywhere. */
 export function LeadScreen({ id }: { id: string }) {
   const lead = useLead(id);
-  const title = lead.data?.firm.name ?? (lead.isPending ? null : "Case file");
+  const title = lead.data?.firm.name ?? (lead.isPending ? null : "Lead");
 
   return (
     <>
       <TitleBar
         title={title ?? <TitlePlaceholder />}
+        meta={lead.data ? lead.data.stage_display : undefined}
         actions={
-          <Link href={`/leads?lead=${encodeURIComponent(id)}`} className={buttonVariants({ variant: "ghost" })}>
-            Back to the docket
+          <Link
+            href={`/leads?stage=${lead.data?.stage ?? "needs_review"}&lead=${encodeURIComponent(id)}`}
+            className={buttonVariants({ variant: "ghost" })}
+          >
+            Back to the work queue
           </Link>
         }
       />

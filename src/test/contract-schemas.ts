@@ -58,7 +58,9 @@ export const ActionJob = z.strictObject({
 const LeadCounts = z.strictObject({
   STRIKE: n, SEQUENCE: n, NURTURE: n, PHONE: n, EXCLUDED: n, UNSCORED: n,
 });
-export const LeadsResponse = z.strictObject({ items: z.array(LeadRow), next_cursor: ns, counts: LeadCounts });
+export const LeadsResponse = z.strictObject({
+  items: z.array(LeadRow), next_cursor: ns, counts: LeadCounts, stage_counts: z.record(s, n),
+});
 const LeadOutcome = z.strictObject({
   id: n, action: OutcomeAction, until: ns, note: ns, actor: s, at: s, transition_applied: z.boolean(),
 });
@@ -140,6 +142,26 @@ export const HandcheckResponse = z.strictObject({
   ),
 });
 export const HealthResponse = z.strictObject({ db: z.enum(["ok", "down"]), version: s });
+const Attention = TodayResponse.shape.attention;
+export const OverviewResponse = z.strictObject({
+  steps: z.array(
+    z.strictObject({
+      key: z.enum(["lists", "research", "qualify", "people", "outreach"]), number: n, label: s,
+      what: s, count: n, count_label: s, detail: s, href: s,
+    }),
+  ),
+  stages: z.array(z.strictObject({ stage: Stage, label: s, help: s, count: n })),
+  running: z.array(
+    z.strictObject({
+      id: s, kind: z.enum(["research", "find_contacts"]),
+      status: z.enum(["queued", "running", "done", "failed"]), firm_id: s, firm_name: s,
+      done_steps: n, total_steps: n, started_at: ns,
+    }),
+  ),
+  last_runs: z.array(z.strictObject({ component: s, label: s, finished_at: s, processed: n, failed: n })),
+  lists: z.strictObject({ count: n, rows: n, latest_file: ns, latest_status: ns, latest_at: ns }),
+  attention: Attention,
+});
 
 // ── Compile-time pins: each schema's type IS the contract type. ─────────────
 type Equals<A, B> = (<X>() => X extends A ? 1 : 2) extends <X>() => X extends B ? 1 : 2 ? true : false;
@@ -156,4 +178,5 @@ export const pins: [
   Equals<z.infer<typeof FirmDetail>, T.FirmDetail>,
   Equals<z.infer<typeof HandcheckResponse>, T.HandcheckResponse>,
   Equals<z.infer<typeof HealthResponse>, T.HealthResponse>,
-] = [true, true, true, true, true, true, true, true, true, true, true, true];
+  Equals<z.infer<typeof OverviewResponse>, T.OverviewResponse>,
+] = [true, true, true, true, true, true, true, true, true, true, true, true, true];

@@ -237,6 +237,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   },
   "SEQUENCE": {
@@ -542,6 +558,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   },
   "NURTURE": {
@@ -653,6 +685,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   },
   "PHONE": {
@@ -764,6 +812,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   },
   "EXCLUDED": {
@@ -895,6 +959,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   },
   "UNSCORED": {
@@ -974,6 +1054,22 @@
       "PHONE": 2,
       "EXCLUDED": 2,
       "UNSCORED": 2
+    },
+    "stage_counts": {
+      "researching": 2,
+      "no_website": 0,
+      "needs_review": 11,
+      "needs_contact": 2,
+      "ready": 0,
+      "parked": 0,
+      "in_outreach": 0,
+      "replied": 0,
+      "handed_off": 0,
+      "won": 0,
+      "lost": 0,
+      "disqualified": 1,
+      "do_not_contact": 1,
+      "needs_refresh": 0
     }
   }
 }

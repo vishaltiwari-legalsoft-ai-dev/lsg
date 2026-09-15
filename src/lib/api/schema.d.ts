@@ -447,6 +447,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Overview */
+        get: operations["get_overview_api_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pipeline/alerts": {
         parameters: {
             query?: never;
@@ -1131,6 +1148,22 @@ export interface components {
             /** Items */
             items: components["schemas"]["ActionJob"][];
         };
+        /** LastRun */
+        LastRun: {
+            /** Component */
+            component: string;
+            /** Failed */
+            failed: number;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Label */
+            label: string;
+            /** Processed */
+            processed: number;
+        };
         /** LeadDetail */
         LeadDetail: {
             /** Band */
@@ -1278,6 +1311,23 @@ export interface components {
             items: components["schemas"]["LeadRow"][];
             /** Next Cursor */
             next_cursor: string | null;
+            /** Stage Counts */
+            stage_counts: {
+                [key: string]: number;
+            };
+        };
+        /** ListsSummary */
+        ListsSummary: {
+            /** Count */
+            count: number;
+            /** Latest At */
+            latest_at: string | null;
+            /** Latest File */
+            latest_file: string | null;
+            /** Latest Status */
+            latest_status: string | null;
+            /** Rows */
+            rows: number;
         };
         /** MappingRequest */
         MappingRequest: {
@@ -1311,10 +1361,45 @@ export interface components {
             /** Transition Applied */
             transition_applied: boolean;
         };
+        /** OverviewResponse */
+        OverviewResponse: {
+            attention: components["schemas"]["Attention"];
+            /** Last Runs */
+            last_runs: components["schemas"]["LastRun"][];
+            lists: components["schemas"]["ListsSummary"];
+            /** Running */
+            running: components["schemas"]["RunningJob"][];
+            /** Stages */
+            stages: components["schemas"]["StageCount"][];
+            /** Steps */
+            steps: components["schemas"]["PipelineStep"][];
+        };
         /** OwnerRequest */
         OwnerRequest: {
             /** Owner */
             owner: string | null;
+        };
+        /** PipelineStep */
+        PipelineStep: {
+            /** Count */
+            count: number;
+            /** Count Label */
+            count_label: string;
+            /** Detail */
+            detail: string;
+            /** Href */
+            href: string;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "lists" | "research" | "qualify" | "people" | "outreach";
+            /** Label */
+            label: string;
+            /** Number */
+            number: number;
+            /** What */
+            what: string;
         };
         /** PrimaryContactRequest */
         PrimaryContactRequest: {
@@ -1393,6 +1478,31 @@ export interface components {
              */
             scope: "full" | "contacts";
         };
+        /** RunningJob */
+        RunningJob: {
+            /** Done Steps */
+            done_steps: number;
+            /** Firm Id */
+            firm_id: string;
+            /** Firm Name */
+            firm_name: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "research" | "find_contacts";
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "done" | "failed";
+            /** Total Steps */
+            total_steps: number;
+        };
         /** ScoreBreakdown */
         ScoreBreakdown: {
             /** Fit Terms */
@@ -1419,6 +1529,20 @@ export interface components {
             points: number;
             /** Weight */
             weight: number;
+        };
+        /** StageCount */
+        StageCount: {
+            /** Count */
+            count: number;
+            /** Help */
+            help: string;
+            /** Label */
+            label: string;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "researching" | "no_website" | "needs_review" | "needs_contact" | "ready" | "parked" | "in_outreach" | "replied" | "handed_off" | "won" | "lost" | "disqualified" | "do_not_contact" | "needs_refresh";
         };
         /** TimelineEvent */
         TimelineEvent: {
@@ -1982,6 +2106,9 @@ export interface operations {
         parameters: {
             query?: {
                 view?: string;
+                stage?: string | null;
+                band?: string | null;
+                owner?: string | null;
                 tier?: string | null;
                 city?: string | null;
                 signal?: string | null;
@@ -2334,6 +2461,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProvidersResponse"];
+                };
+            };
+        };
+    };
+    get_overview_api_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewResponse"];
                 };
             };
         };

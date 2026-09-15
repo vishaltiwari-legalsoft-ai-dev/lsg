@@ -1,4 +1,64 @@
-import type { Band, Contest, LeadView, OutcomeAction, Role } from "@/lib/api/types";
+import type { Band, Contest, LeadView, OutcomeAction, Role, Stage } from "@/lib/api/types";
+
+/*
+ * The stages a person works a lead through (lge/api/stage.py). The engine's
+ * sixteen states stay the truth; these are the words on the tabs.
+ */
+export const QUEUE_STAGES: Stage[] = [
+  "needs_review", "needs_contact", "ready", "in_outreach", "replied", "parked", "researching",
+];
+export const OTHER_STAGES: Stage[] = [
+  "no_website", "needs_refresh", "handed_off", "won", "lost", "disqualified", "do_not_contact",
+];
+export const STAGE_LABEL: Record<Stage, string> = {
+  researching: "Researching",
+  no_website: "No website",
+  needs_review: "Needs a decision",
+  needs_contact: "Needs a person",
+  ready: "Ready to reach",
+  parked: "Parked",
+  in_outreach: "In outreach",
+  replied: "Replied",
+  handed_off: "Handed off",
+  won: "Won",
+  lost: "Lost",
+  disqualified: "Disqualified",
+  do_not_contact: "Do not contact",
+  needs_refresh: "Needs a refresh",
+};
+export const STAGE_EMPTY: Record<Stage, string> = {
+  researching: "Nothing is being researched. Upload a list, or open a firm and research it.",
+  no_website: "Every firm has a website on record.",
+  needs_review: "No lead is waiting for a decision. They arrive as research finishes.",
+  needs_contact: "Every qualified lead has a decision-maker with an address.",
+  ready: "Nothing is ready to reach yet. A lead lands here with a person, an address and a tier.",
+  parked: "Nothing is parked.",
+  in_outreach: "No sequence is running.",
+  replied: "No replies waiting.",
+  handed_off: "Nothing with sales.",
+  won: "Nothing won yet.",
+  lost: "Nothing lost.",
+  disqualified: "Nothing disqualified.",
+  do_not_contact: "Nobody has opted out.",
+  needs_refresh: "Nothing needs a refresh.",
+};
+
+/** Priority is the engine's band, in plain words. */
+export const PRIORITY_LABEL: Record<Band, string> = {
+  STRIKE: "Strike",
+  SEQUENCE: "Sequence",
+  NURTURE: "Nurture",
+  HOLD: "Hold",
+};
+export const PRIORITY_HINT: Record<Band, string> = {
+  STRIKE: "An open role right now — write today, by hand.",
+  SEQUENCE: "Fits, and a live signal — the nine-touch sequence.",
+  NURTURE: "Fits, no signal yet — a light touch until one appears.",
+  HOLD: "Not yet — fit or urgency too low.",
+};
+
+/** The three numbers on a lead, in words. */
+export const SCORE_LABEL = { fit: "Fit", intent: "Urgency", contest: "Competition" } as const;
 
 /*
  * Interface copy for the contract's closed enums. These carry no display

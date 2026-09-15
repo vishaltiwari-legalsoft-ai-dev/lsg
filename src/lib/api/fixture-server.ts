@@ -42,6 +42,7 @@ import type {
   LeadView,
   OutcomeRequest,
   OutcomeResponse,
+  OverviewResponse,
   TodayResponse,
 } from "./types";
 
@@ -189,6 +190,12 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
     ) as LeadCounts;
   }
 
+  function stageCounts(): Record<string, number> {
+    const out: Record<string, number> = Object.fromEntries(Object.keys(STAGE_DISPLAY).map((k) => [k, 0]));
+    for (const d of Object.values(db.leadDetails)) out[d.stage] = (out[d.stage] ?? 0) + 1;
+    return out;
+  }
+
   function replaceRow(detail: LeadDetail, moveTo?: LeadView) {
     const row = toRow(detail);
     for (const view of VIEWS) {
@@ -324,11 +331,48 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
     if (method === "GET" && path === "/api/imports") return { items: [] };
 
     if (method === "GET" && path === "/api/leads") {
+      const stage = param(spec, "stage");
+      if (stage) {
+        const band = param(spec, "band");
+        const all = Object.values(db.leadDetails).map(toRow);
+        const rows = all.filter(
+          (row) => row.stage === stage && (!band || row.band === band) && matchesLead(row, spec),
+        );
+        const { slice, next } = page(rows, spec, FIXTURE_PAGE_LIMIT);
+        return { items: slice, next_cursor: next, counts: counts(spec), stage_counts: stageCounts() } satisfies LeadsResponse;
+      }
       const view = (param(spec, "view") ?? "STRIKE") as LeadView;
       const source = db.leads[view];
       if (!source) throw new ApiError(422, "bad_view", `There is no ${view} view.`, "Use one of the band tabs.");
       const { slice, next } = page(source.items.filter((row) => matchesLead(row, spec)), spec, FIXTURE_PAGE_LIMIT);
-      return { items: slice, next_cursor: next, counts: counts(spec) } satisfies LeadsResponse;
+      return { items: slice, next_cursor: next, counts: counts(spec), stage_counts: stageCounts() } satisfies LeadsResponse;
+    }
+
+    if (method === "GET" && path === "/api/overview") {
+      const details = Object.values(db.leadDetails);
+      const stages = stageCounts();
+      const firms = db.firms.total;
+      const withEmail = details.filter((d) => d.contact?.email).length;
+      const step = (key: OverviewResponse["steps"][number]["key"], number: number, label: string, what: string, count: number, count_label: string, detail: string, href: string) =>
+        ({ key, number, label, what, count, count_label, detail, href });
+      return {
+        steps: [
+          step("lists", 1, "Lists", "A sheet in any layout comes in; every website on it is checked, and searched for when it is wrong.", firms, "firms on file", `${firms} websites verified, 0 behind a bot wall`, "/imports"),
+          step("research", 2, "Research", "Each site is read end to end: who works there, offices, fee model, practice, testimonials, news, and what the site lacks.", details.length, "firms researched", `${details.length * 24} pages read`, "/firms"),
+          step("qualify", 3, "Qualify", "Fit from the record (fee model, practice, size); urgency from pain -- open roles, no support staff, no intake, reviews about unreturned calls.", details.length, "firms tiered", `${details.filter((d) => d.firm.tier === "1A").length} tier 1A; ${stages.needs_review ?? 0} waiting for a decision`, "/leads?stage=needs_review"),
+          step("people", 4, "People", "The owner or office manager, with an address from the site, a search, or the firm's own pattern, and a LinkedIn profile.", details.reduce((n, d) => n + d.contacts.length, 0), "people named", `${withEmail} firms with a decision-maker's address; 3 LinkedIn profiles`, "/leads?stage=needs_contact"),
+          step("outreach", 5, "Outreach", "Nine touches drafted from the proof; outcomes recorded; a lead that does not convert returns to the pool with its contact intact.", (stages.ready ?? 0) + (stages.in_outreach ?? 0) + (stages.replied ?? 0), "leads in play", `${stages.ready ?? 0} ready to reach, ${stages.in_outreach ?? 0} in outreach, ${stages.replied ?? 0} replied`, "/leads?stage=ready"),
+        ],
+        stages: (Object.keys(STAGE_DISPLAY) as LeadRow["stage"][]).map((stage) => ({
+          stage, label: STAGE_DISPLAY[stage], help: "", count: stages[stage] ?? 0,
+        })),
+        running: [],
+        last_runs: [
+          { component: "score", label: "Scored", finished_at: new Date().toISOString(), processed: details.length, failed: 0 },
+        ],
+        lists: { count: 1, rows: firms, latest_file: "firms-sample.csv", latest_status: "loaded", latest_at: new Date().toISOString() },
+        attention: db.today.attention,
+      } satisfies OverviewResponse;
     }
 
     if ((m = path.match(/^\/api\/leads\/([^/]+)$/)) && method === "GET") {

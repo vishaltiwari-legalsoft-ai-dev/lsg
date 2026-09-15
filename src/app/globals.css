@@ -21,6 +21,7 @@
   --color-highlighter: #ffe066; /* proof — the evidence mark and nothing else */
   --color-ledger: #1c7a4b; /* confirmed */
   --color-redline: #c2332b; /* problem */
+  --color-signal: #b9741a; /* why now — urgency read from the firm's own pain */
   --color-white: #ffffff;
 
   /* Derived states — mixed from the tokens above, never new hues. */
@@ -28,6 +29,7 @@
   --color-rule-strong: color-mix(in oklab, var(--color-rule) 70%, var(--color-slate));
   --color-redline-wash: color-mix(in oklab, var(--color-redline) 7%, var(--color-sheet));
   --color-ledger-wash: color-mix(in oklab, var(--color-ledger) 7%, var(--color-sheet));
+  --color-signal-wash: color-mix(in oklab, var(--color-signal) 9%, var(--color-sheet));
 
   /* Type: Rubik for the interface, Libre Caslon Text for the record. */
   --font-sans: var(--font-rubik), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
@@ -45,6 +47,13 @@
   --text-section--line-height: 1.25;
   --text-title: 20px;
   --text-title--line-height: 1.25;
+  --text-headline: 24px;
+  --text-headline--line-height: 1.2;
+  --text-display: 34px;
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.01em;
+  --text-figure: 28px; /* a live number on the home page */
+  --text-figure--line-height: 1.1;
 
   /* Caslon runs 1px larger at every step so the faces read at one size. */
   --text-quote-table: 14px;

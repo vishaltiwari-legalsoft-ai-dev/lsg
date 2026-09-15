@@ -1,10 +1,10 @@
 /** Only screens that exist. Nothing links to an unbuilt screen. */
 export const NAV_ITEMS = [
-  { href: "/", label: "Today", hint: "The strongest proof, and what needs a human" },
-  { href: "/leads", label: "Leads", hint: "The ranked list, by band" },
-  { href: "/firms", label: "Firms", hint: "Every firm, with its record" },
-  { href: "/review/handcheck", label: "Hand-check", hint: "Gate G2: check 50 firms by hand" },
-  { href: "/imports", label: "Imports", hint: "Upload a sheet, check how it was read, load it" },
+  { href: "/", label: "Home", hint: "What the engine does, and where things stand" },
+  { href: "/leads", label: "Work queue", hint: "Every lead, by what it needs next" },
+  { href: "/firms", label: "Firms", hint: "Every firm, with everything read about it" },
+  { href: "/imports", label: "Lists", hint: "Upload a sheet, check how it was read, load it" },
+  { href: "/review/handcheck", label: "Accuracy check", hint: "The engine's reading of 50 firms, checked by hand" },
 ] as const;
 
 export function isActive(pathname: string, href: string): boolean {

@@ -16,7 +16,7 @@ import { isShortcutBlocked, useKeydown } from "@/hooks/use-keydown";
 import { useDrafts, useLead } from "@/lib/api/hooks";
 import type { LeadDetail } from "@/lib/api/types";
 import { formatPlace } from "@/lib/format";
-import { BAND_LABEL } from "@/lib/labels";
+import { PRIORITY_HINT, PRIORITY_LABEL } from "@/lib/labels";
 import { ActionBar } from "./action-bar";
 import { DraftSequence } from "./draft-sequence";
 import { JobProgress } from "./job-progress";
@@ -45,7 +45,13 @@ function RecordFields({ lead }: { lead: LeadDetail }) {
   const place = formatPlace(lead.firm.city, lead.firm.state);
   return (
     <dl className="flex flex-wrap gap-x-9 gap-y-3">
-      <Field label="Band">{lead.band ? BAND_LABEL[lead.band] : <Unknown>Not scored</Unknown>}</Field>
+      <Field label="Priority">
+        {lead.band ? (
+          <span title={PRIORITY_HINT[lead.band]}>{PRIORITY_LABEL[lead.band]}</span>
+        ) : (
+          <Unknown>Not scored</Unknown>
+        )}
+      </Field>
       <Field label="Practice">
         <ValueOrUnknown value={lead.firm.practice_display} />
       </Field>
@@ -70,7 +76,7 @@ function RecordFields({ lead }: { lead: LeadDetail }) {
 
 function CaseFileSkeleton({ mode }: { mode: Mode }) {
   return (
-    <div className="grid gap-8 px-8 py-6" aria-busy="true" aria-label="Loading the case file">
+    <div className="grid gap-8 px-8 py-6" aria-busy="true" aria-label="Loading the lead">
       <div className="grid gap-3">
         {mode === "panel" ? <Skeleton className="h-6 w-2/3" /> : null}
         <Skeleton className="h-4 w-1/3" />
@@ -137,7 +143,7 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
     <article
       data-casefile=""
       aria-labelledby={mode === "panel" ? titleId : undefined}
-      aria-label={mode === "page" ? "Case file" : undefined}
+      aria-label={mode === "page" ? "Lead" : undefined}
       className="group/casefile flex min-h-full flex-col"
     >
       <header className="grid grid-cols-[minmax(0,1fr)] gap-4 border-b border-rule px-7 pt-6 pb-5">
@@ -164,7 +170,7 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
               <Button asChild variant="ghost" size="sm">
                 <Link href={`/leads/${id}`}>Open full page</Link>
               </Button>
-              <Button variant="ghost" size="icon-sm" aria-label="Close case file" onClick={onClose}>
+              <Button variant="ghost" size="icon-sm" aria-label="Close the lead" onClick={onClose}>
                 <XIcon className="size-4" aria-hidden="true" />
               </Button>
             </div>
@@ -179,12 +185,13 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
         {data.exclusion_reasons.length > 0 ? <ExclusionNote reasons={data.exclusion_reasons} /> : null}
 
         <section aria-labelledby="proof-heading" className="grid gap-4">
-          <SectionHeading id="proof-heading">The proof</SectionHeading>
+          <SectionHeading id="proof-heading">Why now</SectionHeading>
           {data.proof ? (
             <ProofQuote proof={data.proof} size="title" animate />
           ) : (
             <p className="text-body text-slate">
-              No open signal yet. Proof appears here when the engine reads one on the firm&apos;s own site.
+              No live signal yet. One appears here when the engine reads an open role, a gap or a
+              complaint on the firm&apos;s own site or in its reviews.
             </p>
           )}
         </section>

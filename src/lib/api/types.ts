@@ -48,6 +48,10 @@ export type LeadsResponse = S["LeadsResponse"];
 /** Narrower than the generated query (which types view/contest as string). */
 export interface LeadsQuery {
   view?: LeadView;
+  /** The work queue: one stage, whatever the band. Takes precedence over `view`. */
+  stage?: Stage;
+  band?: Band;
+  owner?: string;
   tier?: string;
   city?: string;
   signal?: string;
@@ -78,6 +82,7 @@ export type LeadNote = S["LeadNote"];
 export type JobStep = S["JobStep"];
 export type ActionJob = S["ActionJob"];
 export type JobResponse = S["JobResponse"];
+export type JobsResponse = S["JobsResponse"];
 export type ResearchRequest = S["ResearchRequest"];
 export type ContactCreate = S["ContactCreate"];
 export type ContactPatch = S["ContactPatch"];
@@ -88,6 +93,15 @@ export type DecisionResponse = S["DecisionResponse"];
 export type BatchAction = S["BatchRequest"]["action"];
 export type BatchRequest = S["BatchRequest"];
 export type BatchResponse = S["BatchResponse"];
+
+// ── Overview: the home page ─────────────────────────────────────────────────
+
+export type PipelineStep = S["PipelineStep"];
+export type StageCount = S["StageCount"];
+export type RunningJob = S["RunningJob"];
+export type LastRun = S["LastRun"];
+export type ListsSummary = S["ListsSummary"];
+export type OverviewResponse = S["OverviewResponse"];
 
 // ── Firms ───────────────────────────────────────────────────────────────────
 

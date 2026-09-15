@@ -359,8 +359,12 @@ export function ImportsScreen() {
   return (
     <>
       <TitleBar
-        title="Imports"
-        meta={imports.data ? `${formatCount(imports.data.items.length)} sheets` : undefined}
+        title="Lists"
+        meta={
+          imports.data
+            ? `${formatCount(imports.data.items.length)} sheets — upload, check how it was read, load`
+            : "Upload a sheet, check how it was read, load it"
+        }
       />
       <div className="grid gap-6 px-8 py-6 lg:grid-cols-[minmax(18rem,30%)_1fr]">
         <div className="grid content-start gap-6">

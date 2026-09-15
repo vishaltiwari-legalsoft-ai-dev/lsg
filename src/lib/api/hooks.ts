@@ -30,6 +30,7 @@ import type {
 export const queryKeys = {
   health: ["health"] as const,
   today: ["today"] as const,
+  overview: ["overview"] as const,
   leads: (filters: Omit<LeadsQuery, "cursor">) => ["leads", filters] as const,
   lead: (id: string) => ["lead", id] as const,
   drafts: (id: string) => ["drafts", id] as const,
@@ -40,6 +41,7 @@ export const queryKeys = {
   imports: ["imports"] as const,
   import: (id: string) => ["import", id] as const,
   job: (id: string) => ["job", id] as const,
+  firmJobs: (firmId: string) => ["firm-jobs", firmId] as const,
 };
 
 export const LEADS_PAGE_SIZE = 50;
@@ -55,6 +57,15 @@ export function useHealth() {
 
 export function useToday() {
   return useQuery({ queryKey: queryKeys.today, queryFn: ({ signal }) => api.today(signal) });
+}
+
+/** The home page's numbers; refreshed every half minute while a job runs. */
+export function useOverview() {
+  return useQuery({
+    queryKey: queryKeys.overview,
+    queryFn: ({ signal }) => api.overview(signal),
+    refetchInterval: (query) => (query.state.data?.running.length ? 5000 : 30_000),
+  });
 }
 
 export function useLeads(filters: Omit<LeadsQuery, "cursor" | "limit">) {
@@ -225,9 +236,13 @@ function useLeadRefresh() {
       void qc.invalidateQueries({ queryKey: queryKeys.lead(leadId) });
       void qc.invalidateQueries({ queryKey: queryKeys.drafts(leadId) });
     }
-    if (firmId) void qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+    if (firmId) {
+      void qc.invalidateQueries({ queryKey: queryKeys.firm(firmId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.firmJobs(firmId) });
+    }
     void qc.invalidateQueries({ queryKey: ["leads"] });
     void qc.invalidateQueries({ queryKey: queryKeys.today });
+    void qc.invalidateQueries({ queryKey: queryKeys.overview });
   };
 }
 
@@ -241,6 +256,18 @@ export function useJob(id: string | null) {
       const status = query.state.data?.job.status;
       return status === "queued" || status === "running" ? 2000 : false;
     },
+  });
+}
+
+/** A firm's recent research jobs; polls while one is queued or running. */
+export function useFirmJobs(firmId: string) {
+  return useQuery({
+    queryKey: queryKeys.firmJobs(firmId),
+    queryFn: ({ signal }) => api.firmJobs(firmId, signal),
+    refetchInterval: (query) =>
+      query.state.data?.items.some((j) => j.status === "queued" || j.status === "running")
+        ? 2000
+        : false,
   });
 }
 
