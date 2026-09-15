@@ -186,6 +186,67 @@ class LeadsResponse(BaseModel):
     items: list[LeadRow]
     next_cursor: str | None
     counts: LeadViewCounts
+    # Open leads per stage (lge/api/stage.py), for the work queue's tabs.
+    stage_counts: dict[str, int]
+
+
+# =============================================================================
+# GET /api/overview -- the landing page: the pipeline with live numbers
+# =============================================================================
+
+
+class PipelineStep(BaseModel):
+    key: Literal["lists", "research", "qualify", "people", "outreach"]
+    number: int
+    label: str
+    what: str
+    count: int
+    count_label: str
+    detail: str
+    href: str
+
+
+class StageCount(BaseModel):
+    stage: Stage
+    label: str
+    help: str
+    count: int
+
+
+class RunningJob(BaseModel):
+    id: str
+    kind: JobKind
+    status: JobStatus
+    firm_id: str
+    firm_name: str
+    done_steps: int
+    total_steps: int
+    started_at: datetime | None
+
+
+class LastRun(BaseModel):
+    component: str
+    label: str
+    finished_at: datetime
+    processed: int
+    failed: int
+
+
+class ListsSummary(BaseModel):
+    count: int
+    rows: int
+    latest_file: str | None
+    latest_status: str | None
+    latest_at: datetime | None
+
+
+class OverviewResponse(BaseModel):
+    steps: list[PipelineStep]
+    stages: list[StageCount]
+    running: list[RunningJob]
+    last_runs: list[LastRun]
+    lists: ListsSummary
+    attention: Attention
 
 
 # =============================================================================

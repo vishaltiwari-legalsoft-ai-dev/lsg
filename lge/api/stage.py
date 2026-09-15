@@ -33,6 +33,70 @@ STAGE_DISPLAY: dict[str, str] = {
 _RESEARCHING = {"DISCOVERED", "PROFILING", "PROFILED", "ESCALATED"}
 _QUALIFIED = {"QUALIFIED_A", "QUALIFIED_B"}
 
+# The work queue's order: what needs a person first, then what is waiting.
+STAGE_ORDER: tuple[str, ...] = (
+    "needs_review", "needs_contact", "ready", "in_outreach", "replied", "parked",
+    "researching", "no_website", "needs_refresh", "handed_off", "won", "lost",
+    "disqualified", "do_not_contact",
+)
+
+# What each stage means, for the landing page's glossary and the queue's tabs.
+STAGE_HELP: dict[str, str] = {
+    "researching": "The engine is reading the site, or has not reached it yet.",
+    "no_website": "No site could be read; the firm needs a website on record.",
+    "needs_review": "Researched and tiered; a person decides whether to pursue it.",
+    "needs_contact": "Worth pursuing, but no decision-maker with an address yet.",
+    "ready": "A named person with an address; write when a signal arms it, or now.",
+    "parked": "Held until a date you chose.",
+    "in_outreach": "The sequence is running.",
+    "replied": "They answered; a person takes it from here.",
+    "handed_off": "With sales.",
+    "won": "Closed won.",
+    "lost": "Closed lost; returns to the pool after the cooldown.",
+    "disqualified": "Not a fit, by the tier or by a person's decision.",
+    "do_not_contact": "Opted out or bounced; never emailed again.",
+    "needs_refresh": "The site changed or the record is old; research again.",
+}
+
+
+def stage_sql(lead: str = "l") -> str:
+    """The same rule as `stage_of`, as a SQL expression over the open lead
+    `lead` -- so the work queue can page and count by stage in the database.
+    The contact is the firm's owner or office manager (the primary the row
+    shows), the address any email on file for them."""
+    has_contact = (
+        f"EXISTS (SELECT 1 FROM contact sc WHERE sc.firm_id = {lead}.firm_id "
+        "AND sc.removed_at IS NULL AND sc.role IN ('owner', 'admin'))"
+    )
+    has_email = (
+        f"EXISTS (SELECT 1 FROM contact sc JOIN contact_email se ON se.contact_id = sc.id "
+        f"WHERE sc.firm_id = {lead}.firm_id AND sc.removed_at IS NULL "
+        "AND sc.role IN ('owner', 'admin'))"
+    )
+    return f"""
+    CASE
+      WHEN {lead}.state = 'SUPPRESSED' THEN 'do_not_contact'
+      WHEN {lead}.state = 'WON' THEN 'won'
+      WHEN {lead}.state = 'LOST' THEN 'lost'
+      WHEN {lead}.state = 'HANDOFF' THEN 'handed_off'
+      WHEN {lead}.state = 'RESPONDED' THEN 'replied'
+      WHEN {lead}.state = 'ENGAGED' THEN 'in_outreach'
+      WHEN {lead}.state = 'DISQUALIFIED' THEN 'disqualified'
+      WHEN {lead}.state = 'STALE' THEN 'needs_refresh'
+      WHEN {lead}.state = 'NO_WEB' THEN 'no_website'
+      WHEN {lead}.state IN ('DISCOVERED', 'PROFILING', 'PROFILED', 'ESCALATED') THEN 'researching'
+      WHEN {lead}.cooldown_until IS NOT NULL AND {lead}.cooldown_until > now() THEN 'parked'
+      WHEN {lead}.state = 'ARMED' THEN 'ready'
+      WHEN {lead}.state IN ('QUALIFIED_A', 'QUALIFIED_B') THEN
+        CASE WHEN {has_contact} AND {has_email} THEN 'ready' ELSE 'needs_contact' END
+      WHEN {lead}.state = 'RESOLVED' THEN
+        CASE WHEN {has_email} THEN 'needs_review' ELSE 'needs_contact' END
+      WHEN {lead}.state = 'CONTACT_PENDING' THEN 'needs_contact'
+      WHEN {lead}.state = 'CLASSIFIED' THEN 'needs_review'
+      ELSE 'researching'
+    END
+    """
+
 
 def stage_of(
     state: str | None,

@@ -134,6 +134,15 @@ def get_today(conn: ConnDep) -> TodayResponse:
     first_draft = _render_first_draft(top_cl, at) if top_cl else None
     strike = [_row(cl) for cl in rest_strike_cls]
 
+    return TodayResponse(
+        top_proof=top_proof, first_draft=first_draft, strike=strike,
+        attention=build_attention(conn, at),
+    )
+
+
+def build_attention(conn, at: datetime) -> Attention:
+    """Alerts, the review queues, the bench and the providers that are not
+    configured -- shared by Today and the overview."""
     ctx = RunContext(conn, get_settings())
     alert_outcomes = evaluate_all(ctx)
     alerts = [
@@ -143,18 +152,10 @@ def get_today(conn: ConnDep) -> TodayResponse:
         )
         for o in alert_outcomes
     ]
-
     queues = QueueCounts(
         handcheck=pending_count(conn), conflicts=conflicts_count(conn),
         identity=identity_count(conn), agency=agency_count(conn),
         discovery=discovery_count(conn),
     )
     bench = BenchStatus(**bench_status(conn, at))
-
-    attention = Attention(
-        alerts=alerts, queues=queues, bench=bench, providers_inert=providers_inert()
-    )
-
-    return TodayResponse(
-        top_proof=top_proof, first_draft=first_draft, strike=strike, attention=attention
-    )
+    return Attention(alerts=alerts, queues=queues, bench=bench, providers_inert=providers_inert())

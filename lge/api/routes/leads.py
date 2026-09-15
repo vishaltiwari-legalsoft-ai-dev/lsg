@@ -49,6 +49,7 @@ from lge.api.rendering import (
     fetch_signal_scores,
 )
 from lge.api.scoring import compute_fit_terms, signal_term_label
+from lge.api.stage import STAGE_ORDER, stage_sql
 from lge.export.list import (
     ClassifiedLead,
     LeadClassification,
@@ -57,6 +58,8 @@ from lge.export.list import (
     fetch_contacts,
     fetch_emails,
     fetch_repost_first_seen,
+    fetch_signals,
+    select_contacts,
 )
 from lge.journey.build import build_journey
 from lge.journey.model import Contact as JourneyContact
@@ -178,6 +181,89 @@ def _fetch_unscored_page(
         return cur.fetchall()
 
 
+def stage_counts(conn: psycopg.Connection) -> dict[str, int]:
+    """Open leads per stage, every stage present (zero when empty)."""
+    counts = dict.fromkeys(STAGE_ORDER, 0)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT {stage_sql('l')} AS stage, count(*) AS n FROM lead l "  # noqa: S608 -- fixed SQL
+            "WHERE l.closed_at IS NULL GROUP BY 1"
+        )
+        for r in cur.fetchall():
+            counts[r["stage"]] = r["n"]
+    return counts
+
+
+def _fetch_stage_page(
+    conn: psycopg.Connection,
+    stage: str,
+    band: str | None,
+    tier: str | None,
+    city: str | None,
+    q: str | None,
+    owner: str | None,
+    cursor_id: str | None,
+    limit: int,
+) -> list[dict]:
+    """One page of open leads at `stage`, the most urgent first (intent, then
+    fit), keyed for the cursor by id."""
+    where = ["l.closed_at IS NULL", f"({stage_sql('l')}) = %(stage)s"]
+    params: dict[str, Any] = {"stage": stage, "limit": limit + 1}
+    if band:
+        where.append("l.band = %(band)s")
+        params["band"] = band
+    if tier:
+        where.append("f.tier = %(tier)s")
+        params["tier"] = tier
+    if city:
+        where.append("lower(f.city) = lower(%(city)s)")
+        params["city"] = city
+    if owner:
+        where.append("lower(l.owner) = lower(%(owner)s)")
+        params["owner"] = owner
+    if q:
+        where.append("(f.canonical_name ILIKE %(q)s OR f.domain ILIKE %(q)s)")
+        params["q"] = f"%{q}%"
+    if cursor_id:
+        where.append("l.id > %(cursor_id)s::uuid")
+        params["cursor_id"] = cursor_id
+    sql = f"""
+        SELECT l.id AS lead_id, l.grade, l.band, l.contest, l.fit_score, l.intent_score,
+               l.arming_signal, l.state AS lead_state, l.scored_at, l.cooldown_until, l.owner,
+               f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
+               f.tier, f.fee_model, f.primary_practice, f.cms_detected
+        FROM lead l JOIN firm f ON f.id = l.firm_id
+        WHERE {" AND ".join(where)}
+        ORDER BY l.id ASC
+        LIMIT %(limit)s
+    """  # noqa: S608 -- every fragment above is a fixed literal; values are bound params
+    with conn.cursor() as cur:
+        cur.execute(sql, params)
+        return cur.fetchall()
+
+
+def _build_stage_rows(conn: psycopg.Connection, rows: list[dict], at: datetime) -> list[LeadRow]:
+    """Rows for a stage page, each with its primary contact and its arming
+    signal read once."""
+    firm_ids = [r["firm_id"] for r in rows]
+    contacts_by_firm = fetch_contacts(conn, firm_ids)
+    contact_ids = [c["id"] for cs in contacts_by_firm.values() for c in cs]
+    emails_by_contact = fetch_emails(conn, contact_ids)
+    signal_ids = [r["arming_signal"] for r in rows if r["arming_signal"] is not None]
+    signals_by_id = fetch_signals(conn, signal_ids)
+    signal_scores = fetch_signal_scores(conn, list(signals_by_id), at)
+    repost = fetch_repost_first_seen(conn, list(signals_by_id.values()))
+    out: list[LeadRow] = []
+    for r in rows:
+        primary, _secondary = select_contacts(contacts_by_firm.get(r["firm_id"], []),
+                                              emails_by_contact)
+        signal_row = signals_by_id.get(r["arming_signal"]) if r["arming_signal"] else None
+        signal = JourneySignal(**signal_row) if signal_row else None
+        proof = build_proof(signal, repost.get(signal.id) if signal else None, signal_scores, at)
+        out.append(build_lead_row(r, proof, build_contact_summary(primary, emails_by_contact)))
+    return out
+
+
 def _view_counts(conn: psycopg.Connection, classification: LeadClassification) -> LeadViewCounts:
     counts = dict.fromkeys(_VIEWS, 0)
     for cl in classification.leads:
@@ -197,6 +283,9 @@ def _view_counts(conn: psycopg.Connection, classification: LeadClassification) -
 def list_leads(
     conn: ConnDep,
     view: str = Query("STRIKE", pattern="^(STRIKE|SEQUENCE|NURTURE|PHONE|EXCLUDED|UNSCORED)$"),
+    stage: str | None = Query(None, pattern="^[a-z_]+$"),
+    band: str | None = Query(None, pattern="^(STRIKE|SEQUENCE|NURTURE|HOLD)$"),
+    owner: str | None = None,
     tier: str | None = None,
     city: str | None = None,
     signal: str | None = None,
@@ -209,6 +298,30 @@ def list_leads(
     at = datetime.now(UTC)
     classification = classify_open_scored_leads(conn, at)
     counts = _view_counts(conn, classification)
+    stages = stage_counts(conn)
+
+    if stage is not None:
+        # The work queue: every open lead at one stage, whatever its band.
+        if stage not in STAGE_ORDER:
+            raise api_error(400, "bad_request", f"There is no stage {stage!r}.")
+        cursor_id = None
+        if cursor:
+            decoded = decode_cursor(cursor)
+            if decoded and len(decoded) == 1:
+                cursor_id = str(decoded[0])
+        rows = _fetch_stage_page(conn, stage, band, tier, city, q, owner, cursor_id, limit)
+        has_more = len(rows) > limit
+        page_rows = rows[:limit]
+        items = _build_stage_rows(conn, page_rows, at)
+        items = [
+            r for r in items
+            if _matches_filters(r, None, None, signal, contest, verified, None)
+        ]
+        next_cursor = (
+            encode_cursor([str(page_rows[-1]["lead_id"])]) if has_more and page_rows else None
+        )
+        return LeadsResponse(items=items, next_cursor=next_cursor, counts=counts,
+                             stage_counts=stages)
 
     if view == "UNSCORED":
         cursor_id: str | None = None
@@ -226,7 +339,8 @@ def list_leads(
         next_cursor = (
             encode_cursor([str(page_rows[-1]["lead_id"])]) if has_more and page_rows else None
         )
-        return LeadsResponse(items=items, next_cursor=next_cursor, counts=counts)
+        return LeadsResponse(items=items, next_cursor=next_cursor, counts=counts,
+                             stage_counts=stages)
 
     signal_ids = [cl.signal.id for cl in classification.leads if cl.signal is not None]
     signal_scores = fetch_signal_scores(conn, signal_ids, at)
@@ -251,7 +365,7 @@ def list_leads(
     has_more = len(built) > limit
     next_cursor = encode_cursor(list(_sort_key(page[-1]))) if has_more and page else None
 
-    return LeadsResponse(items=page, next_cursor=next_cursor, counts=counts)
+    return LeadsResponse(items=page, next_cursor=next_cursor, counts=counts, stage_counts=stages)
 
 
 # ---------------------------------------------------------------------------

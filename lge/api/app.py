@@ -24,6 +24,7 @@ from lge.api.routes import (
     imports,
     leads,
     meta,
+    overview,
     pipeline,
     today,
 )
@@ -67,6 +68,7 @@ app.include_router(meta.router)
 app.include_router(pipeline.router)
 app.include_router(imports.router)
 app.include_router(actions.router)
+app.include_router(overview.router)
 
 
 def _error_body(code: str, message: str, fix: str | None = None) -> dict:
