@@ -676,6 +676,59 @@ across 200 firms, 441 found by crawling, 723 not fetched behind an edge block):
 - **A render can produce a DOM already on file** for the same URL (`(url, content_hash)` is
   unique). P3 marks the row rendered and leaves it as it was.
 
+## D-035 · The people's addresses come from search; the pattern mints the rest
+
+**Asked for (15 Sep 2026):** "for every firm you were able to actually get only one email ...
+if you do it seriously using the DuckDuckGo library ... you will be able to get a lot of details."
+
+**Rulings:**
+- **`r_search_emails`** asks `"@<domain>"` for the firm and `"<person>" "<firm>" email` for up
+  to four decision-makers without an address, and reads addresses off the result snippets
+  (bar directories, Avvo/Justia, filings, PDFs) -- never the pages behind them. An address on
+  the firm's domain attaches to the contact it renders from, or to the person the snippet
+  names beside it (exactly one personal address in a snippet that carries both name tokens);
+  general and hiring inboxes become claims; off-domain addresses are recorded, never attached.
+- **`r3_email_pattern` recognises eleven schemes**, not five: first.last, flast, first,
+  firstl, last, firstlast, first_last, lastf, f.last, last.first, lastfirst. What search and
+  the site attach is the evidence it learns from; it then mints an address for every other
+  named person at the firm, `status='unverified'`, pattern recorded.
+- **Result on the probe** (before any search results landed): average addresses per firm
+  2.7 → 8.9; firms with five or more 32 → 105; 2,319 of 2,745 named contacts carry an
+  address. Every minted address is unverified and says so; R4 verification is a later step.
+- **Searches survive a bad network.** The search helper retries a dropped connection, a
+  timeout or a rate limit after 15s and 45s; the search components stop after five
+  consecutive failures and leave the rest for the next run; a failed query is asked again
+  next run while a found/not-found answer stands for 90 days. (Found the hard way: 458
+  ConnectErrors in one night, none retried.)
+
+## D-036 · The user can act
+
+**Asked for (15 Sep 2026):** "as of now interface is just an outlet to see what is happening
+it does not give any power to the user" and "prepare a better lead life cycle journey".
+
+**Rulings:**
+- **The engine's sixteen states stay the truth; a person sees a stage.** `stage_of()`
+  (`lge/api/stage.py`) derives one of fourteen task-shaped stages -- researching, no website,
+  needs a decision, needs a person, ready to reach, parked, in outreach, replied, handed off,
+  won, lost, disqualified, do not contact, needs a refresh -- and a next action ("Find an email
+  for Jane Doe") from the state, the cooldown and the primary contact. Never stored.
+- **Research on demand** (`POST /api/firms/{id}/research`, scope full or contacts): the
+  engine's own components run for one firm in the background, in flow order, under live=1,
+  each step's outcome written to the job row as it goes (migration 098, `action_job`). The
+  screen polls the job and refetches the case file when it finishes.
+- **Decisions move a lead only through whitelisted transitions.** Migration 098 adds the ones
+  a person needs: disqualify from any working state, reopen a disqualification (to
+  CLASSIFIED) or a loss (to the pool), qualify on judgement (grade B until an email is
+  verified), hand a warm lead to sales, send a stale record back for research. Every decision
+  writes the state event with actor `ui` and a note; a refused one says why.
+- **People are corrected, never silently overwritten.** A person can be added (source
+  `user`), corrected, chosen as the primary contact, or struck out -- `removed_at` keeps the
+  row so the engine does not re-add the same name and the history stays.
+- **Batch** (`POST /api/leads/batch`, up to 100): research, find people and addresses,
+  disqualify, park, assign -- one answer per lead.
+- **Not done here:** authentication (actor is always `ui`), journey copy for the new signal
+  kinds, and a stage-grouped work queue screen. The band tabs still lead.
+
 ---
 
 ## Standing rulings that were never in dispute
