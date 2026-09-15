@@ -394,8 +394,19 @@ def _more(shown: int, total: int) -> str:
     return f" (+{total - shown} more)" if total > shown else ""
 
 
+_EMPTY_LIST_DISPLAY: dict[str, str] = {
+    "site_people": "Nobody named on the pages read",
+    "testimonials": "None on the pages read",
+    "recent_posts": "No dated posts on the pages read",
+    "growth_news": "None in the last year",
+    "office_locations": "No street address on the pages read",
+}
+
+
 def _format_site_fact(attr: str, value: Any) -> str | None:
     """The list- and dict-shaped site facts, read as a person would say them."""
+    if attr in _EMPTY_LIST_DISPLAY and isinstance(value, list) and not value:
+        return _EMPTY_LIST_DISPLAY[attr]  # read and found empty: not "unknown"
     if attr == "site_people" and isinstance(value, list):
         parts = [
             f"{p.get('name')} ({p['title']})" if p.get("title") else str(p.get("name"))

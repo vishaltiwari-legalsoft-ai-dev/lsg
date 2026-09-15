@@ -2146,6 +2146,40 @@
         "title": "JobsResponse",
         "type": "object"
       },
+      "LastRun": {
+        "properties": {
+          "component": {
+            "title": "Component",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "processed": {
+            "title": "Processed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "component",
+          "label",
+          "finished_at",
+          "processed",
+          "failed"
+        ],
+        "title": "LastRun",
+        "type": "object"
+      },
       "LeadDetail": {
         "properties": {
           "band": {
@@ -2748,14 +2782,77 @@
               }
             ],
             "title": "Next Cursor"
+          },
+          "stage_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Stage Counts",
+            "type": "object"
           }
         },
         "required": [
           "items",
           "next_cursor",
-          "counts"
+          "counts",
+          "stage_counts"
         ],
         "title": "LeadsResponse",
+        "type": "object"
+      },
+      "ListsSummary": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "latest_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest At"
+          },
+          "latest_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest File"
+          },
+          "latest_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Status"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count",
+          "rows",
+          "latest_file",
+          "latest_status",
+          "latest_at"
+        ],
+        "title": "ListsSummary",
         "type": "object"
       },
       "MappingRequest": {
@@ -2861,6 +2958,54 @@
         "title": "OutcomeResponse",
         "type": "object"
       },
+      "OverviewResponse": {
+        "properties": {
+          "attention": {
+            "$ref": "#/components/schemas/Attention"
+          },
+          "last_runs": {
+            "items": {
+              "$ref": "#/components/schemas/LastRun"
+            },
+            "title": "Last Runs",
+            "type": "array"
+          },
+          "lists": {
+            "$ref": "#/components/schemas/ListsSummary"
+          },
+          "running": {
+            "items": {
+              "$ref": "#/components/schemas/RunningJob"
+            },
+            "title": "Running",
+            "type": "array"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageCount"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps",
+          "stages",
+          "running",
+          "last_runs",
+          "lists",
+          "attention"
+        ],
+        "title": "OverviewResponse",
+        "type": "object"
+      },
       "OwnerRequest": {
         "properties": {
           "owner": {
@@ -2879,6 +3024,61 @@
           "owner"
         ],
         "title": "OwnerRequest",
+        "type": "object"
+      },
+      "PipelineStep": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "count_label": {
+            "title": "Count Label",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "key": {
+            "enum": [
+              "lists",
+              "research",
+              "qualify",
+              "people",
+              "outreach"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "integer"
+          },
+          "what": {
+            "title": "What",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "number",
+          "label",
+          "what",
+          "count",
+          "count_label",
+          "detail",
+          "href"
+        ],
+        "title": "PipelineStep",
         "type": "object"
       },
       "PrimaryContactRequest": {
@@ -3100,6 +3300,72 @@
         "title": "ResearchRequest",
         "type": "object"
       },
+      "RunningJob": {
+        "properties": {
+          "done_steps": {
+            "title": "Done Steps",
+            "type": "integer"
+          },
+          "firm_id": {
+            "title": "Firm Id",
+            "type": "string"
+          },
+          "firm_name": {
+            "title": "Firm Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "research",
+              "find_contacts"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_steps": {
+            "title": "Total Steps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "firm_id",
+          "firm_name",
+          "done_steps",
+          "total_steps",
+          "started_at"
+        ],
+        "title": "RunningJob",
+        "type": "object"
+      },
       "ScoreBreakdown": {
         "properties": {
           "fit_terms": {
@@ -3173,6 +3439,50 @@
           "points"
         ],
         "title": "ScoreIntentTerm",
+        "type": "object"
+      },
+      "StageCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "help": {
+            "title": "Help",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "researching",
+              "no_website",
+              "needs_review",
+              "needs_contact",
+              "ready",
+              "parked",
+              "in_outreach",
+              "replied",
+              "handed_off",
+              "won",
+              "lost",
+              "disqualified",
+              "do_not_contact",
+              "needs_refresh"
+            ],
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "label",
+          "help",
+          "count"
+        ],
+        "title": "StageCount",
         "type": "object"
       },
       "TimelineEvent": {
@@ -4124,6 +4434,56 @@
           },
           {
             "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z_]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          },
+          {
+            "in": "query",
+            "name": "band",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(STRIKE|SEQUENCE|NURTURE|HOLD)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Band"
+            }
+          },
+          {
+            "in": "query",
+            "name": "owner",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Owner"
+            }
+          },
+          {
+            "in": "query",
             "name": "tier",
             "required": false,
             "schema": {
@@ -4720,6 +5080,27 @@
         "summary": "Get Providers",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/overview": {
+      "get": {
+        "operationId": "get_overview_api_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Overview",
+        "tags": [
+          "overview"
         ]
       }
     },
