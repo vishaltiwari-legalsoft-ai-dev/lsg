@@ -56,6 +56,7 @@ from typing import Any
 
 from lge.classify.people import person_name
 from lge.classify.roles import classify_role
+from lge.planes.p._site_facts import name_like
 from lge.registry import RunContext, RunResult, component
 
 _COMPONENT_NAME = "r_site_contacts"
@@ -202,7 +203,11 @@ def _apply_claim_entries(
     counts: dict[str, int],
 ) -> None:
     for entry in entries:
+        # person_name() for the shape, name_like() for the page rules too:
+        # "About Us" and "Our Values" reached contacts through the AI reader.
         name = person_name(entry.get("name"))
+        if name and not name_like(name):
+            name = None
         if not name:
             counts["not_a_person"] = counts.get("not_a_person", 0) + 1
             continue

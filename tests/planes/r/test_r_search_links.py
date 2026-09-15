@@ -182,30 +182,49 @@ def test_a_namesake_elsewhere_is_not_adopted_and_is_logged_not_found(db):
 
 def test_every_named_person_is_searched_owners_first_within_the_cap(db):
     firm_id = make_firm(db, canonical_name="Big Firm")
-    for i in range(3):
-        _insert_contact(db, firm_id, full_name=f"Assoc Number{i}", role="attorney",
-                        confidence=0.5)
-    _insert_contact(db, firm_id, full_name="Olive Owner", role="owner", confidence=0.9)
-    _insert_contact(db, firm_id, full_name="Adam Admin", role="admin", confidence=0.7)
+    for name in ("Alan Ames", "Bea Bell", "Cal Cole"):
+        _insert_contact(db, firm_id, full_name=name, role="attorney", confidence=0.5)
+    _insert_contact(db, firm_id, full_name="Olive Oakes", role="owner", confidence=0.9)
+    _insert_contact(db, firm_id, full_name="Adam Ashby", role="admin", confidence=0.7)
     search = Recorder()
     r_search_links.run(ctx(db, live=True), search=search)
     people_queries = [q for q in search.queries if q.endswith('" linkedin')]
     assert len(people_queries) == 5  # everyone, not only decision-makers
-    assert '"Olive Owner"' in people_queries[0]
-    assert '"Adam Admin"' in people_queries[1]
+    assert '"Olive Oakes"' in people_queries[0]
+    assert '"Adam Ashby"' in people_queries[1]
 
     other = make_firm(db, canonical_name="Capped Firm")
-    for i in range(6):
-        _insert_contact(db, other, full_name=f"Person Number{i}", role="unknown", confidence=0.5)
+    for name in ("Dee Dunn", "Eve Eames", "Fay Ford", "Gus Gale", "Hal Hart", "Ida Ives"):
+        _insert_contact(db, other, full_name=name, role="unknown", confidence=0.5)
     capped = Recorder()
     r_search_links.run(ctx(db, live=True), search=capped, max_people="4")
     assert len([q for q in capped.queries if "Capped Firm" in q and q.endswith('" linkedin')]) == 4
 
 
+def test_a_company_page_in_a_persons_results_is_taken_and_junk_names_are_not_searched(db):
+    firm_id = make_firm(db, canonical_name="Sattler Law Group PC")
+    _insert_contact(db, firm_id, full_name="Sam Sattler", role="owner", confidence=0.9)
+    _insert_contact(db, firm_id, full_name="About Us", role="unknown", confidence=0.4)
+    search = Recorder({
+        '"Sam Sattler" linkedin': [
+            {"title": "Sattler Law Group PC - LinkedIn", "body": "Law Practice · 2-10 employees",
+             "href": "https://www.linkedin.com/company/sattler-law-group-pc"},
+        ],
+    })
+    r_search_links.run(ctx(db, live=True), search=search)
+    assert not any('"About Us"' in q for q in search.queries)
+    assert not any(q.startswith("site:linkedin.com/company") for q in search.queries)
+    claims = _claims(db, firm_id)
+    assert claims["linkedin_company_url"]["value"] == (
+        "https://www.linkedin.com/company/sattler-law-group-pc/"
+    )
+    assert claims["linkedin_headcount"]["value"] == "2-10"
+
+
 def test_the_run_stops_at_its_query_budget(db):
-    for i in range(3):
-        firm_id = make_firm(db, canonical_name=f"Budget Firm {i}")
-        _insert_contact(db, firm_id, full_name=f"Bea Budget{i}", role="owner", confidence=0.9)
+    for name in ("Bea Budget", "Ben Bounds", "Bo Brake"):
+        firm_id = make_firm(db, canonical_name=f"{name} Firm")
+        _insert_contact(db, firm_id, full_name=name, role="owner", confidence=0.9)
     search = Recorder()
     result = r_search_links.run(ctx(db, live=True), search=search, max_queries="2")
     assert len(search.queries) == 2
@@ -257,7 +276,7 @@ def test_the_headline_fills_a_missing_title_and_the_company_page_becomes_claims(
              "href": "https://www.linkedin.com/in/jkarpousis",
              "body": "Partner at Freehill Hogan & Mahar · Location: New York · 500+ connections"},
         ],
-        "linkedin company": [
+        "site:linkedin.com/company": [
             {"title": "Freehill Hogan & Mahar | LinkedIn",
              "href": "https://www.linkedin.com/company/freehill-hogan-mahar",
              "body": "Freehill Hogan & Mahar · Law Practice · New York · 51-200 employees"},
@@ -297,11 +316,12 @@ def test_five_failures_in_a_row_stop_the_run(db):
     # Three firms, four people each: twelve queries would be asked. With the
     # network gone the run stops after five, and says so.
     dead = Recorder({"": [{"title": "", "href": "", "body": "search failed: ConnectError"}]})
+    names = iter(("Ann Able", "Bob Baker", "Cam Cross", "Dan Dole", "Eli East", "Flo Fair",
+                  "Gil Grant", "Hope Hill", "Ian Ingle", "Joy Jones", "Kim Kerr", "Lee Lane"))
     for i in range(3):
         firm_id = make_firm(db, canonical_name=f"Dead Firm {i}")
-        for j in range(4):
-            _insert_contact(db, firm_id, full_name=f"Person Number{i}{j}", role="attorney",
-                            confidence=0.5)
+        for _ in range(4):
+            _insert_contact(db, firm_id, full_name=next(names), role="attorney", confidence=0.5)
     result = r_search_links.run(ctx(db, live=True), search=dead)
     assert len(dead.queries) == 5
     assert "stopped early" in " ".join(result.notes)

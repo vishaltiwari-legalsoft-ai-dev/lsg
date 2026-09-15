@@ -92,11 +92,11 @@ def test_ddg_no_results_is_an_empty_answer_not_a_failure(monkeypatch):
     from ddgs.exceptions import DDGSException
 
     class _NoResults:
-        def text(self, query, max_results):
+        def text(self, query, max_results, **kw):
             raise DDGSException("No results found.")
 
     class _Broken:
-        def text(self, query, max_results):
+        def text(self, query, max_results, **kw):
             raise DDGSException("Ratelimit")
 
     monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
@@ -116,7 +116,7 @@ def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
     slept: list[float] = []
 
     class _Flaky:
-        def text(self, query, max_results):
+        def text(self, query, max_results, **kw):
             calls.append(1)
             if len(calls) < 3:
                 raise DDGSException("ConnectError: error sending request")
@@ -133,7 +133,7 @@ def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
     slept.clear()
 
     class _Dead:
-        def text(self, query, max_results):
+        def text(self, query, max_results, **kw):
             raise DDGSException("ConnectError: error sending request")
 
     monkeypatch.setattr(ddgs, "DDGS", _Dead)

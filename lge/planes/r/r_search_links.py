@@ -43,7 +43,7 @@ from psycopg.types.json import Jsonb
 from lge.classify.roles import classify_role
 from lge.ingest.webcheck import ddg_search
 from lge.planes.p._claims import write_claim
-from lge.planes.p._site_facts import looks_like_title
+from lge.planes.p._site_facts import looks_like_title, name_like
 from lge.registry import RunContext, RunResult, component
 
 _COMPONENT = "r_search_links"
@@ -99,7 +99,8 @@ def linkedin_query(firm_name: str, person: str) -> str:
 
 
 def company_query(firm_name: str) -> str:
-    return f'"{firm_name}" linkedin company'
+    # The site: operator keeps the data brokers (RocketReach, ZoomInfo) out.
+    return f'site:linkedin.com/company "{firm_name}"'
 
 
 def reviews_query(firm_name: str, city: str | None, state: str | None) -> str:
@@ -326,6 +327,9 @@ def _people_to_search(conn: Any, firm_id: Any, recheck_days: int, max_people: in
             {"firm_id": firm_id, "days": recheck_days},
         )
         rows = cur.fetchall()
+    # A contact whose name is not a person's ("About Us", "Our Values" -- the
+    # structured-data and AI readers let a few through) is not worth a query.
+    rows = [r for r in rows if name_like(r["full_name"])]
     rows.sort(key=lambda r: (_ROLE_ORDER.get(r["role"] or "unknown", 3),
                              -float(r["confidence"] or 0)))
     return rows[:max_people]
@@ -357,6 +361,14 @@ def _log(
 
 def _failed(results: list[dict]) -> bool:
     return len(results) == 1 and (results[0].get("body") or "").startswith("search failed")
+
+
+def _write_company(conn: Any, firm_id: Any, page: dict[str, Any], now: Any) -> None:
+    write_claim(conn, firm_id, "linkedin_company_url", page["url"], _SOURCE,
+                _CONFIDENCE_LINKEDIN, page["evidence"], now)
+    if page["headcount"]:
+        write_claim(conn, firm_id, "linkedin_headcount", page["headcount"], _SOURCE,
+                    _CONFIDENCE_LINKEDIN, page["evidence"], now)
 
 
 def _record_profile(conn: Any, person: dict, url: str, profile: dict[str, Any], now: Any) -> None:
@@ -434,6 +446,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                 continue
             firm_name = firm["canonical_name"]
             did_something = False
+            company_known = _searched_recently(conn, firm_id, "company", recheck_days)
 
             for person in _people_to_search(conn, firm_id, recheck_days, max_people):
                 if not budget_left():
@@ -457,8 +470,18 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                     counts["not_found"] += 1
                 _log(conn, firm_id, "linkedin", query, "found" if url else "not_found", results,
                      contact_id=person["id"], url=url)
+                # The firm's company page often rides along in a person's
+                # results: take it when it does, and spare the company query.
+                if not company_known:
+                    page = pick_company(firm_name, results)
+                    if page["url"]:
+                        _write_company(conn, firm_id, page, now)
+                        _log(conn, firm_id, "company", query, "found", results, url=page["url"])
+                        counts["companies"] += 1
+                        company_known = True
 
-            if budget_left() and not _searched_recently(conn, firm_id, "company", recheck_days):
+            if (budget_left() and not company_known
+                    and not _searched_recently(conn, firm_id, "company", recheck_days)):
                 query = company_query(firm_name)
                 results = ask(query)
                 did_something = True
@@ -469,12 +492,8 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                     consecutive_failures = 0
                     page = pick_company(firm_name, results)
                     if page["url"]:
-                        write_claim(conn, firm_id, "linkedin_company_url", page["url"], _SOURCE,
-                                    _CONFIDENCE_LINKEDIN, page["evidence"], now)
+                        _write_company(conn, firm_id, page, now)
                         counts["companies"] += 1
-                    if page["headcount"]:
-                        write_claim(conn, firm_id, "linkedin_headcount", page["headcount"],
-                                    _SOURCE, _CONFIDENCE_LINKEDIN, page["evidence"], now)
                     _log(conn, firm_id, "company", query, "found" if page["url"] else "not_found",
                          results, url=page["url"])
 

@@ -213,7 +213,10 @@ def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
             time.sleep(pause)  # a dropped connection or a timeout: wait, then try again
         _last_search_at = time.monotonic()
         try:
-            rows = DDGS().text(query, max_results=max_results) or []
+            # backend pinned: the library's "auto" tries Google and Brave first,
+            # which rate-limit us (429) and cost seconds per query before the
+            # DuckDuckGo fallback answers.
+            rows = DDGS().text(query, max_results=max_results, backend="duckduckgo") or []
             break
         except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
             if "no results" in str(exc).lower():
