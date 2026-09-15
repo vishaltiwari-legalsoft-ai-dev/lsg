@@ -20,16 +20,18 @@ def _li(title: str, slug: str, body: str = "") -> dict[str, str]:
 
 class Recorder:
     """A search that answers from a table keyed on the query text and
-    remembers what it was asked."""
+    remembers what it was asked. A key ending "#2" answers page two."""
 
     def __init__(self, table: dict[str, list[dict[str, str]]] | None = None):
         self.table = table or {}
         self.queries: list[str] = []
 
-    def __call__(self, query: str, max_results: int) -> list[dict[str, str]]:
-        self.queries.append(query)
+    def __call__(self, query: str, max_results: int, page: int = 1) -> list[dict[str, str]]:
+        self.queries.append(query if page == 1 else f"{query} [page {page}]")
         for key, rows in self.table.items():
-            if key in query:
+            if page > 1 and key.endswith(f"#{page}") and key[: -len(f"#{page}")] in query:
+                return rows
+            if page == 1 and "#" not in key and key in query:
                 return rows
         return []
 
@@ -60,6 +62,9 @@ def _claims(conn, firm_id) -> dict[str, dict]:
 
 
 def test_queries_follow_the_brief():
+    assert r_search_links.sweep_query("Hartley Injury Law") == (
+        'site:linkedin.com "Hartley Injury Law"'
+    )
     assert r_search_links.linkedin_query("Hartley Injury Law", "Margaret Hartley") == (
         '"Hartley Injury Law" "Margaret Hartley" linkedin'
     )
@@ -121,10 +126,11 @@ def test_profiles_and_reviews_are_found_logged_and_not_repeated(db):
                             confidence=0.9)
     admin = _insert_contact(db, firm_id, full_name="Priya Raman", role="admin", confidence=0.8)
     search = Recorder({
-        '"Margaret Hartley" linkedin': [
+        'site:linkedin.com "Hartley Injury Law"': [
             _li("Margaret Hartley - Founding Partner - Hartley Injury Law", "mhartley"),
+            _li("Someone Else - Paralegal - Hartley Injury Law", "someone-else"),
+            _li("Priya Raman - Office Manager - Some Other Firm", "praman"),
         ],
-        '"Priya Raman" linkedin': [_li("Priya Raman - Office Manager - Some Other Firm", "praman")],
         "google business reviews": [
             {"title": "Hartley Injury Law", "body": "4.9 (312) · Personal injury attorney",
              "href": "https://www.google.com/maps/place/Hartley+Injury+Law/"},
@@ -151,15 +157,17 @@ def test_profiles_and_reviews_are_found_logged_and_not_repeated(db):
 
     log = _search_log(db, firm_id)
     assert [(r["kind"], r["outcome"]) for r in log] == [
-        ("linkedin", "found"), ("linkedin", "found"), ("company", "not_found"),
-        ("reviews", "found"),
+        ("linkedin", "found"), ("linkedin", "found"), ("sweep", "found"), ("reviews", "found"),
     ]
-    assert search.queries[0] == '"Hartley Injury Law" "Margaret Hartley" linkedin'
-    assert search.queries[-1] == '"Hartley Injury Law" Atlanta GA google business reviews'
+    # one sweep found both people: no query of their own was needed
+    assert search.queries == [
+        'site:linkedin.com "Hartley Injury Law"',
+        '"Hartley Injury Law" Atlanta GA google business reviews',
+    ]
 
     again = r_search_links.run(ctx(db, live=True), search=search)
     assert again.processed == 0
-    assert len(search.queries) == 4  # nothing asked twice
+    assert len(search.queries) == 2  # nothing asked twice
 
 
 def test_a_namesake_elsewhere_is_not_adopted_and_is_logged_not_found(db):
@@ -175,45 +183,88 @@ def test_a_namesake_elsewhere_is_not_adopted_and_is_logged_not_found(db):
         assert cur.fetchone()["linkedin_url"] is None
     log = _search_log(db, firm_id)
     assert [(r["kind"], r["outcome"]) for r in log] == [
-        ("linkedin", "not_found"), ("company", "not_found"), ("reviews", "not_found")
+        ("sweep", "not_found"), ("linkedin", "not_found"), ("reviews", "not_found")
     ]
     assert _claims(db, firm_id) == {}
 
 
-def test_every_named_person_is_searched_owners_first_within_the_cap(db):
+def test_one_sweep_per_firm_then_a_query_for_each_decision_maker_it_missed(db):
     firm_id = make_firm(db, canonical_name="Big Firm")
     for name in ("Alan Ames", "Bea Bell", "Cal Cole"):
         _insert_contact(db, firm_id, full_name=name, role="attorney", confidence=0.5)
     _insert_contact(db, firm_id, full_name="Olive Oakes", role="owner", confidence=0.9)
     _insert_contact(db, firm_id, full_name="Adam Ashby", role="admin", confidence=0.7)
-    search = Recorder()
+    search = Recorder({
+        'site:linkedin.com "Big Firm"': [
+            _li("Bea Bell - Associate - Big Firm", "bea-bell"),
+            _li("Adam Ashby - Office Manager - Big Firm", "adam-ashby"),
+        ],
+    })
     r_search_links.run(ctx(db, live=True), search=search)
+    assert search.queries[0] == 'site:linkedin.com "Big Firm"'
     people_queries = [q for q in search.queries if q.endswith('" linkedin')]
-    assert len(people_queries) == 5  # everyone, not only decision-makers
-    assert '"Olive Oakes"' in people_queries[0]
-    assert '"Adam Ashby"' in people_queries[1]
+    # the owner the sweep missed gets a query; the attorneys never do
+    assert people_queries == ['"Big Firm" "Olive Oakes" linkedin']
+    with db.cursor() as cur:
+        cur.execute("SELECT full_name, linkedin_url FROM contact WHERE firm_id = %s", (firm_id,))
+        urls = {r["full_name"]: r["linkedin_url"] for r in cur.fetchall()}
+    assert urls["Bea Bell"] == "https://www.linkedin.com/in/bea-bell/"
+    assert urls["Adam Ashby"] == "https://www.linkedin.com/in/adam-ashby/"
+    assert urls["Olive Oakes"] is None and urls["Alan Ames"] is None
 
     other = make_firm(db, canonical_name="Capped Firm")
     for name in ("Dee Dunn", "Eve Eames", "Fay Ford", "Gus Gale", "Hal Hart", "Ida Ives"):
         _insert_contact(db, other, full_name=name, role="unknown", confidence=0.5)
     capped = Recorder()
     r_search_links.run(ctx(db, live=True), search=capped, max_people="4")
-    assert len([q for q in capped.queries if "Capped Firm" in q and q.endswith('" linkedin')]) == 4
+    assert [q for q in capped.queries if "Capped Firm" in q] == [
+        'site:linkedin.com "Capped Firm"', '"Capped Firm" google business reviews',
+    ]
 
 
-def test_a_company_page_in_a_persons_results_is_taken_and_junk_names_are_not_searched(db):
+def test_a_full_first_page_with_people_still_missing_earns_a_second_page(db):
+    firm_id = make_firm(db, canonical_name="Page Firm")
+    for name in ("Ann Page", "Ben Page", "Cy Page"):
+        _insert_contact(db, firm_id, full_name=name, role="attorney", confidence=0.5)
+    first = [_li("Ann Page - Associate - Page Firm", "ann-page")] + [
+        _li("Other Person - Paralegal - Page Firm", f"other-{i}") for i in range(7)
+    ]
+    search = Recorder({
+        'site:linkedin.com "Page Firm"': first,
+        'site:linkedin.com "Page Firm"#2': [_li("Ben Page - Associate - Page Firm", "ben-page")],
+    })
+    r_search_links.run(ctx(db, live=True), search=search)
+    assert search.queries[:2] == [
+        'site:linkedin.com "Page Firm"', 'site:linkedin.com "Page Firm" [page 2]',
+    ]
+    with db.cursor() as cur:
+        cur.execute("SELECT full_name, linkedin_url FROM contact WHERE firm_id = %s", (firm_id,))
+        urls = {r["full_name"]: r["linkedin_url"] for r in cur.fetchall()}
+    assert urls["Ann Page"] and urls["Ben Page"] and urls["Cy Page"] is None
+    assert not any('"Cy Page"' in q for q in search.queries)  # an attorney: no query of his own
+
+    # a first page that was not full has no second page
+    other = make_firm(db, canonical_name="Short Firm")
+    _insert_contact(db, other, full_name="Sal Short", role="attorney", confidence=0.5)
+    _insert_contact(db, other, full_name="Tia Short", role="attorney", confidence=0.5)
+    short = Recorder({'site:linkedin.com "Short Firm"': [_li("Sal Short - Short Firm", "sal")]})
+    r_search_links.run(ctx(db, live=True), search=short)
+    assert not any("[page 2]" in q for q in short.queries)
+
+
+def test_the_company_page_in_the_sweep_is_taken_and_junk_names_are_not_searched(db):
     firm_id = make_firm(db, canonical_name="Sattler Law Group PC")
     _insert_contact(db, firm_id, full_name="Sam Sattler", role="owner", confidence=0.9)
     _insert_contact(db, firm_id, full_name="About Us", role="unknown", confidence=0.4)
     search = Recorder({
-        '"Sam Sattler" linkedin': [
+        'site:linkedin.com "Sattler Law Group PC"': [
             {"title": "Sattler Law Group PC - LinkedIn", "body": "Law Practice · 2-10 employees",
              "href": "https://www.linkedin.com/company/sattler-law-group-pc"},
         ],
     })
     r_search_links.run(ctx(db, live=True), search=search)
     assert not any('"About Us"' in q for q in search.queries)
-    assert not any(q.startswith("site:linkedin.com/company") for q in search.queries)
+    assert not any("linkedin.com/company" in q for q in search.queries)
     claims = _claims(db, firm_id)
     assert claims["linkedin_company_url"]["value"] == (
         "https://www.linkedin.com/company/sattler-law-group-pc/"
@@ -276,12 +327,10 @@ def test_the_headline_fills_a_missing_title_and_the_company_page_becomes_claims(
     contact_id = _insert_contact(db, firm_id, full_name="John Karpousis", role="unknown",
                                  confidence=0.5)
     search = Recorder({
-        '"John Karpousis" linkedin': [
+        'site:linkedin.com "Freehill Hogan & Mahar"': [
             {"title": "John Karpousis - Partner at Freehill Hogan & Mahar | LinkedIn",
              "href": "https://www.linkedin.com/in/jkarpousis",
              "body": "Partner at Freehill Hogan & Mahar · Location: New York · 500+ connections"},
-        ],
-        "site:linkedin.com/company": [
             {"title": "Freehill Hogan & Mahar | LinkedIn",
              "href": "https://www.linkedin.com/company/freehill-hogan-mahar",
              "body": "Freehill Hogan & Mahar · Law Practice · New York · 51-200 employees"},

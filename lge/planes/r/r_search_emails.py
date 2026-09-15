@@ -55,6 +55,7 @@ _MAX_PEOPLE_PER_FIRM = 4
 _MAX_RESULTS = 8
 _MAX_CONSECUTIVE_FAILURES = 5
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
+_DECISION_MAKERS = ("owner", "admin")
 _CONFIDENCE = 0.7
 
 SearchFn = Callable[[str, int], list[dict[str, str]]]
@@ -281,7 +282,10 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                          url=next(iter(on.values()))["href"] if on else None)
             attached += _attach_matching(conn, found, contacts)
 
+            # One query per person is the expensive part: only the decision-makers
+            # the firm query and the pattern left without an address get one.
             people = [c for c in contacts if not c["has_email"]
+                      and (c["role"] or "unknown") in _DECISION_MAKERS
                       and not _searched(conn, "person_email", recheck_days, contact_id=c["id"])]
             people.sort(key=lambda c: (_ROLE_ORDER.get(c["role"] or "unknown", 3),
                                        -float(c["confidence"] or 0)))

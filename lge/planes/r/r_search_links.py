@@ -1,19 +1,22 @@
 """r_search_links -- the web searches outreach needs (Plane R, D-032, D-038).
 
-  * For every named person without a LinkedIn URL (owner first, then admin,
-    then attorney, then the rest; `max_people` per firm, default 12):
+  * One sweep per firm finds its people at once (D-041):
+        site:linkedin.com "<firm>"
+    Every linkedin.com/in/ result on the page is matched against the firm's
+    named people who have no profile yet (up to 60, owners first); a second
+    page is asked for only when the first was full and people are still
+    unmatched. A result is adopted for a person only when its title (or
+    slug) carries both name tokens -- a namesake at another firm is not
+    this person. The firm's company page usually rides along in the same
+    results: its URL and the headcount its snippet prints ("11-50
+    employees") become claims linkedin_company_url, linkedin_headcount.
+  * The decision-makers the sweep did not find get one query each
+    (`max_people` per firm, default 4):
         "<firm>" "<person>" linkedin
-    The result adopted must be a linkedin.com/in/ profile whose title names
-    the person (both name tokens) -- a namesake at another firm is not this
-    person. What the search engine shows about the profile is read off the
-    result -- the headline ("Partner at Freehill Hogan & Mahar"), the
-    location, the company -- and kept on the contact; a title the site never
-    printed is filled from the headline. LinkedIn itself is never fetched
-    (standing rule).
-  * For the firm:  "<firm>" linkedin company
-    The company page's URL and the headcount its snippet prints
-    ("11-50 employees") become claims: linkedin_company_url,
-    linkedin_headcount.
+  * What the search engine shows about a profile is read off the result --
+    the headline ("Partner at Freehill Hogan & Mahar") and the location are
+    kept on the contact, and a title the site never printed is filled from
+    the headline. LinkedIn itself is never fetched (standing rule).
   * For the firm:  "<firm>" <city> <state> google business reviews
     The result snippets are read for the listing's rating and review count
     ("4.8 (312)", "Rated 4.9 · 312 reviews") and the Google Maps URL when one
@@ -49,15 +52,20 @@ from lge.registry import RunContext, RunResult, component
 _COMPONENT = "r_search_links"
 _SOURCE = "search:ddg"
 _RECHECK_DAYS_DEFAULT = 90
-_MAX_PEOPLE_PER_FIRM = 12
+_MAX_PEOPLE_PER_FIRM = 4  # per-person queries: the decision-makers the sweep missed
+_MAX_SWEEP_PEOPLE = 60  # people a sweep's results are matched against
+_SWEEP_RESULTS = 30  # a results page holds ten; ask for all it gives
+_SWEEP_PAGE_FULL = 8  # this many profiles on page one: page two may hold more
 _MAX_QUERIES_PER_RUN = 600
 _MAX_RESULTS = 8
+_MAX_LOGGED = 30
 _MAX_CONSECUTIVE_FAILURES = 5
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
+_DECISION_MAKERS = ("owner", "admin")
 _CONFIDENCE_LINKEDIN = 0.8
 _CONFIDENCE_REVIEWS = 0.6
 
-SearchFn = Callable[[str, int], list[dict[str, str]]]
+SearchFn = Callable[..., list[dict[str, str]]]  # (query, max_results, *, page=1)
 
 _LINKEDIN_PROFILE_RE = re.compile(r"^/(?:in|pub)/[^/]+/?", re.I)
 _LINKEDIN_COMPANY_RE = re.compile(r"^/company/[^/]+/?", re.I)
@@ -98,9 +106,10 @@ def linkedin_query(firm_name: str, person: str) -> str:
     return f'"{firm_name}" "{person}" linkedin'
 
 
-def company_query(firm_name: str) -> str:
-    # The site: operator keeps the data brokers (RocketReach, ZoomInfo) out.
-    return f'site:linkedin.com/company "{firm_name}"'
+def sweep_query(firm_name: str) -> str:
+    # The site: operator keeps the data brokers (RocketReach, ZoomInfo) out;
+    # the whole domain, so the company page comes back with the people.
+    return f'site:linkedin.com "{firm_name}"'
 
 
 def reviews_query(firm_name: str, city: str | None, state: str | None) -> str:
@@ -210,6 +219,28 @@ def pick_linkedin(
     return canonical_linkedin(href), evidence
 
 
+def is_profile(result: dict[str, str]) -> bool:
+    parts = urlsplit(result.get("href") or "")
+    host = (parts.hostname or "").lower()
+    return _is_linkedin(host) and bool(_LINKEDIN_PROFILE_RE.match(parts.path))
+
+
+def match_people(
+    people: list[dict], firm_name: str, results: list[dict[str, str]]
+) -> list[tuple[dict, str, dict[str, Any]]]:
+    """Each person the sweep's results name, with their profile: owners
+    first, one result per person, one person per result."""
+    matched: list[tuple[dict, str, dict[str, Any]]] = []
+    used: set[str] = set()
+    for person in people:
+        candidates = [r for r in results if (r.get("href") or "") not in used]
+        url, profile = pick_linkedin(person["full_name"], firm_name, candidates)
+        if url:
+            matched.append((person, url, profile))
+            used.add(profile.get("href") or "")
+    return matched
+
+
 def pick_company(firm_name: str, results: list[dict[str, str]]) -> dict[str, Any]:
     """The firm's LinkedIn company page and the headcount its snippet prints."""
     firm_tokens = _firm_tokens(firm_name)
@@ -298,14 +329,18 @@ def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
             if line.strip()
         ]
     person = _not_searched("linkedin", "contact_id").format(ref="c.id")
-    company = _not_searched("company", "firm_id").format(ref="f.id")
+    sweep = _not_searched("sweep", "firm_id").format(ref="f.id")
     reviews = _not_searched("reviews", "firm_id").format(ref="f.id")
+    # A firm is due when someone still has no profile and either the firm
+    # has not been swept lately or that someone is a decision-maker who has
+    # not had a query of their own.
     query = f"""
         SELECT DISTINCT f.id AS firm_id
         FROM firm f
         LEFT JOIN contact c ON c.firm_id = f.id AND c.removed_at IS NULL
-        WHERE (c.id IS NOT NULL AND c.linkedin_url IS NULL AND {person})
-           OR {company} OR {reviews}
+        WHERE (c.id IS NOT NULL AND c.linkedin_url IS NULL AND {person}
+               AND ({sweep} OR c.role IN ('owner', 'admin')))
+           OR {reviews}
         ORDER BY f.id
     """  # noqa: S608 -- fixed fragments; the day count is a bound parameter
     params: dict[str, Any] = {"days": recheck_days}
@@ -359,7 +394,7 @@ def _log(
             "INSERT INTO search_log (firm_id, kind, contact_id, query, outcome, url, rating, "
             "review_count, results) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (firm_id, kind, contact_id, query, outcome, url, rating, review_count,
-             Jsonb(results[:_MAX_RESULTS])),
+             Jsonb(results[:_MAX_LOGGED])),
         )
 
 
@@ -416,17 +451,18 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
     max_people = int(opts.get("max_people") or _MAX_PEOPLE_PER_FIRM)
     max_queries = int(opts.get("max_queries") or _MAX_QUERIES_PER_RUN)
     now = datetime.now(UTC)
-    counts = {"found": 0, "not_found": 0, "titles": 0, "companies": 0, "reviews": 0}
+    counts = {"swept": 0, "found": 0, "not_found": 0, "titles": 0, "companies": 0,
+              "reviews": 0}
     queries = 0
     # Five failures in a row is the network or the engine refusing us, not
     # five unlucky queries: stop, leave the rest for the next run.
     consecutive_failures = 0
     last_failure = ""
 
-    def ask(query: str) -> list[dict[str, str]]:
+    def ask(query: str, n: int = _MAX_RESULTS, page: int = 1) -> list[dict[str, str]]:
         nonlocal queries, last_failure
         queries += 1
-        results = search(query, _MAX_RESULTS)
+        results = search(query, n, page=page)
         if _failed(results):
             last_failure = results[0].get("body") or ""
         return results
@@ -436,13 +472,6 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
 
     for firm_id in _firm_ids(conn, opts, recheck_days):
         if not budget_left():
-            result.notes.append(
-                f"stopped early: {consecutive_failures} searches failed in a row "
-                f"({last_failure})"
-                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES
-                else f"stopped at the run's budget of {max_queries} queries"
-                " -- the rest wait for the next run"
-            )
             break
         try:
             with conn.cursor() as cur:
@@ -456,8 +485,56 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             firm_name = firm["canonical_name"]
             did_something = False
             company_known = _searched_recently(conn, firm_id, "company", recheck_days)
+            people = _people_to_search(conn, firm_id, recheck_days, _MAX_SWEEP_PEOPLE)
 
-            for person in _people_to_search(conn, firm_id, recheck_days, max_people):
+            # One query finds the firm's people at once; a second page only
+            # when the first was full and someone is still unmatched.
+            if people and budget_left() and not _searched_recently(
+                conn, firm_id, "sweep", recheck_days
+            ):
+                query = sweep_query(firm_name)
+                results = ask(query, _SWEEP_RESULTS)
+                did_something = True
+                if _failed(results):
+                    consecutive_failures += 1
+                    _log(conn, firm_id, "sweep", query, "failed", results)
+                else:
+                    consecutive_failures = 0
+                    matched = match_people(people, firm_name, results)
+                    if (budget_left() and len(matched) < len(people)
+                            and sum(1 for r in results if is_profile(r)) >= _SWEEP_PAGE_FULL):
+                        more = ask(query, _SWEEP_RESULTS, page=2)
+                        if not _failed(more):
+                            found_ids = {m[0]["id"] for m in matched}
+                            left = [p for p in people if p["id"] not in found_ids]
+                            matched += match_people(left, firm_name, more)
+                            results = results + more
+                    for person, url, profile in matched:
+                        _record_profile(conn, person, url, profile, now)
+                        counts["found"] += 1
+                        if (not person.get("title")
+                                and title_from_headline(profile.get("headline"))):
+                            counts["titles"] += 1
+                        _log(conn, firm_id, "linkedin", query, "found",
+                             [r for r in results if r.get("href") == profile.get("href")],
+                             contact_id=person["id"], url=url)
+                    _log(conn, firm_id, "sweep", query, "found" if matched else "not_found",
+                         results)
+                    counts["swept"] += 1
+                    if not company_known:
+                        page = pick_company(firm_name, results)
+                        if page["url"]:
+                            _write_company(conn, firm_id, page, now)
+                            _log(conn, firm_id, "company", query, "found", results,
+                                 url=page["url"])
+                            counts["companies"] += 1
+                            company_known = True
+                    found_ids = {m[0]["id"] for m in matched}
+                    people = [p for p in people if p["id"] not in found_ids]
+
+            # The decision-makers the sweep did not find: one query each.
+            leftovers = [p for p in people if (p["role"] or "unknown") in _DECISION_MAKERS]
+            for person in leftovers[:max_people]:
                 if not budget_left():
                     break
                 query = linkedin_query(firm_name, person["full_name"])
@@ -488,23 +565,6 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                         _log(conn, firm_id, "company", query, "found", results, url=page["url"])
                         counts["companies"] += 1
                         company_known = True
-
-            if (budget_left() and not company_known
-                    and not _searched_recently(conn, firm_id, "company", recheck_days)):
-                query = company_query(firm_name)
-                results = ask(query)
-                did_something = True
-                if _failed(results):
-                    consecutive_failures += 1
-                    _log(conn, firm_id, "company", query, "failed", results)
-                else:
-                    consecutive_failures = 0
-                    page = pick_company(firm_name, results)
-                    if page["url"]:
-                        _write_company(conn, firm_id, page, now)
-                        counts["companies"] += 1
-                    _log(conn, firm_id, "company", query, "found" if page["url"] else "not_found",
-                         results, url=page["url"])
 
             if budget_left() and not _searched_recently(conn, firm_id, "reviews", recheck_days):
                 query = reviews_query(firm_name, firm["city"], firm["state"])
@@ -543,9 +603,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             result.notes.append(f"{_COMPONENT} firm={firm_id}: {exc}")
         ctx.checkpoint()
 
+    if not budget_left():
+        reason = (
+            f"{consecutive_failures} searches failed in a row ({last_failure})"
+            if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES
+            else f"the run's budget of {max_queries} queries"
+        )
+        result.notes.append(f"stopped early: {reason} -- the rest wait for the next run")
     result.notes.append(
-        f"linkedin profiles found {counts['found']}, not found {counts['not_found']}, "
-        f"titles filled from headlines {counts['titles']}; company pages {counts['companies']}; "
-        f"review listings read {counts['reviews']}; {queries} queries"
+        f"firms swept {counts['swept']}; linkedin profiles found {counts['found']}, "
+        f"not found {counts['not_found']}, titles filled from headlines {counts['titles']}; "
+        f"company pages {counts['companies']}; review listings read {counts['reviews']}; "
+        f"{queries} queries"
     )
     return result

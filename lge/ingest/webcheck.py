@@ -33,8 +33,10 @@ from __future__ import annotations
 import asyncio
 import functools
 import json
+import random
 import re
 import time
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -55,7 +57,13 @@ from lge.norm import norm_domain, norm_name
 from lge.registry import RunContext, RunResult, component
 
 SEARCH_SOURCE = "search:ddg"
-SEARCH_INTERVAL_S = 5.0  # at 2 s DuckDuckGo starts answering with a bot check within ~20 minutes
+# The pace of one careful person at a keyboard: a query every 8-12 s, and a
+# rest once fifty have gone out inside ten minutes. At 2 s DuckDuckGo starts
+# answering with a bot check within twenty minutes.
+SEARCH_INTERVAL_S = 8.0
+SEARCH_JITTER_S = 4.0
+SEARCH_WINDOW_QUERIES = 50
+SEARCH_WINDOW_S = 600.0
 DEFAULT_RECHECK_DAYS = 30
 NAME_MATCH_OK = 0.5
 
@@ -184,8 +192,9 @@ async def check_site(
 # Search
 # ---------------------------------------------------------------------------
 
-SearchFn = Callable[[str, int], list[dict[str, str]]]
+SearchFn = Callable[..., list[dict[str, str]]]  # (query, max_results, *, page=1)
 _last_search_at = 0.0
+_recent_queries: deque[float] = deque()  # when the last SEARCH_WINDOW_QUERIES went out
 
 
 SEARCH_BACKOFF_S: tuple[float, ...] = (15.0, 45.0)
@@ -215,7 +224,7 @@ def _engine() -> Any:
     return Duckduckgo(timeout=10)
 
 
-def _raw_search(query: str, max_results: int) -> list[dict[str, str]]:
+def _raw_search(query: str, max_results: int, page: int = 1) -> list[dict[str, str]]:
     """One request to DuckDuckGo through the ddgs engine (pinned: the
     library's "auto" tries Google and Brave first, which rate-limit us).
     The library folds a bot check into "No results found."; we read the
@@ -223,7 +232,7 @@ def _raw_search(query: str, max_results: int) -> list[dict[str, str]]:
     nothing and must not be logged as "not found" for 90 days."""
     engine = _engine()
     payload = engine.build_payload(
-        query=query, region="us-en", safesearch="moderate", timelimit=None, page=1
+        query=query, region="us-en", safesearch="moderate", timelimit=None, page=page
     )
     resp = engine.http_client.request(engine.search_method, engine.search_url, data=payload)
     if resp.status_code in _BLOCKED_STATUSES:
@@ -238,24 +247,37 @@ def _failure(text: str) -> list[dict[str, str]]:
     return [{"title": "", "href": "", "body": text}]
 
 
-def ddg_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
-    """DuckDuckGo text results as {title, href, body}. Throttled so a batch
-    of corrections never hammers the engine. A failure comes back as one row
-    whose body starts with "search failed"; an empty list is a real answer."""
+def _pace() -> None:
+    """Wait until the next query is due: the steady interval with a little
+    jitter, and a rest when the window's worth has already gone out."""
+    now = time.monotonic()
+    wait = SEARCH_INTERVAL_S + random.uniform(0, SEARCH_JITTER_S) - (now - _last_search_at)
+    while _recent_queries and now - _recent_queries[0] >= SEARCH_WINDOW_S:
+        _recent_queries.popleft()
+    if SEARCH_WINDOW_QUERIES and len(_recent_queries) >= SEARCH_WINDOW_QUERIES:
+        wait = max(wait, _recent_queries[0] + SEARCH_WINDOW_S - now)
+    if wait > 0:
+        time.sleep(wait)
+
+
+def ddg_search(query: str, max_results: int = 8, *, page: int = 1) -> list[dict[str, str]]:
+    """DuckDuckGo text results as {title, href, body}; `page` 2 is the next
+    ten. Paced so a batch never hammers the engine. A failure comes back as
+    one row whose body starts with "search failed"; an empty list is a real
+    answer."""
     global _last_search_at, _blocked_until  # noqa: PLW0603
 
     if time.monotonic() < _blocked_until:
         return _failure("search failed: blocked -- DuckDuckGo asked for a bot check earlier; "
                         "leaving it alone for now")
-    wait = SEARCH_INTERVAL_S - (time.monotonic() - _last_search_at)
-    if wait > 0:
-        time.sleep(wait)
+    _pace()
     pauses = list(SEARCH_BACKOFF_S)
     blocked_once = False
     while True:
         _last_search_at = time.monotonic()
+        _recent_queries.append(_last_search_at)
         try:
-            return _raw_search(query, max_results)
+            return _raw_search(query, max_results, page)
         except SearchBlocked as exc:
             if blocked_once or not BLOCK_BACKOFF_S:
                 _blocked_until = time.monotonic() + BLOCK_COOLDOWN_S

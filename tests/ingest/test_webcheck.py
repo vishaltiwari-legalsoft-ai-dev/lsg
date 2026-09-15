@@ -89,19 +89,45 @@ def test_page_identity_reads_title_and_jsonld():
 
 def _quiet_search(monkeypatch):
     monkeypatch.setattr(webcheck, "SEARCH_INTERVAL_S", 0)
+    monkeypatch.setattr(webcheck, "SEARCH_JITTER_S", 0)
+    monkeypatch.setattr(webcheck, "SEARCH_WINDOW_QUERIES", 0)
     monkeypatch.setattr(webcheck, "_last_search_at", 0.0)
     monkeypatch.setattr(webcheck, "_blocked_until", 0.0)
+    webcheck._recent_queries.clear()
+
+
+def test_ddg_pacing_rests_once_the_windows_worth_has_gone_out(monkeypatch):
+    clock = [1000.0]
+    slept: list[float] = []
+
+    def sleep(s):
+        slept.append(s)
+        clock[0] += s
+
+    _quiet_search(monkeypatch)
+    monkeypatch.setattr(webcheck, "SEARCH_WINDOW_QUERIES", 2)
+    monkeypatch.setattr(webcheck, "SEARCH_WINDOW_S", 100.0)
+    monkeypatch.setattr(webcheck.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(webcheck.time, "sleep", sleep)
+    monkeypatch.setattr(webcheck, "_raw_search", lambda q, n, page=1: [])
+    webcheck.ddg_search("a")
+    webcheck.ddg_search("b")
+    assert slept == []  # two inside the window: no rest yet
+    webcheck.ddg_search("c")
+    assert slept == [100.0]  # the third waits until the first has aged out
+    webcheck.ddg_search("d")
+    assert slept == [100.0]  # the window has room again
 
 
 def test_ddg_no_results_is_an_empty_answer_not_a_failure(monkeypatch):
     from ddgs.exceptions import DDGSException
 
-    def broken(query, n):
+    def broken(query, n, page=1):
         raise DDGSException("Ratelimit")
 
     _quiet_search(monkeypatch)
     monkeypatch.setattr(webcheck, "SEARCH_BACKOFF_S", ())
-    monkeypatch.setattr(webcheck, "_raw_search", lambda query, n: [])
+    monkeypatch.setattr(webcheck, "_raw_search", lambda query, n, page=1: [])
     assert webcheck.ddg_search('"Nobody Law" Atlanta GA law firm') == []
     monkeypatch.setattr(webcheck, "_raw_search", broken)
     failed = webcheck.ddg_search('"Nobody Law" Atlanta GA law firm')
@@ -114,7 +140,7 @@ def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
     calls: list[int] = []
     slept: list[float] = []
 
-    def flaky(query, n):
+    def flaky(query, n, page=1):
         calls.append(1)
         if len(calls) < 3:
             raise DDGSException("ConnectError: error sending request")
@@ -130,7 +156,7 @@ def test_ddg_retries_a_dropped_connection_then_gives_up(monkeypatch):
     calls.clear()
     slept.clear()
 
-    def dead(query, n):
+    def dead(query, n, page=1):
         raise DDGSException("ConnectError: error sending request")
 
     monkeypatch.setattr(webcheck, "_raw_search", dead)
@@ -144,7 +170,7 @@ def test_ddg_bot_check_backs_off_once_then_leaves_the_engine_alone(monkeypatch):
     calls: list[str] = []
     slept: list[float] = []
 
-    def challenged(query, n):
+    def challenged(query, n, page=1):
         calls.append(query)
         raise webcheck.SearchBlocked("DuckDuckGo answered 202 (bot check), not results")
 
@@ -196,6 +222,9 @@ def test_raw_search_reads_the_status_before_the_page(monkeypatch):
     assert rows == [{"title": "Doe Law", "href": "https://doe.law/",
                      "body": "Doe Law is a firm in Atlanta"}]
     assert eng.http_client.sent[0]["data"]["q"] == '"Doe Law" Atlanta'
+    assert "s" not in eng.http_client.sent[0]["data"]
+    webcheck._raw_search('"Doe Law" Atlanta', 10, page=2)
+    assert eng.http_client.sent[1]["data"]["s"] == "10"  # the engine's offset for page two
 
     monkeypatch.setattr(webcheck, "_engine", lambda: engine_with(202, "<html>anomaly</html>"))
     with pytest.raises(webcheck.SearchBlocked):

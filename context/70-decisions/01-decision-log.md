@@ -823,6 +823,33 @@ that was not committed yet, found nothing, and returned without a word.
   site parser once took for names ("REAL ESTATE MATTERS") are skipped, as the LinkedIn
   search already did.
 
+## D-041 · One search per firm finds its people; the engine is asked a tenth as often
+
+**Asked for (16 Sep 2026):** "ddg ko optimize nhi kr skte?" -- after D-039 the LinkedIn
+pass was one query per person at a pace DuckDuckGo would not tolerate for long: about
+250,000 queries for the full list, and a bot check within twenty minutes.
+
+**Rulings:**
+- **A sweep per firm first**: `site:linkedin.com "<firm>"`. Every profile on the results
+  page is matched against the firm's named people without a profile (up to 60, owners
+  first; both name tokens required, one result per person). The company page and its
+  headcount ride along in the same results. A second page is asked for only when the
+  first was full (8+ profiles) and people are still unmatched. This supersedes D-038's
+  `"<firm>" linkedin company` query, which is gone.
+- **A query of their own only for decision-makers the sweep missed** (owners and
+  administrators, `max_people` per firm, default 4). Attorneys and unknowns are found by
+  the sweep or not at all. The email search trims the same way: per-person email queries
+  only for decision-makers the firm query and the pattern left without an address.
+- **The pace of one careful person**: a query every 8-12 s (jittered) and a rest once
+  fifty have gone out within ten minutes. That honours the engine's limit; rotating
+  addresses or fingerprints would dodge it and stays off the table (D-039).
+- **What it adds up to**: roughly 30,000 queries for all 22,000 firms instead of
+  250,000, about three days of background running, free. Coverage is bounded by what
+  DuckDuckGo indexes; a paid search API (Brave, Google CSE) would drain the same queue in
+  hours and slots in as an adapter when a key exists.
+- **The run's note is one string** for both stop reasons, so "the rest wait for the next
+  run" is never dropped (the review finding on bc8b4a2).
+
 ---
 
 ## Standing rulings that were never in dispute
