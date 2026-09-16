@@ -4,9 +4,9 @@ The Legal Soft lead generation project is three repositories. This is the first 
 
 | Repo | Folder | What it is |
 |---|---|---|
-| **Brain** | `lead-gen-brain` | Why we are building it and what has been built. Plans, decisions, specs, and `REPORT.md` — the day-by-day report. No code. |
-| **Backend** | `Lead Gen Engine` | The engine: scrapers, normalisation, identity resolution, scoring, the lead lifecycle, the database and the API. |
-| **Frontend** | `lead-gen-web` | The screens people actually work in. |
+| **Brain** | `Lead Gen Engine/brain` | Why we are building it and what has been built. Plans, decisions, specs, and `REPORT.md` — the day-by-day report. No code. |
+| **Backend** | `Lead Gen Engine` (the folder above) | The engine: scrapers, normalisation, identity resolution, scoring, the lead lifecycle, the database and the API. |
+| **Frontend** | `Lead Gen Engine/frontend` | The screens people actually work in. |
 
 Start with `REPORT.md` for where the project stands, `PLAN.md` for where it is going, and `context/70-decisions/01-decision-log.md` for why anything is the way it is.
 

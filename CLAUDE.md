@@ -29,5 +29,5 @@ Decisions are numbered `D-001` onward in `context/70-decisions/01-decision-log.m
 
 ## The other two repos
 
-- **Backend** — `../Lead Gen Engine`: the engine, the scrapers, the database, the API.
-- **Frontend** — `../lead-gen-web`: the screens.
+- **Backend** — the folder above this one (`..`): the engine, the scrapers, the database, the API.
+- **Frontend** — `../frontend`: the screens.

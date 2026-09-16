@@ -124,8 +124,9 @@ Full plan: [plan/ui-plan.md](plan/ui-plan.md)
 
 | Repo | What | Where |
 |---|---|---|
-| **backend** | This engine + a FastAPI layer + the knowledge base | This folder (already a git repo; the database, venv and data live here) |
-| **frontend** | Next.js web app, types generated from the backend's OpenAPI contract | New sibling repo `C:\Users\ACER\Desktop\lead-gen-web` |
+| **backend** | This engine + a FastAPI layer | `Lead Gen Engine` — the main folder (the database, venv and data live here) |
+| **frontend** | Next.js web app, types generated from the backend's OpenAPI contract | `Lead Gen Engine/frontend` — its own repo inside the main folder |
+| **brain** | The knowledge base, the plans, and `REPORT.md` | `Lead Gen Engine/brain` — its own repo inside the main folder |
 
 **Split timing:** right after the live probe completes and its results are verified. Moving the
 database or venv under a running crawl would break it, and the API contract has to exist before
