@@ -1,16 +1,16 @@
 # Lead Gen Engine — backend
 
-The engine: scrapers, database, scoring, API. Three repos: **brain** `../lead-gen-brain` (plans, decisions, report), **backend** here, **frontend** `../lead-gen-web`.
+The engine: scrapers, database, scoring, API. Three repos: **brain** `brain/` (plans, decisions, report), **backend** here, **frontend** `frontend/`.
 
 ## At the end of every session, write the report
 
-Add what you did to `../lead-gen-brain/REPORT.md`: one entry per day, newest first, **one paragraph in plain words** — what was built or fixed and why it mattered. No bullets, no file names, no jargon. If today's entry exists, extend it instead of adding another.
+Add what you did to `brain/REPORT.md`: one entry per day, newest first, **one paragraph in plain words** — what was built or fixed and why it mattered. No bullets, no file names, no jargon. If today's entry exists, extend it instead of adding another.
 
-A decision that changes behaviour also gets a numbered entry in `../lead-gen-brain/context/70-decisions/01-decision-log.md` in the same session.
+A decision that changes behaviour also gets a numbered entry in `brain/context/70-decisions/01-decision-log.md` in the same session.
 
 ## Where the docs are
 
-Docstrings in `lge/` cite `plan/api-contract.md` and `context/...`. Those paths are now relative to `../lead-gen-brain/`.
+Docstrings in `lge/` cite `plan/api-contract.md` and `context/...`. Those paths are now relative to `brain/`.
 
 ## Running things here
 

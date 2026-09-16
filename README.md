@@ -2,7 +2,7 @@
 
 The engine behind the Legal Soft lead generation project: ingest, crawl, normalise, resolve identity, extract, score, and serve it all over an API.
 
-One of three repos. The plans, decisions and the day-by-day report live in **`../lead-gen-brain`**; the screens live in **`../lead-gen-web`**.
+One of three repos. The plans, decisions and the day-by-day report live in **`brain/`**; the screens live in **`frontend/`**.
 
 ## Layout
 
@@ -42,4 +42,4 @@ The API binds to `127.0.0.1` only. It serves contact details, which are personal
 
 ## At the end of a session
 
-Write one plain-words paragraph about what changed into `../lead-gen-brain/REPORT.md`. The rule is in that repo's `CLAUDE.md`.
+Write one plain-words paragraph about what changed into `brain/REPORT.md`. The rule is in that repo's `CLAUDE.md`.

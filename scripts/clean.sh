@@ -10,7 +10,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WEB_DIR="$(cd "$ROOT_DIR/.." && pwd)/lead-gen-web"
+WEB_DIR="$ROOT_DIR/frontend"
 DRY=1
 [ "${1:-}" = "--yes" ] && DRY=0
 

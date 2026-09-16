@@ -13,3 +13,7 @@ data/out/
 
 # secrets
 .env
+
+# the other two repos live inside this folder but keep their own git history
+/brain/
+/frontend/
