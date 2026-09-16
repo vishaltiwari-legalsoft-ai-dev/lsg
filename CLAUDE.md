@@ -15,7 +15,7 @@ Docstrings in `lge/` cite `plan/api-contract.md` and `context/...`. Those paths 
 ## Running things here
 
 - `bash scripts/pg.sh start` — portable Postgres, port 54329, database `lge`.
-- `python -m lge <cmd>` and `python -m pytest` — Application Control blocks the `.venv` stubs, so never call `lge.exe` or `pytest.exe` directly.
+- `.venv/Scripts/python.exe -m lge <cmd>` and `... -m pytest` — go through the interpreter. Application Control blocks the `.venv` launcher stubs, so never call `lge.exe` or `pytest.exe`, and the system `python` has none of the dependencies.
 - `uv run --no-sync` while any process is running; a plain `uv run` tries to rewrite a locked environment.
 - Stop a server **by exact PID only**, verified against the port and its command line. Never by name or pattern — that has killed an unrelated service before.
 - `.local/objects` is the raw-page store and `.local/pgdata` is the database. Never delete either.

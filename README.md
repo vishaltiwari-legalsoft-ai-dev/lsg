@@ -23,9 +23,9 @@ Windows Application Control blocks the `.venv` launcher stubs, so always go thro
 
 ```bash
 bash scripts/pg.sh start          # portable Postgres on port 54329
-python -m lge migrate             # apply sql/ in order
-python -m lge serve               # API on 127.0.0.1:8000
-python -m pytest                  # the suite
+.venv/Scripts/python.exe -m lge migrate   # apply sql/ in order
+.venv/Scripts/python.exe -m lge serve     # API on 127.0.0.1:8000
+.venv/Scripts/python.exe -m pytest       # the suite
 ```
 
 `uv run` must be called as `uv run --no-sync` while anything is running, or it tries to rewrite a locked environment.
