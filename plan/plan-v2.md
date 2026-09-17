@@ -110,6 +110,8 @@ Rules that hold across every chunk:
 
 **Deliverable:** % of decision-makers at qualified probe firms with (a) a LinkedIn profile, (b) an email, (c) a *verified* email.
 
+**Status — built 17 Sep 2026 (D-046), live run pending.** Hunter behind `r1_enrich` (finder) and `r4_verify` (verifier), NeverBounce as the verifier switch, both chosen by the settings. Tested against recorded answers. The measurement above runs the day `HUNTER_API_KEY` lands in `.env`.
+
 ### 5. Strict ICP — one checklist, each rule with evidence
 
 **Today:** a fixed tier rule from the original spec covering five customer segments; it is generic, not one profile.

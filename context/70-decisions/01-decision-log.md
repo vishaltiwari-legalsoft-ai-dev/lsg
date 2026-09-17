@@ -994,6 +994,38 @@ the possibility to switch.
   measurement for this chunk: profiles found per firm, queries per firm, failure rate.
 - **Bing is not an option**: Microsoft retired its Web Search API in August 2025.
 
+## D-046 · Chunk 4: Hunter finds and verifies decision-makers' addresses; NeverBounce stays a switch
+
+**Built (17 Sep 2026)** as plan-v2 workstream 4. The user's call: Hunter, with the
+possibility to switch the verifier to NeverBounce, which they have used and found expensive.
+
+**Rulings:**
+- **Two seams, both chosen by the settings.** `r1_enrich` is the email *finder*
+  (`settings.email_finder_name()`: `hunter` when its key exists, else inert) and `r4_verify`
+  the *verifier* (`settings.email_verifier_name()`: `hunter`, else `neverbounce`, else
+  inert). `config/resolvers.yml` says `auto` for both; a name there or `--opt provider=`
+  forces one. Keys come from the environment first, then `.env` through the settings --
+  r4 used to read only the environment, so a key kept in `.env` was invisible to it.
+- **Who gets looked up.** A tiered, non-DQ firm with no owner/admin contact, or with one who
+  has no address. For a known decision-maker Hunter's Email Finder is asked (domain + first
+  + last), up to four per firm; for a firm with nobody, the Domain Search, from which only
+  owners and administrators are taken (the position through `classify_role`, or Hunter's
+  `executive` seniority), added as contacts with source `hunter`, never duplicating a name
+  already on file.
+- **Hunter's verdict is mapped onto OUR vocabulary, never trusted upward.** `valid` ->
+  'valid'; `accept_all` -> 'catch_all' (a failure, as everywhere); `invalid`/`disposable` ->
+  'invalid'; `webmail`/`unknown` -> 'risky'; an address the finder returned without a
+  verification stays 'unverified' for R4. An existing row is upgraded only from
+  'unverified'. A verifier answer with no data (Hunter's 222 "still checking") writes no
+  attempt row, so it is asked again next run and never billed twice.
+- **Idempotency follows the people, not the firm**: the once-key is the domain plus the
+  decision-makers still without an address, so a person found later gets a lookup and the
+  same people are never paid for twice.
+- **Cost guard**: `price_per_request_usd.hunter: 0.049` (Starter, ~$49/1,000 requests -- a
+  placeholder) for `--opt max_usd`.
+- **Not verified live**: no `HUNTER_API_KEY` yet; both adapters are tested against recorded
+  answers. The first live run over the probe's qualified firms is the measurement.
+
 ---
 
 ## Standing rulings that were never in dispute
