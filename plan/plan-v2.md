@@ -110,7 +110,7 @@ Rules that hold across every chunk:
 
 **Deliverable:** % of decision-makers at qualified probe firms with (a) a LinkedIn profile, (b) an email, (c) a *verified* email.
 
-**Status — built 17 Sep 2026 (D-046), revised the same day (D-050).** Addresses are found by our own scraping — site, search results, the firm's pattern; no finder vendor (the Hunter adapter stays unselected). Verification is rented from a verification-only service: NeverBounce or ZeroBounce, both adapters in `r4_verify`, chosen by whichever key exists. The measurement above runs the day a verification key lands in `.env`.
+**Status — built 17 Sep 2026 (D-046), revised the same day (D-050, D-051).** Addresses are found by our own scraping — the site, search results, the firm's pattern, and now the person's own name: `r_email_guess` builds the candidate addresses from first name, last name and domain and has the verifier confirm one. No finder vendor (the Hunter adapter stays unselected). Verification is rented from a verification-only service: NeverBounce or ZeroBounce, both adapters in `r4_verify`, chosen by whichever key exists. The measurement above runs the day a verification key lands in `.env`.
 
 ### 5. Strict ICP — one checklist, each rule with evidence
 

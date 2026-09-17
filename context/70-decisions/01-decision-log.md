@@ -1144,6 +1144,31 @@ direction, then we run scraping jobs. Why are you sending me to Hunter?"
 - **The ask to the manager is therefore two utilities**: Serper credits (~$50 for the whole
   list) and a verification balance (~$10-20 for the first thousand decision-makers).
 
+## D-051 · A decision-maker's address from their name and the domain, confirmed by the verifier
+
+**Asked for (17 Sep 2026):** "take the decision-maker's first name and last name with the
+domain, make the combinations, one of them will be the real address, then check it with
+NeverBounce -- why were you sending me to Hunter?" The gap was real: r3 learns a firm's
+pattern only once *one* real address is known; a firm with none stayed empty.
+
+**Rulings:**
+- **`r_email_guess`** (Plane R) fills that gap. For a decision-maker with no address at a
+  tiered firm where nobody has an on-domain address yet, it builds the eleven schemes'
+  candidates -- first.last, first, flast, firstlast, first_last, firstl, f.last, last,
+  lastf, last.first, lastfirst, in the order the probe saw them -- and asks the verifier
+  about each until one comes back `valid`. The hit is the person's address, scheme recorded,
+  `verified_at` set; r3 then learns the firm's pattern from it and mints the rest of the
+  firm's people on its next run.
+- **A catch-all domain ends the spending for the whole firm**: the first `catch_all` answer
+  puts the most common scheme on file for every decision-maker there with status
+  `catch_all` -- on file, never sent to -- and no further call is made for that domain.
+- **Never paid for twice**: every candidate is logged in `verify_attempt`; a prior answer is
+  read back instead of bought again. `max_candidates` (6) caps a person, `--opt max_usd` caps
+  a run, five failures in a row stop it. About a cent a candidate, two or three on average.
+- **Wired in** after `r3_email_pattern` in research-on-demand (full and contacts scopes) and in
+  the `profile_probe` flow, before `r4_verify`. Inert without a verifier key, like R4. The
+  home page's key question no longer names Hunter.
+
 ---
 
 ## Standing rulings that were never in dispute
