@@ -27,7 +27,7 @@ _DEFAULT_ADMIN_DSN = "postgresql://postgres@127.0.0.1:54329/postgres"
 COLUMN_READERS = ("auto", "llm", "rules")
 SEARCH_ENGINES = ("auto", "serper", "brave", "ddg")
 EMAIL_FINDERS = ("auto", "hunter", "none")
-EMAIL_VERIFIERS = ("auto", "hunter", "neverbounce", "none")
+EMAIL_VERIFIERS = ("auto", "hunter", "neverbounce", "zerobounce", "none")
 
 
 def _read_dotenv(path: Path) -> dict[str, str]:
@@ -77,9 +77,10 @@ class Settings:
     serper_api_key: str = ""
     brave_api_key: str = ""
     email_finder: str = "auto"  # auto | hunter | none
-    email_verifier: str = "auto"  # auto | hunter | neverbounce | none
+    email_verifier: str = "auto"  # auto | hunter | neverbounce | zerobounce | none
     hunter_api_key: str = ""
     neverbounce_api_key: str = ""
+    zerobounce_api_key: str = ""
 
     # Resolved choices: `auto` becomes the first provider with a key. A
     # component calls these, never the raw fields, so the fallback order is
@@ -106,10 +107,14 @@ class Settings:
     def email_verifier_name(self) -> str:
         if self.email_verifier != "auto":
             return self.email_verifier
+        # Verification-only services first in practice (D-050): Hunter's key
+        # is never expected to be present.
         if self.hunter_api_key:
             return "hunter"
         if self.neverbounce_api_key:
             return "neverbounce"
+        if self.zerobounce_api_key:
+            return "zerobounce"
         return "none"
 
 
@@ -144,6 +149,7 @@ def _load_settings() -> Settings:
         email_verifier=_choice(get("LGE_EMAIL_VERIFIER"), EMAIL_VERIFIERS, "LGE_EMAIL_VERIFIER"),
         hunter_api_key=get("HUNTER_API_KEY", ""),
         neverbounce_api_key=get("NEVERBOUNCE_API_KEY", ""),
+        zerobounce_api_key=get("ZEROBOUNCE_API_KEY", ""),
     )
 
 
