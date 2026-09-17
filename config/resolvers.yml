@@ -21,9 +21,10 @@ r3_email_pattern:
   confidence_single: 0.6
 
 r4_verify:
-  # none (inert default) | zerobounce | neverbounce. Selecting a provider with
-  # no matching API key still runs inert -- see r4_verify.py's docstring.
-  provider: none
+  # auto (the settings' choice: the first verifier with a key -- hunter, then
+  # neverbounce -- else inert) | none | zerobounce | neverbounce | hunter.
+  # Selecting a provider with no matching API key still runs inert.
+  provider: auto
   timeout_s: 10.0
   max_retries: 2
   backoff_base_s: 1.0
@@ -34,6 +35,7 @@ r4_verify:
   price_per_email_usd:
     zerobounce: 0.007
     neverbounce: 0.008
+    hunter: 0.049
 
 r5_phone:
   # DNC scrub adapter selection. 'none' is the only implementation today --
@@ -54,5 +56,13 @@ r2_bar_join:
   city_name_similarity: 0.82
 
 r1_enrich:
-  # none (inert default). No vendor is contracted yet -- see r1_enrich.py.
-  provider: none
+  # auto (the settings' choice: hunter when its key exists, else inert) |
+  # none | hunter. See r1_enrich.py.
+  provider: auto
+  timeout_s: 15.0
+  # decision-makers looked up per firm, and people taken from a domain search
+  max_people: 4
+  # USD per request, for the --opt max_usd guard only (Hunter's Starter plan
+  # is about $49 for 1,000 requests -- a placeholder, not a contract).
+  price_per_request_usd:
+    hunter: 0.049

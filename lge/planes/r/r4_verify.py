@@ -59,17 +59,19 @@ from lge.registry import RunContext, RunResult, component
 
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "resolvers.yml"
 
-# Provider name -> the environment variable its API key is read from. Read
-# directly from os.environ (never lge.settings.Settings, which is another
-# agent's owned file) -- same "env var, with a .env fallback the shell
-# already provides" contract Settings itself follows for OPENROUTER_API_KEY.
+# Provider name -> the environment variable its API key is read from; the
+# environment wins, then lge.settings (which reads .env) for the providers it
+# knows (hunter, neverbounce). Which provider runs is the settings' choice
+# unless config or --opt name one (D-046).
 _ENV_KEYS: dict[str, str] = {
     "zerobounce": "ZEROBOUNCE_API_KEY",
     "neverbounce": "NEVERBOUNCE_API_KEY",
+    "hunter": "HUNTER_API_KEY",
 }
 
 _ZEROBOUNCE_URL = "https://api.zerobounce.net/v2/validate"
 _NEVERBOUNCE_URL = "https://api.neverbounce.com/v4/single/check"
+_HUNTER_URL = "https://api.hunter.io/v2/email-verifier"
 
 _VALID_STATUSES = {"valid", "catch_all", "risky", "invalid"}
 
@@ -186,11 +188,57 @@ def verify_neverbounce(
     return VerifyResult(status, raw)
 
 
+# Hunter /v2/email-verifier documented `status` values. `accept_all` is a
+# catch-all domain -- a failure, as everywhere else in this file.
+_HUNTER_STATUS_MAP: dict[str, str] = {
+    "valid": "valid",
+    "accept_all": "catch_all",
+    "unknown": "risky",
+    "webmail": "risky",
+    "invalid": "invalid",
+    "disposable": "invalid",
+}
+
+
+def verify_hunter(
+    email: str, *, client: httpx.Client, api_key: str, cfg: dict[str, Any]
+) -> VerifyResult:
+    raw = _get_with_retry(
+        client, _HUNTER_URL, params={"api_key": api_key, "email": email}, cfg=cfg
+    )
+    data = raw.get("data") or {}
+    if not data:
+        # Hunter answers 222 with no data while a check is still running: not
+        # a billable answer, so no attempt row -- the next run asks again.
+        raise VerifyError("hunter: no verdict yet (check still running)")
+    status = _HUNTER_STATUS_MAP.get(str(data.get("status", "")).lower(), "risky")
+    return VerifyResult(status, raw)
+
+
 _ADAPTERS: dict[str, VerifyAdapter] = {
     "none": verify_none,
     "zerobounce": verify_zerobounce,
     "neverbounce": verify_neverbounce,
+    "hunter": verify_hunter,
 }
+
+
+def provider_for(cfg: dict[str, Any], settings: Any, override: Any = None) -> str:
+    """`--opt provider=` wins; a config value other than auto/none wins next;
+    otherwise the settings' choice (the first verifier with a key, else none)."""
+    if override not in (None, ""):
+        return str(override)
+    configured = str(cfg.get("provider") or "auto")
+    if configured not in ("auto", "none"):
+        return configured
+    return settings.email_verifier_name()
+
+
+def api_key_for(provider: str, settings: Any) -> str:
+    env_key = _ENV_KEYS.get(provider)
+    if not env_key:
+        return ""
+    return os.environ.get(env_key, "") or str(getattr(settings, f"{provider}_api_key", "") or "")
 
 
 def _select_candidates(conn, opts: dict[str, Any]) -> list[dict]:
@@ -247,12 +295,12 @@ def _already_attempted(conn, email: str, provider: str) -> bool:
 def run(ctx: RunContext, **opts: Any) -> RunResult:
     conn = ctx.conn
     cfg = _config()
-    provider = str(opts.get("provider", cfg.get("provider", "none")))
+    provider = provider_for(cfg, ctx.settings, opts.get("provider"))
 
     candidates = _select_candidates(conn, opts)
 
     env_key = _ENV_KEYS.get(provider)
-    api_key = os.environ.get(env_key, "") if env_key else ""
+    api_key = api_key_for(provider, ctx.settings)
 
     if provider == "none" or provider not in _ADAPTERS or (env_key and not api_key):
         return RunResult(

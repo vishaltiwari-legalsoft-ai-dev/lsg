@@ -46,6 +46,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "search:ddg": "Web search (DuckDuckGo)",
     "search:serper": "Web search (Google)",
     "search:brave": "Web search (Brave)",
+    "hunter": "Hunter.io",
     "internal_firms": "Purchased firm list",
     "internal_jobs": "Job history file",
     "careers": "Careers page",

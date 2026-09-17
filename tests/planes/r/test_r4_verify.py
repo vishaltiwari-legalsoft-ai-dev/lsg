@@ -254,3 +254,52 @@ def test_idempotent_across_different_contacts_same_email(db, monkeypatch):
     assert route.call_count == 1
     assert result.processed == 1
     assert result.skipped == 1
+
+
+@respx.mock
+def test_hunter_status_mapping_and_a_pending_check_is_not_billed(db, monkeypatch):
+    """Hunter's `accept_all` is a catch-all -- a failure; `valid` is the only
+    pass; an answer with no data (Hunter's 222 "still checking") writes no
+    attempt row, so the next run asks again (D-046)."""
+    monkeypatch.setenv("HUNTER_API_KEY", "k")
+    firm_id = make_firm(db, tier="1A")
+    c1, e1 = _insert_contact_with_email(db, firm_id, role="owner", email="a@firm.example")
+    c2, e2 = _insert_contact_with_email(db, firm_id, role="admin", email="b@firm.example")
+    c3, e3 = _insert_contact_with_email(db, firm_id, role="owner", email="c@firm.example")
+
+    def answer(request):
+        email = request.url.params["email"]
+        if email == e1:
+            return httpx.Response(200, json={"data": {"status": "accept_all", "result": "risky"}})
+        if email == e2:
+            return httpx.Response(200, json={"data": {"status": "valid", "result": "deliverable"}})
+        return httpx.Response(222, json={"errors": [{"id": "in_progress"}]})
+
+    route = respx.get(r4_verify._HUNTER_URL).mock(side_effect=answer)
+    result = r4_verify.run(_ctx(db), provider="hunter")
+    assert route.calls.last.request.url.params["api_key"] == "k"
+    assert result.processed == 2 and result.failed == 1
+    assert _email_status(db, c1, e1) == "catch_all"
+    assert _email_status(db, c2, e2) == "valid"
+    assert _email_status(db, c3, e3) == "unverified"
+    assert _attempt_count(db, e1, "hunter") == 1 and _attempt_count(db, e3, "hunter") == 0
+
+
+@respx.mock
+def test_the_verifier_follows_the_settings_when_config_says_auto(db):
+    from lge.settings import Settings
+
+    firm_id = make_firm(db, tier="1A")
+    c1, e1 = _insert_contact_with_email(db, firm_id, role="owner", email="a@firm.example")
+    respx.get(r4_verify._HUNTER_URL).mock(
+        return_value=httpx.Response(200, json={"data": {"status": "valid"}})
+    )
+    settings = Settings(dsn="", admin_dsn="", object_store=".", user_agent="",
+                        anthropic_api_key="", openrouter_api_key="", live=False,
+                        email_verifier="auto", hunter_api_key="k")
+    assert r4_verify.provider_for({"provider": "auto"}, settings) == "hunter"
+    result = r4_verify.run(RunContext(db, settings))
+    assert result.processed == 1
+    assert _email_status(db, c1, e1) == "valid"
+    # the test suite's own settings name no verifier: inert, as before
+    assert r4_verify.provider_for({"provider": "auto"}, get_settings()) == "none"
