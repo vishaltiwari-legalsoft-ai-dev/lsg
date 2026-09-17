@@ -155,3 +155,9 @@ def test_failed_queries_are_retried_and_nothing_runs_without_live(db):
     assert len(working.queries) == 2
     r_search_emails.run(ctx(db, live=True), search=working)
     assert len(working.queries) == 2
+
+
+def test_the_person_query_carries_the_city():
+    assert r_search_emails.person_query("Hartley Injury Law", "Margaret Hartley", "Atlanta") == (
+        '"Margaret Hartley" "Hartley Injury Law" Atlanta email'
+    )

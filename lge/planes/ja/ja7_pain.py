@@ -187,7 +187,7 @@ def write_pain_signals(conn: Any, firm_id: Any, firm_name: str, claims: dict[str
             url = snippet.get("url")
             evidence = {
                 "quote": quote, "match": phrase, "url": url,
-                "source": "search:ddg", "sources": ["search:ddg"],
+                "source": snippets_claim["source"], "sources": [snippets_claim["source"]],
             }
             fp = _fingerprint(str(firm_id), "review_unreturned_call", url or quote)
             if _write(conn, firm_id, "review_unreturned_call", fp, seen, seen, evidence):

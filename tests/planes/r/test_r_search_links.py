@@ -161,7 +161,7 @@ def test_profiles_and_reviews_are_found_logged_and_not_repeated(db):
     ]
     # one sweep found both people: no query of their own was needed
     assert search.queries == [
-        'site:linkedin.com "Hartley Injury Law"',
+        'site:linkedin.com "Hartley Injury Law" Atlanta',  # the city keeps namesakes apart
         '"Hartley Injury Law" Atlanta GA google business reviews',
     ]
 
@@ -397,3 +397,62 @@ def test_a_failed_search_is_logged_as_failed_and_retried_next_run(db):
     assert outcomes.count("found") == 1 and outcomes.count("not_found") == 2
     r_search_links.run(ctx(db, live=True), search=working)
     assert len(working.queries) == 3  # nothing asked a third time
+
+
+def test_queries_carry_the_city_when_the_firm_has_one():
+    assert r_search_links.sweep_query("Hartley Injury Law", "Atlanta") == (
+        'site:linkedin.com "Hartley Injury Law" Atlanta'
+    )
+    assert r_search_links.linkedin_query("Hartley Injury Law", "Margaret Hartley", "Atlanta") == (
+        '"Hartley Injury Law" "Margaret Hartley" Atlanta linkedin'
+    )
+    assert r_search_links.places_query("Hartley Injury Law", "Atlanta", "GA") == (
+        "Hartley Injury Law Atlanta GA"
+    )
+    assert r_search_links.pick_listing("Hartley Injury Law", [
+        {"name": "Hartley Dental"}, {"name": "Hartley Injury Law, P.C.", "rating": 4.9},
+    ])["rating"] == 4.9
+    assert r_search_links.pick_listing("Hartley Injury Law", [{"name": "Hartley Dental"}]) is None
+    # a listing whose category is not a law practice is never the firm
+    assert r_search_links.pick_listing("Smith Law", [
+        {"name": "Smith Legal", "category": "Dentist"},
+    ]) is None
+    assert r_search_links.pick_listing("Hartley Injury Law", None) is None
+
+
+def test_a_listing_from_the_engine_beats_the_snippets(db):
+    """When the engine has a listings endpoint, the Google Business Profile is
+    read from it -- rating, count, the listing's own URL -- and the snippet
+    query is never asked (D-045)."""
+    firm_id = make_firm(db, canonical_name="Hartley Injury Law", domain="hartleylaw.com",
+                        city="Atlanta", state="GA")
+    search = Recorder({})
+    listings = [{"name": "Hartley Injury Law", "address": "1 Peachtree St, Atlanta, GA",
+                 "rating": 4.8, "review_count": 212, "phone": None, "website": None,
+                 "url": "https://www.google.com/maps?cid=123"}]
+    asked: list[str] = []
+
+    def places(query):
+        asked.append(query)
+        return listings
+
+    result = r_search_links.run(ctx(db, live=True), search=search, places=places)
+    assert result.processed == 1
+    assert asked == ["Hartley Injury Law Atlanta GA"]
+    assert not any("google business reviews" in q for q in search.queries)
+    with db.cursor() as cur:
+        cur.execute(
+            "SELECT attr, value, confidence FROM firm_attribute WHERE firm_id = %s "
+            "AND attr IN ('google_rating', 'review_count', 'google_business_url') ORDER BY attr",
+            (firm_id,),
+        )
+        claims = {r["attr"]: r for r in cur.fetchall()}
+        cur.execute(
+            "SELECT outcome, url, rating, review_count, engine FROM search_log "
+            "WHERE firm_id = %s AND kind = 'reviews'", (firm_id,),
+        )
+        log = cur.fetchone()
+    assert claims["google_rating"]["value"] == 4.8 and claims["review_count"]["value"] == 212
+    assert claims["google_business_url"]["value"] == "https://www.google.com/maps?cid=123"
+    assert float(claims["review_count"]["confidence"]) == 0.85
+    assert log["outcome"] == "found" and log["review_count"] == 212 and log["engine"] == "ddg"

@@ -44,6 +44,8 @@ _SOURCE_LABELS: dict[str, str] = {
     "rules:site": "Firm website",
     "site:page": "Firm website (page text)",
     "search:ddg": "Web search (DuckDuckGo)",
+    "search:serper": "Web search (Google)",
+    "search:brave": "Web search (Brave)",
     "internal_firms": "Purchased firm list",
     "internal_jobs": "Job history file",
     "careers": "Careers page",

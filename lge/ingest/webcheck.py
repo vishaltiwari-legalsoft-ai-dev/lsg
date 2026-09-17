@@ -13,12 +13,13 @@ For each firm:
   5. answers, page names the firm         -> 'ok'
   6. answers, page is something else      -> 'mismatch'  -> search
 
-The search is DuckDuckGo (`ddgs`): "<firm name>" <city> <state> law firm.
+The search is whatever engine lge.search answers with (D-045): "<firm name>"
+<city> <state> law firm.
 Directory, social and aggregator results are dropped; the best remaining
 result whose title or snippet names the firm becomes the corrected domain.
 A correction is written three ways: a website_check row (outcome
 'corrected', with the query and every result considered), an observation
-from source 'search:ddg' (the one door), and the firm's domain itself under
+from source 'search:<engine>' (the one door), and the firm's domain itself under
 the 'resolve' writer, with the old domain kept as an alias. When the found
 domain already belongs to another firm record, nothing is rewritten and an
 identity_review row asks a person -- that is a duplicate, not a correction.
@@ -33,11 +34,7 @@ from __future__ import annotations
 import asyncio
 import functools
 import json
-import random
 import re
-import time
-from collections import deque
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -55,15 +52,10 @@ from lge.fetch.ratelimit import HostRateLimiter
 from lge.fetch.robots import RobotsCache
 from lge.norm import norm_domain, norm_name
 from lge.registry import RunContext, RunResult, component
+from lge.search import SearchFn
+from lge.search import search as web_search
+from lge.search import source as search_source
 
-SEARCH_SOURCE = "search:ddg"
-# The pace of one careful person at a keyboard: a query every 8-12 s, and a
-# rest once fifty have gone out inside ten minutes. At 2 s DuckDuckGo starts
-# answering with a bot check within twenty minutes.
-SEARCH_INTERVAL_S = 8.0
-SEARCH_JITTER_S = 4.0
-SEARCH_WINDOW_QUERIES = 50
-SEARCH_WINDOW_S = 600.0
 DEFAULT_RECHECK_DAYS = 30
 NAME_MATCH_OK = 0.5
 
@@ -189,105 +181,9 @@ async def check_site(
 
 
 # ---------------------------------------------------------------------------
-# Search
+# Search -- the engine behind it is lge.search (D-045); this module only
+# builds the query and judges the results.
 # ---------------------------------------------------------------------------
-
-SearchFn = Callable[..., list[dict[str, str]]]  # (query, max_results, *, page=1)
-_last_search_at = 0.0
-_recent_queries: deque[float] = deque()  # when the last SEARCH_WINDOW_QUERIES went out
-
-
-SEARCH_BACKOFF_S: tuple[float, ...] = (15.0, 45.0)
-# A bot check is the engine asking us to slow down. We do: wait, ask once
-# more, and if it is still checking, leave the engine alone for the rest of
-# the run (every later query fails at once, so the planes' breaker stops it).
-BLOCK_BACKOFF_S = 90.0
-BLOCK_COOLDOWN_S = 20 * 60.0
-_blocked_until = 0.0
-_BLOCKED_STATUSES = frozenset({202, 403, 429})  # 202 is DuckDuckGo's anomaly page
-
-
-class SearchBlocked(Exception):
-    """The engine answered with a bot check instead of results."""
-
-
-def _transient(exc: Exception) -> bool:
-    """A dropped connection, a timeout, a rate limit: worth a second try."""
-    text = f"{type(exc).__name__}: {exc}".lower()
-    words = ("connect", "timeout", "timed out", "ratelimit", "rate limit", "503", "502")
-    return any(w in text for w in words)
-
-
-def _engine() -> Any:
-    from ddgs.engines.duckduckgo import Duckduckgo
-
-    return Duckduckgo(timeout=10)
-
-
-def _raw_search(query: str, max_results: int, page: int = 1) -> list[dict[str, str]]:
-    """One request to DuckDuckGo through the ddgs engine (pinned: the
-    library's "auto" tries Google and Brave first, which rate-limit us).
-    The library folds a bot check into "No results found."; we read the
-    status ourselves, because an empty answer under a bot check proves
-    nothing and must not be logged as "not found" for 90 days."""
-    engine = _engine()
-    payload = engine.build_payload(
-        query=query, region="us-en", safesearch="moderate", timelimit=None, page=page
-    )
-    resp = engine.http_client.request(engine.search_method, engine.search_url, data=payload)
-    if resp.status_code in _BLOCKED_STATUSES:
-        raise SearchBlocked(f"DuckDuckGo answered {resp.status_code} (bot check), not results")
-    if resp.status_code != 200:
-        raise RuntimeError(f"DuckDuckGo answered {resp.status_code}")
-    rows = engine.post_extract_results(engine.extract_results(resp.text))
-    return [{"title": r.title, "href": r.href, "body": r.body} for r in rows[:max_results]]
-
-
-def _failure(text: str) -> list[dict[str, str]]:
-    return [{"title": "", "href": "", "body": text}]
-
-
-def _pace() -> None:
-    """Wait until the next query is due: the steady interval with a little
-    jitter, and a rest when the window's worth has already gone out."""
-    now = time.monotonic()
-    wait = SEARCH_INTERVAL_S + random.uniform(0, SEARCH_JITTER_S) - (now - _last_search_at)
-    while _recent_queries and now - _recent_queries[0] >= SEARCH_WINDOW_S:
-        _recent_queries.popleft()
-    if SEARCH_WINDOW_QUERIES and len(_recent_queries) >= SEARCH_WINDOW_QUERIES:
-        wait = max(wait, _recent_queries[0] + SEARCH_WINDOW_S - now)
-    if wait > 0:
-        time.sleep(wait)
-
-
-def ddg_search(query: str, max_results: int = 8, *, page: int = 1) -> list[dict[str, str]]:
-    """DuckDuckGo text results as {title, href, body}; `page` 2 is the next
-    ten. Paced so a batch never hammers the engine. A failure comes back as
-    one row whose body starts with "search failed"; an empty list is a real
-    answer."""
-    global _last_search_at, _blocked_until  # noqa: PLW0603
-
-    if time.monotonic() < _blocked_until:
-        return _failure("search failed: blocked -- DuckDuckGo asked for a bot check earlier; "
-                        "leaving it alone for now")
-    _pace()
-    pauses = list(SEARCH_BACKOFF_S)
-    blocked_once = False
-    while True:
-        _last_search_at = time.monotonic()
-        _recent_queries.append(_last_search_at)
-        try:
-            return _raw_search(query, max_results, page)
-        except SearchBlocked as exc:
-            if blocked_once or not BLOCK_BACKOFF_S:
-                _blocked_until = time.monotonic() + BLOCK_COOLDOWN_S
-                return _failure(f"search failed: blocked -- {exc}")
-            blocked_once = True
-            time.sleep(BLOCK_BACKOFF_S)  # the check usually clears if we stop asking
-        except Exception as exc:  # noqa: BLE001 -- a search failure is an unresolved check, not a crash
-            if not pauses or not _transient(exc):
-                return _failure(f"search failed: {type(exc).__name__}: {exc}")
-            time.sleep(pauses.pop(0))  # a dropped connection or a timeout: wait, then try again
 
 
 def build_query(firm_name: str, city: str | None, state: str | None) -> str:
@@ -445,7 +341,7 @@ def _apply_correction(conn, firm: dict, found: str, verdict: SearchVerdict, now:
             ON CONFLICT DO NOTHING
             """,
             (
-                SEARCH_SOURCE, f"{firm['id']}:{found}", firm["id"],
+                search_source(), f"{firm['id']}:{found}", firm["id"],
                 Jsonb({"query": verdict.query, "domain": found, "score": verdict.score,
                        "results": verdict.results}),
                 now, firm["canonical_name"], norm_name(firm["canonical_name"]), found,
@@ -469,7 +365,7 @@ def _apply_correction(conn, firm: dict, found: str, verdict: SearchVerdict, now:
 def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunResult:
     conn = ctx.conn
     result = RunResult()
-    search = search or ddg_search
+    search = search or web_search
     recheck_days = int(opts.get("recheck_days", DEFAULT_RECHECK_DAYS))
     firms = _select_firms(conn, opts, recheck_days)
     if not firms:

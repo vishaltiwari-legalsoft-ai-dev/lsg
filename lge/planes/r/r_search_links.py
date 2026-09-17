@@ -44,13 +44,16 @@ from urllib.parse import urlsplit, urlunsplit
 from psycopg.types.json import Jsonb
 
 from lge.classify.roles import classify_role
-from lge.ingest.webcheck import ddg_search
 from lge.planes.p._claims import write_claim
 from lge.planes.p._site_facts import looks_like_title, name_like
 from lge.registry import RunContext, RunResult, component
+from lge.search import engine_name
+from lge.search import places as web_places
+from lge.search import search as web_search
+from lge.search import source as search_source
 
 _COMPONENT = "r_search_links"
-_SOURCE = "search:ddg"
+# claims are tagged with the engine that answered: lge.search.source()
 _RECHECK_DAYS_DEFAULT = 90
 _MAX_PEOPLE_PER_FIRM = 4  # per-person queries: the decision-makers the sweep missed
 _MAX_SWEEP_PEOPLE = 60  # people a sweep's results are matched against
@@ -64,6 +67,7 @@ _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
 _DECISION_MAKERS = ("owner", "admin")
 _CONFIDENCE_LINKEDIN = 0.8
 _CONFIDENCE_REVIEWS = 0.6
+_CONFIDENCE_LISTING = 0.85  # the listing itself, through the engine's API, not a snippet
 
 SearchFn = Callable[..., list[dict[str, str]]]  # (query, max_results, *, page=1)
 
@@ -102,18 +106,58 @@ _LAW_WORDS_RE = re.compile(
 # ---------------------------------------------------------------------------
 
 
-def linkedin_query(firm_name: str, person: str) -> str:
-    return f'"{firm_name}" "{person}" linkedin'
+def linkedin_query(firm_name: str, person: str, city: str | None = None) -> str:
+    # The city keeps namesakes apart (D-042): a "John Smith" at "Smith Law" in Atlanta
+    return " ".join(p for p in (f'"{firm_name}"', f'"{person}"', city, "linkedin") if p)
 
 
-def sweep_query(firm_name: str) -> str:
+def sweep_query(firm_name: str, city: str | None = None) -> str:
     # The site: operator keeps the data brokers (RocketReach, ZoomInfo) out;
     # the whole domain, so the company page comes back with the people.
-    return f'site:linkedin.com "{firm_name}"'
+    return " ".join(p for p in (f'site:linkedin.com "{firm_name}"', city) if p)
 
 
 def reviews_query(firm_name: str, city: str | None, state: str | None) -> str:
     return " ".join(p for p in (f'"{firm_name}"', city, state, "google business reviews") if p)
+
+
+def places_query(firm_name: str, city: str | None, state: str | None) -> str:
+    return " ".join(p for p in (firm_name, city, state) if p)
+
+
+_LISTING_MIN_OVERLAP = 0.34
+_LAW_CATEGORY_RE = re.compile(r"law|legal|attorney|lawyer", re.I)
+
+
+def _listing_tokens(text: str) -> set[str]:
+    return {
+        t for t in re.findall(r"[a-z0-9]+", _LAW_WORDS_RE.sub(" ", text.casefold())) if len(t) > 1
+    }
+
+
+def pick_listing(firm_name: str, listings: list[dict[str, Any]] | None) -> dict[str, Any] | None:
+    """The business listing that is this firm: the best name overlap once the
+    law words are set aside ("Hartley Injury Law" is "Hartley Injury Law, P.C.",
+    not "Hartley Dental"), and never a listing whose category is not a law
+    practice."""
+    if not listings:
+        return None
+    firm = _listing_tokens(firm_name)
+    if not firm:
+        return None
+    best: dict[str, Any] | None = None
+    best_score = 0.0
+    for p in listings:
+        category = str(p.get("category") or "")
+        if category and not _LAW_CATEGORY_RE.search(category):
+            continue
+        name = _listing_tokens(str(p.get("name") or ""))
+        if not name:
+            continue
+        score = len(firm & name) / len(firm | name)
+        if score > best_score:
+            best, best_score = p, score
+    return best if best_score >= _LISTING_MIN_OVERLAP else None
 
 
 def _name_tokens(name: str) -> list[str]:
@@ -392,9 +436,9 @@ def _log(
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO search_log (firm_id, kind, contact_id, query, outcome, url, rating, "
-            "review_count, results) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "review_count, results, engine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (firm_id, kind, contact_id, query, outcome, url, rating, review_count,
-             Jsonb(results[:_MAX_LOGGED])),
+             Jsonb(results[:_MAX_LOGGED]), engine_name()),
         )
 
 
@@ -403,10 +447,10 @@ def _failed(results: list[dict]) -> bool:
 
 
 def _write_company(conn: Any, firm_id: Any, page: dict[str, Any], now: Any) -> None:
-    write_claim(conn, firm_id, "linkedin_company_url", page["url"], _SOURCE,
+    write_claim(conn, firm_id, "linkedin_company_url", page["url"], search_source(),
                 _CONFIDENCE_LINKEDIN, page["evidence"], now)
     if page["headcount"]:
-        write_claim(conn, firm_id, "linkedin_headcount", page["headcount"], _SOURCE,
+        write_claim(conn, firm_id, "linkedin_headcount", page["headcount"], search_source(),
                     _CONFIDENCE_LINKEDIN, page["evidence"], now)
 
 
@@ -439,10 +483,33 @@ def _record_profile(conn: Any, person: dict, url: str, profile: dict[str, Any], 
     _COMPONENT, "R",
     "Web search: LinkedIn profiles for every named person, the firm's company page, Google reviews",
 )
-def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunResult:
+def _write_listing(conn: Any, firm_id: Any, listing: dict[str, Any], now: Any) -> None:
+    evidence = (
+        f"{listing.get('name')}, {listing.get('address') or 'no address'}: "
+        f"{listing.get('rating')} ({listing.get('review_count')} reviews)"
+    )
+    if listing.get("url"):
+        write_claim(conn, firm_id, "google_business_url", listing["url"], search_source(),
+                    _CONFIDENCE_LISTING, evidence, now)
+    if listing.get("rating") is not None:
+        write_claim(conn, firm_id, "google_rating", listing["rating"], search_source(),
+                    _CONFIDENCE_LISTING, evidence, now)
+    if listing.get("review_count") is not None:
+        write_claim(conn, firm_id, "review_count", listing["review_count"], search_source(),
+                    _CONFIDENCE_LISTING, evidence, now)
+
+
+PlacesFn = Callable[[str], list[dict[str, Any]] | None]
+
+
+def run(
+    ctx: RunContext, *, search: SearchFn | None = None, places: PlacesFn | None = None,
+    **opts: Any,
+) -> RunResult:
     conn = ctx.conn
     result = RunResult()
-    search = search or ddg_search
+    search = search or web_search
+    places = places or web_places
     live = bool(ctx.settings.live) or str(opts.get("live", "")) in ("1", "true", "True")
     if not live:
         result.notes.append("live=0: web search is network work -- nothing searched")
@@ -492,7 +559,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             if people and budget_left() and not _searched_recently(
                 conn, firm_id, "sweep", recheck_days
             ):
-                query = sweep_query(firm_name)
+                query = sweep_query(firm_name, firm["city"])
                 results = ask(query, _SWEEP_RESULTS)
                 did_something = True
                 if _failed(results):
@@ -537,7 +604,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             for person in leftovers[:max_people]:
                 if not budget_left():
                     break
-                query = linkedin_query(firm_name, person["full_name"])
+                query = linkedin_query(firm_name, person["full_name"], firm["city"])
                 results = ask(query)
                 did_something = True
                 if _failed(results):
@@ -567,10 +634,29 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                         company_known = True
 
             if budget_left() and not _searched_recently(conn, firm_id, "reviews", recheck_days):
-                query = reviews_query(firm_name, firm["city"], firm["state"])
-                results = ask(query)
+                # The listing itself when the engine has a listings endpoint
+                # (Google Business Profile through the API, D-045); the
+                # snippets of an ordinary query otherwise.
+                query = places_query(firm_name, firm["city"], firm["state"])
+                listings = places(query)
+                if listings is not None:
+                    queries += 1
+                listing = pick_listing(firm_name, listings)
                 did_something = True
-                if _failed(results):
+                if listing is not None:
+                    consecutive_failures = 0
+                    _write_listing(conn, firm_id, listing, now)
+                    _log(conn, firm_id, "reviews", query, "found", [listing],
+                         url=listing.get("url"), rating=listing.get("rating"),
+                         review_count=listing.get("review_count"))
+                    counts["reviews"] += 1
+                    results = None
+                else:
+                    query = reviews_query(firm_name, firm["city"], firm["state"])
+                    results = ask(query)
+                if results is None:
+                    pass
+                elif _failed(results):
                     consecutive_failures += 1
                     _log(conn, firm_id, "reviews", query, "failed", results)
                 else:
@@ -578,16 +664,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
                     found = read_reviews(results)
                     if found["maps_url"]:
                         write_claim(conn, firm_id, "google_business_url", found["maps_url"],
-                                    _SOURCE, _CONFIDENCE_REVIEWS, found["maps_url"], now)
+                                    search_source(), _CONFIDENCE_REVIEWS, found["maps_url"], now)
                     if found["rating"] is not None:
-                        write_claim(conn, firm_id, "google_rating", found["rating"], _SOURCE,
+                        write_claim(conn, firm_id, "google_rating", found["rating"],
+                                    search_source(),
                                     _CONFIDENCE_REVIEWS, found["evidence"], now)
                     if found["count"] is not None:
-                        write_claim(conn, firm_id, "review_count", found["count"], _SOURCE,
+                        write_claim(conn, firm_id, "review_count", found["count"], search_source(),
                                     _CONFIDENCE_REVIEWS, found["evidence"], now)
                     if found["snippets"]:
                         write_claim(conn, firm_id, "search_review_snippets", found["snippets"],
-                                    _SOURCE, _CONFIDENCE_REVIEWS, query, now)
+                                    search_source(), _CONFIDENCE_REVIEWS, query, now)
                     got = found["maps_url"] or found["rating"] is not None or found["count"]
                     _log(conn, firm_id, "reviews", query, "found" if got else "not_found",
                          results, url=found["maps_url"], rating=found["rating"],

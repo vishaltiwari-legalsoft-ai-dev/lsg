@@ -34,7 +34,6 @@ from typing import Any
 
 from psycopg.types.json import Jsonb
 
-from lge.ingest.webcheck import ddg_search
 from lge.planes.p._claims import write_claim
 from lge.planes.p._site_facts import name_like
 from lge.planes.r.r3_email_pattern import infer_pattern
@@ -47,9 +46,12 @@ from lge.planes.r.r_site_emails import (
     match_contact,
 )
 from lge.registry import RunContext, RunResult, component
+from lge.search import engine_name
+from lge.search import search as web_search
+from lge.search import source as search_source
 
 _COMPONENT = "r_search_emails"
-_SOURCE = "search:ddg"
+# claims are tagged with the engine that answered: lge.search.source()
 _RECHECK_DAYS_DEFAULT = 90
 _MAX_PEOPLE_PER_FIRM = 4
 _MAX_RESULTS = 8
@@ -68,8 +70,8 @@ def firm_query(domain: str) -> str:
     return f'"@{domain}"'
 
 
-def person_query(firm_name: str, person: str) -> str:
-    return f'"{person}" "{firm_name}" email'
+def person_query(firm_name: str, person: str, city: str | None = None) -> str:
+    return " ".join(p for p in (f'"{person}"', f'"{firm_name}"', city, "email") if p)
 
 
 def _result_text(r: dict[str, str]) -> str:
@@ -131,9 +133,10 @@ def _log(
 ) -> None:
     with conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO search_log (firm_id, kind, contact_id, query, outcome, url, results) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (firm_id, kind, contact_id, query, outcome, url, Jsonb(results[:_MAX_RESULTS])),
+            "INSERT INTO search_log (firm_id, kind, contact_id, query, outcome, url, results, "
+            "engine) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (firm_id, kind, contact_id, query, outcome, url, Jsonb(results[:_MAX_RESULTS]),
+             engine_name()),
         )
 
 
@@ -227,7 +230,7 @@ def _attach_matching(conn: Any, found: dict[str, dict[str, str]], contacts: list
 def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunResult:
     conn = ctx.conn
     result = RunResult()
-    search = search or ddg_search
+    search = search or web_search
     live = bool(ctx.settings.live) or str(opts.get("live", "")) in ("1", "true", "True")
     if not live:
         result.notes.append("live=0: web search is network work -- nothing searched")
@@ -254,7 +257,9 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             break
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT canonical_name, domain FROM firm WHERE id = %s", (firm_id,))
+                cur.execute(
+                    "SELECT canonical_name, domain, city FROM firm WHERE id = %s", (firm_id,)
+                )
                 firm = cur.fetchone()
             if firm is None or not firm["domain"]:
                 result.skipped += 1
@@ -292,7 +297,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             for person in people[:_MAX_PEOPLE_PER_FIRM]:
                 if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
                     break
-                query = person_query(firm["canonical_name"], person["full_name"])
+                query = person_query(firm["canonical_name"], person["full_name"], firm["city"])
                 results = ask(query)
                 did_something = True
                 if _failed(results):
@@ -318,17 +323,17 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             general = _pick([e for e in found if local_kind(e) == "general"], _GENERAL_LOCALS)
             hiring = _pick([e for e in found if local_kind(e) == "hiring"], _HIRING_LOCALS)
             if general:
-                write_claim(conn, firm_id, "general_email", general, _SOURCE, _CONFIDENCE,
+                write_claim(conn, firm_id, "general_email", general, search_source(), _CONFIDENCE,
                             found[general]["href"], now)
             if hiring:
-                write_claim(conn, firm_id, "hiring_email", hiring, _SOURCE, _CONFIDENCE,
+                write_claim(conn, firm_id, "hiring_email", hiring, search_source(), _CONFIDENCE,
                             found[hiring]["href"], now)
             if found or off_domain:
                 entries = [{"email": e, "url": r.get("href"), "on_domain": True}
                            for e, r in sorted(found.items())]
                 entries += [{"email": e, "url": r.get("href"), "on_domain": False}
                             for e, r in sorted(off_domain.items())]
-                write_claim(conn, firm_id, "search_emails", entries, _SOURCE, _CONFIDENCE,
+                write_claim(conn, firm_id, "search_emails", entries, search_source(), _CONFIDENCE,
                             f"{len(found)} on {domain}, {len(off_domain)} elsewhere", now)
             found_total += len(found)
             attached_total += attached

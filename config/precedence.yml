@@ -170,6 +170,8 @@ precedence:
   # is one, goes above it.
   review_count:
     - places
+    - search:serper           # the listing itself, through the engine's API (D-045)
+    - search:brave
     - search:ddg
 
   # first_seen_bar_admission, paid_ads_active: not given an explicit

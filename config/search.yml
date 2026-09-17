@@ -1,0 +1,49 @@
+# config/search.yml -- the web-search seam (D-045): which engine answers is
+# .env's choice (LGE_SEARCH_ENGINE / the keys, lge/settings.py); how each is
+# paced is here. lge/search/pace.py reads these.
+#
+# interval_s / jitter_s   -- the steady gap between queries, plus a random
+#                            0..jitter added to it
+# window_queries/window_s -- rest once this many queries went out inside the
+#                            window (0 = no window)
+# backoff_s               -- waits before retrying a dropped connection or a
+#                            timeout; the list's length is the retry count
+# block_backoff_s         -- after a bot check or a rate limit: wait this
+#                            long and ask once more ...
+# block_cooldown_s        -- ... and if it is still refusing, leave the engine
+#                            alone for this long (every query fails at once,
+#                            so the planes' five-failure breaker stops the run)
+
+engines:
+  # Keyless and throttled: the pace of one careful person at a keyboard. At
+  # 2 s DuckDuckGo answers with a bot check inside twenty minutes (D-039).
+  ddg:
+    interval_s: 8.0
+    jitter_s: 4.0
+    window_queries: 50
+    window_s: 600.0
+    backoff_s: [15.0, 45.0]
+    block_backoff_s: 90.0
+    block_cooldown_s: 1200.0
+  # Google results through serper.dev; the plan allows tens of queries a
+  # second, and 429 is a soft rate limit worth a short wait.
+  serper:
+    interval_s: 0.25
+    jitter_s: 0.1
+    window_queries: 0
+    window_s: 0.0
+    backoff_s: [5.0, 15.0]
+    block_backoff_s: 30.0
+    block_cooldown_s: 300.0
+  # Brave's own index; one query a second on the base plan.
+  brave:
+    interval_s: 1.0
+    jitter_s: 0.2
+    window_queries: 0
+    window_s: 0.0
+    backoff_s: [5.0, 15.0]
+    block_backoff_s: 30.0
+    block_cooldown_s: 300.0
+
+request:
+  timeout_s: 15.0
