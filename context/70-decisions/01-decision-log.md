@@ -850,6 +850,34 @@ pass was one query per person at a pace DuckDuckGo would not tolerate for long: 
 - **The run's note is one string** for both stop reasons, so "the rest wait for the next
   run" is never dropped (the review finding on bc8b4a2).
 
+## D-042 · Scraping, web search and LinkedIn first; outreach refinement last
+
+**Asked for (17 Sep 2026):** "don't jump on the conclusion that you have to build this ...
+if we crack down the scraping part, the web search part and the LinkedIn part, we are at
+90% of the job. Then refining what you have to send comes after." Also: the sheet reader
+must be flexible and AI-operated, the ICP strict, DuckDuckGo replaced, and the interface
+made presentable and reusable by a team.
+
+**Rulings:**
+- **The order of work is `plan/plan-v2.md`**: sheet in → scrape → search → LinkedIn, each
+  measured on the 242-firm probe before the full list; the strict ICP alongside the scrape;
+  the team interface as data lands; outreach copy last. `PLAN.md`'s milestone sequence is
+  superseded; its scope is not.
+- **No field on a sheet is hard-required except a firm name plus a website or a location.**
+  The AI reads the header and sample rows and says what the sheet has and lacks; every other
+  field is research-fillable, and the sheet's value is one source among several. The site's
+  own headcount and LinkedIn's headcount become valid sources of firm size (today only the
+  sheet and the LLM team-page reading may set it).
+- **The crawl reads six page kinds** — home, about, contact, team/attorneys, testimonials,
+  careers — capped around 12 pages, not 12 kinds and 30 pages. Google Business Profile comes
+  from search, not the site.
+- **Search runs behind one adapter with interchangeable engines.** DuckDuckGo stays only for
+  a keyless machine; a paid engine (Serper first, Brave as fallback) is the production path.
+  Every people query carries the firm's city. LinkedIn is still never fetched (D-032, D-038);
+  a licensed enrichment provider for decision-makers is an adapter, not a scraper.
+- **Plan before build.** A change of direction is written here and in `plan/` before any
+  code moves; the user reads the plan, not the diff.
+
 ---
 
 ## Standing rulings that were never in dispute
