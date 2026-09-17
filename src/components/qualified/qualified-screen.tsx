@@ -258,11 +258,11 @@ export function QualifiedScreen() {
                 <caption className="sr-only">Qualified leads. Select a lead to open it.</caption>
                 <thead>
                   <tr className="border-b border-rule text-meta text-slate">
-                    <th scope="col" className="h-9 w-[24%] pl-6 font-normal">Firm</th>
-                    <th scope="col" className="font-normal">Decision-maker</th>
-                    <th scope="col" className="font-normal">Address</th>
-                    <th scope="col" className="font-normal">LinkedIn</th>
-                    <th scope="col" className="font-normal">Why now</th>
+                    <th scope="col" className="h-9 w-[20%] pl-6 font-normal">Firm</th>
+                    <th scope="col" className="w-[16%] font-normal">Decision-maker</th>
+                    <th scope="col" className="w-[22%] font-normal">Address</th>
+                    <th scope="col" className="w-[7%] font-normal">LinkedIn</th>
+                    <th scope="col" className="w-[13%] font-normal">Why now</th>
                     <th scope="col" className="pr-6 font-normal">{only === "ready" ? "Steps" : "Missing"}</th>
                   </tr>
                 </thead>
@@ -289,14 +289,14 @@ export function QualifiedScreen() {
                         <td className="max-w-0 truncate pr-4 text-ink">
                           {person?.ok ? person.detail : <Unknown>{person?.detail ?? "No one named"}</Unknown>}
                         </td>
-                        <td className="max-w-0 truncate pr-4">
+                        <td className="max-w-0 pr-4">
                           {email?.ok ? (
-                            <>
-                              <span className="text-ink">{email.detail}</span>
-                              <span className={cn("ml-2 text-meta", verified?.ok ? "text-ledger" : "text-redline")}>
+                            <div className="grid gap-0.5">
+                              <span className="truncate text-ink" title={email.detail ?? undefined}>{email.detail}</span>
+                              <span className={cn("truncate text-meta", verified?.ok ? "text-ledger" : "text-redline")}>
                                 {verified?.detail}
                               </span>
-                            </>
+                            </div>
                           ) : (
                             <Unknown>{email?.detail ?? "No address"}</Unknown>
                           )}
