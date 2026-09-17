@@ -906,6 +906,59 @@ made presentable and reusable by a team.
   before the repo move. Fixed; the contract and the generated types carry
   `research_fills`, `reader` and `filled_by`.
 
+## D-044 · Chunk 2: six page kinds from one config line; the site's own count is a size
+
+**Built (17 Sep 2026)** as plan-v2 workstream 2. The user's brief: the landing page, about,
+testimonials, careers and the Google Business Profile -- "not more than that". Contact and
+the attorneys/team pages stay because that is where the emails and the names come from.
+
+**Rulings:**
+- **`config/crawl.yml` `caps` is the one list of what the engine reads.** A kind above zero
+  is mapped by P1, crawled into by P2 and read by every claim reader; a kind at zero is
+  still classified (a link to it is recognised) but never fetched, probed for, or read.
+  `lge/fetch/config.py` answers `wanted_kinds()`, `crawl_into_kinds()`, `only_wanted()`
+  and `kind_cap()`; the fetcher's `WANTED_KINDS`, its `_KIND_PRIORITY` table and the
+  mapper's `_OTHER_KINDS` are gone. Six kinds, twelve pages: home 1, contact 1, about 1,
+  attorneys 3, team 2, careers 2, testimonials 2. Practice, news, locations, fees and
+  other are at zero. `MAPPER_VERSION` is 4.
+- **A gap about a page kind is claimed only when that kind is read.** With news at zero,
+  "no news page" would have fired on every firm; it and "no careers page" and "no
+  testimonials" are gated on the kind being wanted. `stale_site` now comes from the
+  copyright year alone.
+- **The attorneys the site names are a source of firm size.** `px_site_facts` writes
+  `attorney_count` = the attorneys counted on the attorneys/team page at confidence 0.65
+  -- above reconcile's 0.6 bar so it can tier, below the LLM's stated count, which
+  outranks it in `config/precedence.yml`. Only from a page that lists the team; two names
+  in a footer say nothing. The vendor sheet's employee range still never sets it.
+- **The wanted kinds are part of every reader's version** (`kinds_version()`), so a
+  change to the list re-derives every firm even where its pages did not change. Found
+  because the first re-run skipped 84 firms and left their gap lists as they were.
+- **A reader's run is the complete set of its claims for a firm.** Claims are keyed by
+  observed_at and reconcile prefers the freshest within a source, so a gap list or a fee
+  reading taken off a news or practice page fetched *later* than the home page stood as
+  the freshest word after those kinds stopped being read -- two probe firms still said
+  "no news page", and 617 claims on the probe came from pages the engine no longer reads.
+  `claim_run(conn, firm_id, *sources)` (`lge/planes/p/_claims.py`) wraps one firm's
+  derivation: every `write_claim` under it is recorded (a context variable, so the
+  readers' helpers did not change), and on a clean exit the reader's other claims for
+  that firm are deleted. A firm with no page of a wanted kind keeps no claims from that
+  reader at all. An exception leaves everything as it was. The HTML is the audit trail,
+  not the row (write_claim's own rule). Applied to `px_site_facts`, `p6_fee` and
+  `px_site_rules`; their versions are v6, v4 and v2 so the rule ran once over every firm.
+- **Measured on the 232-firm probe**, re-deriving from pages already on file: pages the
+  crawl reads 3,611 -> 1,954 (-46%; practice pages alone were 1,151); firms with a known
+  size 75 -> 112 (+49%, 57 of them from the site's count); fee model known 105 -> 100
+  (five firms' fee promise lived only on a practice or fees page); practice areas
+  147 -> 146; people 148 -> 148. One firm moved to `DQ_SIZE`: Tanenbaum Keale lists 51
+  attorneys on its people page and the LLM had returned null -- the right answer. Open
+  pain signals: `stale_site` 37 -> 25 (no `stale_news` any more), `no_support_staff_listed`
+  97 -> 78; `new_office_or_lateral` stays at 7 -- those headlines are on the home pages.
+- **Not done here:** LinkedIn's headcount as a further size source waits for the search
+  chunk (3), where it is read. The probe's `site_map` still holds its old practice and news
+  rows; P2 ignores them, and the next P2 run over the probe re-fetches the twelve pages once.
+- **Reading a practice page is one config line away** (`practice: 1`) if the four lost fee
+  readings turn out to matter at scale; the code does not change.
+
 ---
 
 ## Standing rulings that were never in dispute

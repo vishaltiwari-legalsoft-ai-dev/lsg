@@ -87,6 +87,8 @@ Rules that hold across every chunk:
 
 **Deliverable, per firm with a reachable site:** a facts sheet, a people list with titles, the emails printed on the site, the fee promise if stated, and the gap list. Measured as: % of probe firms with ≥1 named person, ≥1 site email, fee model known, headcount known. Crawl ~2.5× faster than today.
 
+**Status — done 17 Sep 2026 (D-044).** Six kinds, twelve pages, one config line. Probe: pages read −46%, size known 75 → 112, practice 147 → 146, people 148 → 148, fee known 105 → 100. A reader's run now retires what it did not re-derive (617 stale claims cleared). LinkedIn headcount as a size source moves to workstream 3.
+
 ### 3. Web search — a paid engine behind one adapter
 
 **Today:** DuckDuckGo, free, throttled; 647 of 1,125 LinkedIn searches failed on its bot check; ~30,000 queries for the list would take ~3 days if tolerated at all.
