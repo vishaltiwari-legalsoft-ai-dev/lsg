@@ -822,6 +822,8 @@ export interface components {
         };
         /** FieldOption */
         FieldOption: {
+            /** Filled By */
+            filled_by: string;
             /** Label */
             label: string;
             /** Mandatory Group */
@@ -1076,6 +1078,10 @@ export interface components {
             missing: string[];
             /** Notes */
             notes: string[];
+            /** Reader */
+            reader: string;
+            /** Research Fills */
+            research_fills: string[];
             /** Row Count */
             row_count: number;
             /** Status */
@@ -1117,6 +1123,10 @@ export interface components {
             loaded_at: string | null;
             /** Missing */
             missing: string[];
+            /** Reader */
+            reader: string;
+            /** Research Fills */
+            research_fills: string[];
             /** Row Count */
             row_count: number;
             /** Status */

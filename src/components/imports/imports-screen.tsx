@@ -130,13 +130,24 @@ function ImportRow({
 // ── Detail ──────────────────────────────────────────────────────────────────
 
 function MandatoryLine({ detail }: { detail: ImportDetail }) {
-  if (detail.missing.length === 0) {
-    return <p className="text-body text-ledger">Every mandatory field was found.</p>;
-  }
+  const readBy = detail.reader === "llm" ? "Read by the AI, checked against the values." : "Read by the rules.";
   return (
-    <p className="text-body text-redline">
-      Missing: {detail.missing.join("; ")}. Pick the right column below, or the sheet cannot load.
-    </p>
+    <div className="grid gap-1">
+      {detail.missing.length === 0 ? (
+        <p className="text-body text-ledger">
+          Found what it needs: a firm name and a way to reach each firm. {readBy}
+        </p>
+      ) : (
+        <p className="text-body text-redline">
+          Missing: {detail.missing.join("; ")}. Pick the right column below, or the sheet cannot load.
+        </p>
+      )}
+      {detail.research_fills.length > 0 ? (
+        <p className="text-meta text-slate">
+          Not on the sheet, filled by research: {detail.research_fills.join(" · ")}.
+        </p>
+      ) : null}
+    </div>
   );
 }
 

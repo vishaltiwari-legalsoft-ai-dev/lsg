@@ -11,7 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "api:types": "openapi-typescript \"../Lead Gen Engine/openapi.json\" -o src/lib/api/schema.d.ts"
+    "api:types": "openapi-typescript ../openapi.json -o src/lib/api/schema.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
