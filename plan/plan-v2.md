@@ -8,6 +8,65 @@ Most of this project is scraping. If the site is read properly, the web is searc
 
 Nothing here is built until the plan is agreed. Each workstream has a deliverable that can be checked on the 242-firm probe before it runs over the full 22,182.
 
+## Architecture — the seams between the chunks
+
+The chunks connect through the store and through four *seams*: small interfaces with interchangeable implementations, each chosen by one `.env` key in `lge/settings.py`. No component names a provider; it asks the seam. That is what makes a provider swappable without touching the chunk that uses it.
+
+```mermaid
+flowchart LR
+  ENV[".env → settings"]
+
+  subgraph S1["1 · Sheet in"]
+    RD["reader<br/>streams rows, never holds the sheet"] --> CR{"ColumnReader"}
+    CR -->|llm| CR1["LLM reads header + sample"]
+    CR -->|rules| CR2["rule sniffer"]
+    CR1 & CR2 --> CM["ColumnMap<br/>field ↔ column, confidence, reason<br/>what research will fill"]
+    CM --> NB["normalise → batches → observation"]
+  end
+
+  subgraph S2["2 · Scrape"]
+    P1["map: 6 page kinds"] --> P2["fetch + crawl"] --> PX["site facts<br/>people · emails · size · fee · gaps"]
+  end
+
+  subgraph S3["3 · Search"]
+    SE{"SearchEngine"} -->|serper| SE1["Serper"]
+    SE -->|brave| SE2["Brave"]
+    SE -->|ddg| SE3["DuckDuckGo"]
+  end
+
+  subgraph S4["4 · People"]
+    EF{"EmailFinder"} -->|hunter| H["Hunter"]
+    EV{"EmailVerifier"} -->|hunter| H
+    EV -->|neverbounce| NB2["NeverBounce"]
+  end
+
+  DB[("store")]
+  NB --> DB
+  DB <--> S2
+  DB <--> S3
+  DB <--> S4
+  ENV -.-> CR
+  ENV -.-> SE
+  ENV -.-> EF
+  ENV -.-> EV
+```
+
+| Seam | Where | Implementations | Chosen by |
+|---|---|---|---|
+| `ColumnReader` | `lge/ingest/columns.py` | `llm` (OpenRouter, one call per sheet, validated by the rule sniffer), `rules` | `LGE_COLUMN_READER` = `auto` (llm when a key exists) / `llm` / `rules` |
+| `SearchEngine` | `lge/search/` | `serper`, `brave`, `ddg` | `LGE_SEARCH_ENGINE` = `auto` (first key found) / a name |
+| `EmailFinder` | `lge/enrich/` | `hunter` | `LGE_EMAIL_FINDER` |
+| `EmailVerifier` | `lge/enrich/` | `hunter`, `neverbounce` | `LGE_EMAIL_VERIFIER` |
+| firm size sources | `config/precedence.yml` | LLM team-page reading, the site's own staff count, LinkedIn headcount, the sheet | precedence order, not code |
+
+Rules that hold across every chunk:
+
+- **A field a sheet lacks is research-fillable, never fatal.** The only hard requirement is a firm name plus a way to reach the firm (website, email, or a location).
+- **Rows stream.** Nothing reads a whole sheet into memory; batches are read as they load, so 100,000 rows cost the same per row as 100.
+- **Every output of a chunk is a row in the store** (observation, claim, contact, search_log). The next chunk reads the store, never the previous chunk's objects.
+- **Every external call is logged with the provider that answered** so a result can always be traced to the engine, model or verifier that produced it.
+- **Keys live in `.env` only.** Never in code, logs, screens or commits.
+
 ## Workstreams, in order
 
 ### 1. Sheet in — read by the AI, nothing hard-required
@@ -17,6 +76,8 @@ Nothing here is built until the plan is agreed. Each workstream has a deliverabl
 **Target:** upload any sheet. The AI reads the header row and a sample of rows and answers: what each column is, what the sheet has, what it lacks, and what research will have to fill. The only hard requirement is a firm name plus either a website or a location. Every other field — size, practice, fee model, people, emails — is *research-fillable*, and the sheet's values are one source among several, never the source of record. The existing rule-based sniffer becomes the validator of the AI's answer, not the reader.
 
 **Deliverable:** three different sheet layouts load with zero fields hard-required, and the screen says in plain words what each one has and lacks.
+
+**Status — done 17 Sep 2026 (D-043).** Vendor layout, the 11-column layout and a name-plus-site sheet all load with nothing missing; the AI read the probe sheet's ten columns correctly in 8.9 s; a 100,000-row sheet streams in under a second at 25 MB peak.
 
 ### 2. Scraping — read the firm, not thirty pages
 

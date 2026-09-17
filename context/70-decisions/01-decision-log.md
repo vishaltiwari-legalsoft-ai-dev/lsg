@@ -878,6 +878,34 @@ made presentable and reusable by a team.
 - **Plan before build.** A change of direction is written here and in `plan/` before any
   code moves; the user reads the plan, not the diff.
 
+## D-043 · Chunk 1: the AI reads the sheet, the values check it, the rows stream
+
+**Built (17 Sep 2026)** as plan-v2 workstream 1, on the seams in `lge/settings.py`.
+
+**Rulings:**
+- **Two mandatory groups, not five.** `firm_name`, and `reach` = any of website, email,
+  city, state, zip, address, location. Size and type left the mandatory list; each
+  research-fillable field says where research gets it (`Field.filled_by`), the column map
+  lists what the sheet lacks as `research_fills`, and the import screen shows "filled by
+  research", never "missing". The health score is coverage of the two groups only.
+- **`ColumnReader` is the seam** (`lge/ingest/columns.py`): `rules` is the sniffer,
+  `llm` asks the model once per sheet (`lge/llm/sheet_reader.py`, strict schema, twelve
+  sample rows, cells trimmed to 60 chars) and then reconciles: a typed field the values do
+  not look like keeps the rules' reading with the disagreement in the reason; a column the
+  AI left null is rescued by a rule guess of 0.9 or better; an unknown field name is noted
+  and ignored; a model that cannot be reached means the rules read the sheet and the map
+  says so. The map records its `reader`; a map stored before this loads with `rules`.
+- **Measured on the real probe sheet:** all ten columns right, 8.9 s, five useful notes on
+  the sheet's gaps. On a generated 100,000-row CSV: head 0.03 s, count 0.67 s, 200 batches
+  streamed in 0.76 s, 25 MB peak. `register_import` reads a 2,000-row head and counts the
+  rest; `load_import` walks only the pending batches in one pass; `upload_import` is a
+  plain `def` so the parse and the model call run on the threadpool.
+- **Tests never reach a provider.** `tests/conftest.py` pins every seam to its keyless
+  implementation before settings are first read.
+- **Found on the way:** the frontend's `api:types` still pointed at the sibling path from
+  before the repo move. Fixed; the contract and the generated types carry
+  `research_fills`, `reader` and `filled_by`.
+
 ---
 
 ## Standing rulings that were never in dispute
