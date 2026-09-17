@@ -193,6 +193,43 @@ class LeadsResponse(BaseModel):
 
 
 # =============================================================================
+# GET /api/qualified -- the leads with every step done, ready to reach (D-047)
+# =============================================================================
+
+QualifiedCheckKey = Literal[
+    "site_read", "fit", "person", "email", "email_verified", "linkedin", "journey"
+]
+
+
+class QualifiedCheck(BaseModel):
+    key: QualifiedCheckKey
+    label: str
+    ok: bool
+    detail: str | None  # what was found, or why not, in plain words
+
+
+class QualifiedRow(LeadRow):
+    checks: list[QualifiedCheck]
+    ready: bool  # every check passed
+    missing: list[str]  # the failed checks' labels, in plain words
+    why_now: bool  # an open pain signal on the firm -- shown, not required
+
+
+class QualifiedCounts(BaseModel):
+    ready: int
+    almost: int  # every step but one or two
+    checked: int  # open leads at firms that are not disqualified
+    # Among the almost-ready, how many fail each check -- what is holding them back.
+    missing_by_check: dict[str, int]
+
+
+class QualifiedResponse(BaseModel):
+    items: list[QualifiedRow]
+    next_offset: int | None
+    counts: QualifiedCounts
+
+
+# =============================================================================
 # GET /api/overview -- the landing page: the pipeline with live numbers
 # =============================================================================
 

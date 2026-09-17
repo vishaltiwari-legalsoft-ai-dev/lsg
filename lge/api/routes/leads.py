@@ -596,7 +596,12 @@ def get_drafts(lead_id: str, conn: ConnDep) -> DraftsResponse:
     row = _fetch_lead_row(conn, lead_id)
     if row is None:
         raise not_found("Lead not found.", "Check the id.")
+    return drafts_for_row(conn, row, lead_id)
 
+
+def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsResponse:
+    """The journey for one lead row (band, firm columns, arming_signal) as the
+    drafts endpoint renders it -- shared with /api/qualified (D-047)."""
     band = row["band"]
     if band not in ("SEQUENCE", "NURTURE"):
         return DraftsResponse(band=band, excluded_reason=None, touches=[])

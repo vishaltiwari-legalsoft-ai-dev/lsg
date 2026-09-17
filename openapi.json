@@ -3294,6 +3294,328 @@
         "title": "ProvidersResponse",
         "type": "object"
       },
+      "QualifiedCheck": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "key": {
+            "enum": [
+              "site_read",
+              "fit",
+              "person",
+              "email",
+              "email_verified",
+              "linkedin",
+              "journey"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "ok",
+          "detail"
+        ],
+        "title": "QualifiedCheck",
+        "type": "object"
+      },
+      "QualifiedCounts": {
+        "properties": {
+          "almost": {
+            "title": "Almost",
+            "type": "integer"
+          },
+          "checked": {
+            "title": "Checked",
+            "type": "integer"
+          },
+          "missing_by_check": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Missing By Check",
+            "type": "object"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ready",
+          "almost",
+          "checked",
+          "missing_by_check"
+        ],
+        "title": "QualifiedCounts",
+        "type": "object"
+      },
+      "QualifiedResponse": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/QualifiedCounts"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QualifiedRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Offset"
+          }
+        },
+        "required": [
+          "items",
+          "next_offset",
+          "counts"
+        ],
+        "title": "QualifiedResponse",
+        "type": "object"
+      },
+      "QualifiedRow": {
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "STRIKE",
+                  "SEQUENCE",
+                  "NURTURE",
+                  "HOLD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/QualifiedCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contest": {
+            "anyOf": [
+              {
+                "enum": [
+                  "NONE",
+                  "LOW",
+                  "MED",
+                  "HIGH"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contest"
+          },
+          "firm": {
+            "$ref": "#/components/schemas/FirmRef"
+          },
+          "fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "enum": [
+                  "A",
+                  "B"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "next_action": {
+            "title": "Next Action",
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Proof"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "scored_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scored At"
+          },
+          "stage": {
+            "enum": [
+              "researching",
+              "no_website",
+              "needs_review",
+              "needs_contact",
+              "ready",
+              "parked",
+              "in_outreach",
+              "replied",
+              "handed_off",
+              "won",
+              "lost",
+              "disqualified",
+              "do_not_contact",
+              "needs_refresh"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "stage_display": {
+            "title": "Stage Display",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "state_display": {
+            "title": "State Display",
+            "type": "string"
+          },
+          "why_now": {
+            "title": "Why Now",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "firm",
+          "state",
+          "state_display",
+          "band",
+          "fit",
+          "intent",
+          "contest",
+          "grade",
+          "proof",
+          "contact",
+          "scored_at",
+          "blockers",
+          "stage",
+          "stage_display",
+          "next_action",
+          "owner",
+          "checks",
+          "ready",
+          "missing",
+          "why_now"
+        ],
+        "title": "QualifiedRow",
+        "type": "object"
+      },
       "QueueCounts": {
         "properties": {
           "agency": {
@@ -5185,6 +5507,110 @@
         "summary": "Get Gates",
         "tags": [
           "pipeline"
+        ]
+      }
+    },
+    "/api/qualified": {
+      "get": {
+        "operationId": "list_qualified_api_qualified_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "only",
+            "required": false,
+            "schema": {
+              "default": "ready",
+              "pattern": "^(ready|almost|all)$",
+              "title": "Only",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualifiedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Qualified",
+        "tags": [
+          "qualified"
+        ]
+      }
+    },
+    "/api/qualified/export.csv": {
+      "get": {
+        "description": "The ready leads as a sheet for the sending vendor -- never the almost-ready.",
+        "operationId": "export_qualified_csv_api_qualified_export_csv_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Qualified Csv",
+        "tags": [
+          "qualified"
         ]
       }
     },
