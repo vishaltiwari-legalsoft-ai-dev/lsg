@@ -479,10 +479,6 @@ def _record_profile(conn: Any, person: dict, url: str, profile: dict[str, Any], 
 # ---------------------------------------------------------------------------
 
 
-@component(
-    _COMPONENT, "R",
-    "Web search: LinkedIn profiles for every named person, the firm's company page, Google reviews",
-)
 def _write_listing(conn: Any, firm_id: Any, listing: dict[str, Any], now: Any) -> None:
     evidence = (
         f"{listing.get('name')}, {listing.get('address') or 'no address'}: "
@@ -502,6 +498,10 @@ def _write_listing(conn: Any, firm_id: Any, listing: dict[str, Any], now: Any) -
 PlacesFn = Callable[[str], list[dict[str, Any]] | None]
 
 
+@component(
+    _COMPONENT, "R",
+    "Web search: LinkedIn profiles for every named person, the firm's company page, Google reviews",
+)
 def run(
     ctx: RunContext, *, search: SearchFn | None = None, places: PlacesFn | None = None,
     **opts: Any,

@@ -24,7 +24,9 @@ Stage = Literal[
     "needs_refresh",
 ]
 DecisionAction = Literal["qualify", "disqualify", "hold", "reopen", "handoff"]
-BatchAction = Literal["research", "find_contacts", "disqualify", "hold", "assign"]
+BatchAction = Literal[
+    "research", "find_contacts", "qualify", "disqualify", "hold", "reopen", "handoff", "assign",
+]
 JobKind = Literal["research", "find_contacts"]
 JobStatus = Literal["queued", "running", "done", "failed"]
 AttributeState = Literal["resolved", "unknown", "conflict", "stale"]

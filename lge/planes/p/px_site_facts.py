@@ -131,9 +131,11 @@ def read_firm(docs: list[dict], domain: str | None, store: ObjectStore) -> Facts
             seen_offices.add(key)
             facts.offices.append({**addr, "url": url})
             if facts.address is None:
-                raw = addr.pop("raw")
-                facts.address = (addr, raw, fetched_at)
-                addr["raw"] = raw
+                # a copy without the printed text: the claim's value must match
+                # site:jsonld's six keys exactly, or two sources printing the
+                # same office never "agree" in reconcile (D-031)
+                value = {k: v for k, v in addr.items() if k != "raw"}
+                facts.address = (value, addr["raw"], fetched_at)
 
         if kind in _PEOPLE_KINDS:
             for person in sf.find_people(tree, url, strict=kind not in _LOOSE_PEOPLE_KINDS):

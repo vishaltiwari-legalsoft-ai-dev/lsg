@@ -11,11 +11,13 @@ Seven checks, each with the evidence it read:
   linkedin        that person has a LinkedIn profile
   journey         the nine-touch journey renders for the lead
 
-`ready` is all seven. `almost` is four or more of the first six (the journey
-is only asked of leads that pass the rest). The pain signal is shown, not
-required: the journey renders without one for a nurture lead. Nothing here
-recomputes a tier, a band or a draft -- the checks read what the engine
-already wrote.
+`ready` is all seven. `almost` is four or more of the first six. The
+database answers the first six and returns only the leads that are at least
+almost ready, most complete first; the journey is rendered in Python only
+for leads that pass the other six, and at most JOURNEY_EVAL_CAP of them per
+request -- beyond that a lead is shown as "not checked in this view" rather
+than making every page load render thousands of drafts. The pain signal is
+shown, not required. Nothing here recomputes a tier, a band or a draft.
 """
 
 from __future__ import annotations
@@ -53,23 +55,41 @@ CHECKS: tuple[tuple[str, str], ...] = (
 )
 _SQL_CHECKS = ("site_read", "fit", "person", "email", "email_verified", "linkedin")
 ALMOST_MIN_PASSES = 4  # of the six checks the database answers
+JOURNEY_EVAL_CAP = 500  # drafts rendered per request, for the leads that pass the other six
 _LIMIT_DEFAULT = 50
 _LIMIT_MAX = 200
 
 _BAND_WORD = {"STRIKE": "Strike", "SEQUENCE": "Sequence", "NURTURE": "Nurture", "HOLD": "Hold"}
 
+_BASE_WHERE = (
+    "l.closed_at IS NULL "
+    "AND l.state NOT IN ('SUPPRESSED', 'DISQUALIFIED', 'WON', 'LOST') "
+    "AND (f.tier IS NULL OR f.tier NOT LIKE 'DQ%%')"
+)
+_SEARCH_WHERE = "AND (f.canonical_name ILIKE %(q)s OR f.domain ILIKE %(q)s)"
 
-def _fetch_candidates(conn: psycopg.Connection, q: str | None) -> list[dict]:
-    """Every open lead at a firm that is not disqualified, with the six checks
-    the database can answer, most complete first."""
-    where = [
-        "l.closed_at IS NULL",
-        "l.state NOT IN ('SUPPRESSED', 'DISQUALIFIED', 'WON', 'LOST')",
-        "(f.tier IS NULL OR f.tier NOT LIKE 'DQ%%')",
-    ]
-    params: dict[str, Any] = {"kinds": list(wanted_kinds())}
+
+def _count_checked(conn: psycopg.Connection, q: str | None) -> int:
+    """Every open lead at a firm that is not disqualified -- the denominator."""
+    sql = f"SELECT count(*) AS n FROM lead l JOIN firm f ON f.id = l.firm_id WHERE {_BASE_WHERE}"
+    params: dict[str, Any] = {}
     if q:
-        where.append("(f.canonical_name ILIKE %(q)s OR f.domain ILIKE %(q)s)")
+        sql += f" {_SEARCH_WHERE}"
+        params["q"] = f"%{q}%"
+    with conn.cursor() as cur:
+        cur.execute(sql, params)  # noqa: S608 -- fixed fragments; values are bound params
+        return int(cur.fetchone()["n"])
+
+
+def _fetch_candidates(conn: psycopg.Connection, q: str | None, min_passes: int) -> list[dict]:
+    """The leads at least `min_passes` of the six database checks along, with
+    the checks answered, most complete first. The database filters, so a
+    universe of a hundred thousand leads costs one indexed pass, not a
+    round-trip per lead."""
+    params: dict[str, Any] = {"kinds": list(wanted_kinds()), "min_passes": min_passes}
+    search = ""
+    if q:
+        search = _SEARCH_WHERE
         params["q"] = f"%{q}%"
     sql = f"""
         WITH dm AS (
@@ -78,32 +98,45 @@ def _fetch_candidates(conn: psycopg.Connection, q: str | None) -> list[dict]:
             FROM contact c
             WHERE c.removed_at IS NULL AND c.role IN ('owner', 'admin')
             ORDER BY c.firm_id, (c.role = 'owner') DESC, c.confidence DESC NULLS LAST, c.id
+        ),
+        best_email AS (
+            SELECT DISTINCT ON (e.contact_id) e.contact_id, e.email, e.status, e.vendor_status
+            FROM contact_email e JOIN dm ON dm.contact_id = e.contact_id
+            ORDER BY e.contact_id, (e.status = 'valid') DESC, e.email
+        ),
+        cand AS (
+            SELECT l.id AS lead_id, l.grade, l.band, l.contest, l.fit_score, l.intent_score,
+                   l.arming_signal, l.state AS lead_state, l.scored_at, l.cooldown_until,
+                   l.owner,
+                   f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
+                   f.tier, f.fee_model, f.primary_practice, f.cms_detected,
+                   dm.contact_id AS dm_id, dm.full_name AS dm_name, dm.title AS dm_title,
+                   dm.linkedin_url AS dm_linkedin,
+                   be.email AS dm_email, be.status AS dm_email_status,
+                   be.vendor_status AS dm_vendor_status,
+                   EXISTS (SELECT 1 FROM document d WHERE d.firm_id = f.id AND d.fetch_ok
+                           AND d.status_code = 200 AND NOT d.soft_404
+                           AND d.page_kind = ANY(%(kinds)s)) AS site_read,
+                   (f.tier IS NOT NULL AND f.tier <> 'UNCLASSIFIED'
+                    AND f.tier NOT LIKE 'DQ%%') AS fit,
+                   (dm.contact_id IS NOT NULL) AS person,
+                   (be.email IS NOT NULL) AS email,
+                   (be.status = 'valid') AS email_verified,
+                   (dm.linkedin_url IS NOT NULL) AS linkedin,
+                   EXISTS (SELECT 1 FROM signal s WHERE s.firm_id = f.id
+                           AND s.closed_at IS NULL) AS why_now
+            FROM lead l
+            JOIN firm f ON f.id = l.firm_id
+            LEFT JOIN dm ON dm.firm_id = f.id
+            LEFT JOIN best_email be ON be.contact_id = dm.contact_id
+            WHERE {_BASE_WHERE} {search}
         )
-        SELECT l.id AS lead_id, l.grade, l.band, l.contest, l.fit_score, l.intent_score,
-               l.arming_signal, l.state AS lead_state, l.scored_at, l.cooldown_until, l.owner,
-               f.id AS firm_id, f.canonical_name, f.domain, f.city, f.state,
-               f.tier, f.fee_model, f.primary_practice, f.cms_detected,
-               dm.contact_id AS dm_id, dm.full_name AS dm_name, dm.title AS dm_title,
-               dm.linkedin_url AS dm_linkedin,
-               EXISTS (SELECT 1 FROM document d WHERE d.firm_id = f.id AND d.fetch_ok
-                       AND d.status_code = 200 AND NOT d.soft_404
-                       AND d.page_kind = ANY(%(kinds)s)) AS site_read,
-               (f.tier IS NOT NULL AND f.tier <> 'UNCLASSIFIED'
-                AND f.tier NOT LIKE 'DQ%%') AS fit,
-               (dm.contact_id IS NOT NULL) AS person,
-               (SELECT e.email FROM contact_email e WHERE e.contact_id = dm.contact_id
-                ORDER BY (e.status = 'valid') DESC, e.email LIMIT 1) AS dm_email,
-               (SELECT e.status FROM contact_email e WHERE e.contact_id = dm.contact_id
-                ORDER BY (e.status = 'valid') DESC, e.email LIMIT 1) AS dm_email_status,
-               (SELECT e.vendor_status FROM contact_email e WHERE e.contact_id = dm.contact_id
-                ORDER BY (e.status = 'valid') DESC, e.email LIMIT 1) AS dm_vendor_status,
-               EXISTS (SELECT 1 FROM signal s WHERE s.firm_id = f.id AND s.closed_at IS NULL)
-                   AS why_now
-        FROM lead l
-        JOIN firm f ON f.id = l.firm_id
-        LEFT JOIN dm ON dm.firm_id = f.id
-        WHERE {" AND ".join(where)}
-        ORDER BY l.intent_score DESC NULLS LAST, l.fit_score DESC NULLS LAST, l.id
+        SELECT *, (site_read::int + fit::int + person::int + email::int
+                   + email_verified::int + linkedin::int) AS passes
+        FROM cand
+        WHERE (site_read::int + fit::int + person::int + email::int
+               + email_verified::int + linkedin::int) >= %(min_passes)s
+        ORDER BY passes DESC, intent_score DESC NULLS LAST, fit_score DESC NULLS LAST, lead_id
     """  # noqa: S608 -- every fragment above is a fixed literal; values are bound params
     with conn.cursor() as cur:
         cur.execute(sql, params)
@@ -111,14 +144,7 @@ def _fetch_candidates(conn: psycopg.Connection, q: str | None) -> list[dict]:
 
 
 def _sql_results(r: dict) -> dict[str, bool]:
-    return {
-        "site_read": bool(r["site_read"]),
-        "fit": bool(r["fit"]),
-        "person": bool(r["person"]),
-        "email": r["dm_email"] is not None,
-        "email_verified": r["dm_email_status"] == "valid",
-        "linkedin": bool(r["dm_linkedin"]),
-    }
+    return {key: bool(r[key]) for key in _SQL_CHECKS}
 
 
 def _details(r: dict) -> dict[str, str | None]:
@@ -133,9 +159,7 @@ def _details(r: dict) -> dict[str, str | None]:
             if r["person"] else "No owner or office manager named"
         ),
         "email": r["dm_email"] or "No address for this person",
-        "email_verified": (
-            email_status if r["dm_email"] else "No address to verify"
-        ),
+        "email_verified": email_status if r["dm_email"] else "No address to verify",
         "linkedin": r["dm_linkedin"] or "No profile found",
     }
 
@@ -154,18 +178,23 @@ def _journey_check(conn: psycopg.Connection, r: dict) -> tuple[bool, str]:
 
 
 def _classify(conn: psycopg.Connection, rows: list[dict]) -> list[tuple[dict, dict, dict, bool]]:
-    """(row, results, details, ready) for every candidate that is at least
-    almost ready; the journey is rendered only for the rows that pass the
-    rest, so the list never pays for drafts it will not show."""
+    """(row, results, details, ready) for every candidate. The journey is
+    rendered only for the rows that pass the other six, and for at most
+    JOURNEY_EVAL_CAP of them; the rest say so and count as almost."""
     out = []
+    rendered = 0
     for r in rows:
         results = _sql_results(r)
-        passes = sum(results.values())
-        if passes < ALMOST_MIN_PASSES:
-            continue
         details = _details(r)
-        if passes == len(_SQL_CHECKS):
-            ok, detail = _journey_check(conn, r)
+        if all(results.values()):
+            if rendered < JOURNEY_EVAL_CAP:
+                rendered += 1
+                ok, detail = _journey_check(conn, r)
+            else:
+                ok, detail = False, (
+                    f"Not checked in this view -- more than {JOURNEY_EVAL_CAP:,} leads pass "
+                    "the other six; narrow with a search"
+                )
         else:
             ok, detail = False, "Asked once the rest is done"
         results["journey"] = ok
@@ -201,8 +230,8 @@ def list_qualified(
     limit: int = Query(_LIMIT_DEFAULT, ge=1, le=_LIMIT_MAX),
 ) -> QualifiedResponse:
     at = datetime.now(UTC)
-    candidates = _fetch_candidates(conn, q)
-    classified = _classify(conn, candidates)
+    checked = _count_checked(conn, q)
+    classified = _classify(conn, _fetch_candidates(conn, q, ALMOST_MIN_PASSES))
     ready = [c for c in classified if c[3]]
     almost = [c for c in classified if not c[3]]
     missing_by_check: dict[str, int] = {key: 0 for key, _ in CHECKS}
@@ -217,7 +246,7 @@ def list_qualified(
         items=_rows(conn, page, at),
         next_offset=next_offset,
         counts=QualifiedCounts(
-            ready=len(ready), almost=len(almost), checked=len(candidates),
+            ready=len(ready), almost=len(almost), checked=checked,
             missing_by_check=missing_by_check,
         ),
     )
@@ -233,7 +262,8 @@ _CSV_COLUMNS = (
 def export_qualified_csv(conn: ConnDep) -> Response:
     """The ready leads as a sheet for the sending vendor -- never the almost-ready."""
     at = datetime.now(UTC)
-    classified = [c for c in _classify(conn, _fetch_candidates(conn, None)) if c[3]]
+    six = _fetch_candidates(conn, None, len(_SQL_CHECKS))  # only leads that pass all six
+    classified = [c for c in _classify(conn, six) if c[3]]
     rows = _rows(conn, classified, at)
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=_CSV_COLUMNS, lineterminator="\n")

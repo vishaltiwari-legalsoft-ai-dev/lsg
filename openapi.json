@@ -445,8 +445,11 @@
             "enum": [
               "research",
               "find_contacts",
+              "qualify",
               "disqualify",
               "hold",
+              "reopen",
+              "handoff",
               "assign"
             ],
             "title": "Action",
