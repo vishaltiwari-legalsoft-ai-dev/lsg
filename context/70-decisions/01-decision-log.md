@@ -1055,6 +1055,29 @@ which all kind of work has been done and they are ready to be outreach."
   LinkedIn profile (30), a tier (20), an address at all (5). That is the work list the two
   keys unlock, in order; the panel shows the gap rather than lowering the bar.
 
+## D-048 · The store starts empty; the purchased list is a sheet like any other
+
+**Asked for (17 Sep 2026):** "remove every kind of data that you have actually gathered, just
+focus on the capabilities of the platform, and then we will start testing" -- the user will
+upload a sheet with their leads.
+
+**Rulings:**
+- **Everything gathered was removed**: the database was dropped and recreated from the
+  migrations (45 tables; only the seeds remain -- the lifecycle whitelist and the tier SKUs),
+  and `.local/objects` (raw pages), `.local/imports` (staged uploads), `.local/jobs`, the run
+  logs and `data/in` (the vendor list, the job history, the probe lists) were moved out.
+  `data/out` was cleared. Nothing under `tests/` changed: fixtures are tests, not data.
+- **A compressed copy sits in `.local/backups/2026-09-17-reset/`** (291 MB, git-ignored: the
+  `pg_dump`, the object store, the imports, the sheets). It exists so the wipe is reversible,
+  not because anything will be restored; the user may delete it.
+- **The purchased list is no longer special.** It enters, if it ever does, through the Lists
+  screen like any sheet. `config/flows.yml`'s `load_first_party` flow, which read
+  `data/in/vendor_firms_37k.csv` by path, is legacy and will report the missing file rather
+  than load anything.
+- **Every number in D-042..D-047 was measured on the probe, which is gone.** Future
+  measurements are on the sheet the user uploads; the panel and the pipeline counts start
+  at zero.
+
 ---
 
 ## Standing rulings that were never in dispute
