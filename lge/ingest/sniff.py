@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from dateutil import parser as dateutil_parser
 
-from lge.ingest.vocab import BY_NAME, FIELDS, ColumnGuess, missing_mandatory
+from lge.ingest.vocab import BY_NAME, FIELDS, ColumnGuess, missing_mandatory, research_fills
 
 _EMAIL_RE = re.compile(r"^[\w.+-]+@[\w-]+(?:\.[\w-]+)+$")
 _URL_RE = re.compile(
@@ -163,6 +163,9 @@ class ColumnMap:
     mapping: dict[str, str]  # field -> primary column
     secondary: dict[str, list[str]]  # field -> other columns that also carry it
     missing: list[str]  # mandatory groups nothing satisfies
+    research_fills: list[str] = field(default_factory=list)  # fields research supplies
+    reader: str = "rules"  # which reader produced this map: "rules" | "llm"
+    notes: list[str] = field(default_factory=list)  # the reader's remarks on the sheet
 
     def columns_for(self, name: str) -> list[str]:
         cols = [self.mapping[name]] if name in self.mapping else []
@@ -181,6 +184,9 @@ class ColumnMap:
             "mapping": dict(self.mapping),
             "secondary": {k: list(v) for k, v in self.secondary.items()},
             "missing": list(self.missing),
+            "research_fills": list(self.research_fills),
+            "reader": self.reader,
+            "notes": list(self.notes),
         }
 
     @classmethod
@@ -190,6 +196,9 @@ class ColumnMap:
             mapping=dict(d.get("mapping", {})),
             secondary={k: list(v) for k, v in d.get("secondary", {}).items()},
             missing=list(d.get("missing", [])),
+            research_fills=list(d.get("research_fills", [])),
+            reader=str(d.get("reader", "rules")),
+            notes=list(d.get("notes", [])),
         )
 
     def with_overrides(self, overrides: dict[str, str | None]) -> ColumnMap:
@@ -205,10 +214,19 @@ class ColumnMap:
                 guesses.append(ColumnGuess(g.column, new_field, 1.0, "set by hand", g.samples))
             else:
                 guesses.append(g)
-        return _assemble(guesses, prefer={c: f for c, f in overrides.items() if f})
+        return _assemble(
+            guesses, prefer={c: f for c, f in overrides.items() if f},
+            reader=self.reader, notes=self.notes,
+        )
 
 
-def _assemble(guesses: list[ColumnGuess], prefer: dict[str, str] | None = None) -> ColumnMap:
+def _assemble(
+    guesses: list[ColumnGuess],
+    prefer: dict[str, str] | None = None,
+    *,
+    reader: str = "rules",
+    notes: list[str] | None = None,
+) -> ColumnMap:
     prefer = prefer or {}
     by_field: dict[str, list[ColumnGuess]] = defaultdict(list)
     for g in guesses:
@@ -227,7 +245,10 @@ def _assemble(guesses: list[ColumnGuess], prefer: dict[str, str] | None = None) 
     mapped = set(mapping)
     if "first_name" in mapped and "last_name" in mapped:
         mapped.add("person_name")
-    return ColumnMap(guesses, mapping, secondary, missing_mandatory(mapped))
+    return ColumnMap(
+        guesses, mapping, secondary, missing_mandatory(mapped),
+        research_fills=research_fills(mapped), reader=reader, notes=list(notes or []),
+    )
 
 
 def sniff_columns(headers: list[str], rows: list[dict[str, str]]) -> ColumnMap:

@@ -10,6 +10,14 @@ from datetime import UTC, datetime
 import psycopg
 import pytest
 
+# Tests never reach a paid provider: the seams are pinned to their keyless
+# implementations before lge.settings is first read (brain/plan/plan-v2.md).
+os.environ.setdefault("LGE_COLUMN_READER", "rules")
+os.environ.setdefault("LGE_SEARCH_ENGINE", "ddg")
+os.environ.setdefault("LGE_EMAIL_FINDER", "none")
+os.environ.setdefault("LGE_EMAIL_VERIFIER", "none")
+
+
 from lge import db as lge_db
 from lge.settings import get_settings
 

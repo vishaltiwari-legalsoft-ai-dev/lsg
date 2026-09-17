@@ -44,25 +44,48 @@ def test_upload_maps_columns_and_reports_what_is_missing(client):
     assert by_col["No. of Attorneys"]["field"] == "firm_size"
     assert by_col["Contacted?"]["field"] == "contacted_before"
     assert body["missing"] == []
+    assert body["reader"] == "rules"  # tests never call the model (conftest pins it)
+    # the sheet has no LinkedIn column: research says where it gets one
+    assert any(r.startswith("LinkedIn — from") for r in body["research_fills"])
     assert body["health"]["rows"] == 4 and body["health"]["junk_person_names"] == 1
-    assert any(f["name"] == "firm_type" and f["mandatory_group"] == "firm_type"
+    # firm type is research-fillable, not mandatory; the website is one way to reach a firm
+    assert any(f["name"] == "firm_type" and f["mandatory_group"] is None and f["filled_by"]
                for f in body["fields"])
+    assert any(f["name"] == "website" and f["mandatory_group"] == "reach" for f in body["fields"])
 
     listing = client.get("/api/imports").json()
     assert [i["id"] for i in listing["items"]] == [body["id"]]
 
 
-def test_missing_mandatory_is_named_and_a_correction_fixes_it(client):
-    text = "Company,Site,City,Team Size,What they do\nAcme Legal,acme.law,Boise,5,PI\n"
+def test_a_thin_sheet_is_not_incomplete(client):
+    """Name and website only: nothing mandatory is missing, and the screen is
+    told what research will fill (D-042)."""
+    text = "Company,Site\nAcme Legal,acme.law\nBeta Injury,beta.law\nGamma LLP,gamma.com\n"
     body = _upload(client, text=text).json()
-    # "What they do" is nobody's synonym -> firm type missing, in plain words
-    assert body["missing"] == ["Firm type or practice area"]
+    assert body["missing"] == []
+    fills = body["research_fills"]
+    assert any(r.startswith("Firm size — from") for r in fills)
+    assert any(r.startswith("Firm type — from") for r in fills)
+    assert any(r.startswith("Contact name — from") for r in fills)
+    assert body["health_score"] == 100
+
+
+def test_missing_mandatory_is_named_and_a_correction_fixes_it(client):
+    text = (
+        "Company,Handle,Team Size\nAcme Legal,acme-legal,5\nBeta Law,beta-law,3\n"
+        "Gamma,gamma-x,2\n"
+    )
+    body = _upload(client, text=text).json()
+    # "Handle" is nobody's synonym and its values are not addresses -> no way to reach the firm
+    assert body["missing"] == [
+        "A way to reach the firm: a website, an email, or a location (city, state, ZIP or address)"
+    ]
     fixed = client.put(
-        f"/api/imports/{body['id']}/mapping", json={"overrides": {"What they do": "firm_type"}}
+        f"/api/imports/{body['id']}/mapping", json={"overrides": {"Handle": "website"}}
     ).json()
     assert fixed["missing"] == []
-    col = next(c for c in fixed["columns"] if c["column"] == "What they do")
-    assert col["field"] == "firm_type" and col["reason"] == "set by hand"
+    col = next(c for c in fixed["columns"] if c["column"] == "Handle")
+    assert col["field"] == "website" and col["reason"] == "set by hand"
 
 
 def test_load_sync_produces_firms_claims_and_people(client, db):

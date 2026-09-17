@@ -58,3 +58,14 @@ request:
 
 referer: https://legalsoft.com
 title: "Legal Soft Lead Engine"
+
+# The sheet reader (D-042): one call per uploaded sheet with the header row
+# and a dozen sample rows; answers which column is which and what the sheet
+# lacks. lge/llm/sheet_reader.py. Cheap tier: a few thousand tokens a sheet.
+sheet_reader:
+  model: anthropic/claude-haiku-4.5
+  sample_rows: 12
+  max_output_tokens: 1500
+  timeout_s: 60
+  price_per_mtok_input: 1.00
+  price_per_mtok_output: 5.00

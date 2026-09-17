@@ -37,7 +37,7 @@ from lge.api.models import (
 from lge.ingest.batches import DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE, MIN_BATCH_SIZE
 from lge.ingest.load import get_import, list_batches, load_import, register_import, update_mapping
 from lge.ingest.sniff import ColumnMap
-from lge.ingest.vocab import FIELDS, MANDATORY_LABELS, field_label_of
+from lge.ingest.vocab import FIELDS, MANDATORY_LABELS, field_label_of, research_fill_label
 from lge.registry import RunContext, discover, registered_components
 from lge.settings import PROJECT_ROOT, get_settings
 
@@ -62,6 +62,7 @@ _STATUS_DISPLAY = {
 
 def _summary(row: dict[str, Any], batches: list[dict[str, Any]]) -> ImportSummary:
     health = row.get("health") or {}
+    colmap = ColumnMap.from_dict(row["column_map"])
     return ImportSummary(
         id=str(row["id"]),
         file_name=row["file_name"],
@@ -70,6 +71,8 @@ def _summary(row: dict[str, Any], batches: list[dict[str, Any]]) -> ImportSummar
         status=row["status"],
         status_display=_STATUS_DISPLAY.get(row["status"], row["status"]),
         missing=[MANDATORY_LABELS.get(m, m) for m in (row.get("missing") or [])],
+        research_fills=[research_fill_label(f) for f in colmap.research_fills],
+        reader=colmap.reader,
         batch_size=row["batch_size"],
         batches_total=len(batches),
         batches_loaded=sum(1 for b in batches if b["status"] == "loaded"),
@@ -88,7 +91,10 @@ def _detail(row: dict[str, Any], batches: list[dict[str, Any]]) -> ImportDetail:
         )
         for g in colmap.guesses
     ]
-    fields = [FieldOption(name=f.name, label=f.label, mandatory_group=f.group) for f in FIELDS]
+    fields = [
+        FieldOption(name=f.name, label=f.label, mandatory_group=f.group, filled_by=f.filled_by)
+        for f in FIELDS
+    ]
     return ImportDetail(
         **_summary(row, batches).model_dump(),
         columns=columns,
@@ -188,19 +194,21 @@ def list_imports(conn: ConnDep) -> ImportsResponse:
 
 
 @router.post("/imports", response_model=ImportDetail, status_code=201)
-async def upload_import(
+def upload_import(
     conn: ConnDep,
     file: UploadFile = File(...),  # noqa: B008 -- FastAPI's declaration style
     source_tag: str = Form("internal_firms"),
     batch_size: int = Form(DEFAULT_BATCH_SIZE),
 ) -> ImportDetail:
+    # A plain `def`: FastAPI runs it on the threadpool, so parsing a large
+    # sheet and the column reader's model call never block the event loop.
     name = file.filename or "upload.csv"
     if not name.lower().endswith(_ALLOWED_SUFFIXES):
         raise api_error(
             422, "validation_error", f"'{name}' is not a CSV or XLSX file.",
             "Upload a .csv, .tsv or .xlsx file.",
         )
-    data = await file.read()
+    data = file.file.read()
     if not data:
         raise api_error(422, "validation_error", "The file is empty.")
     if len(data) > _MAX_BYTES:

@@ -6,11 +6,14 @@ whatever the team has: a vendor export, a conference list, last quarter's
 outreach sheet, a partner's referrals -- different headers, different
 languages for the same thing, different completeness.
 
-    reader     -- CSV (any encoding, any delimiter) and XLSX -> headers + rows
-    vocab      -- the fixed field vocabulary every downstream step reads,
-                  and which fields are mandatory
-    sniff      -- header synonyms + value shapes -> a column map with
-                  confidence, and what mandatory data the sheet lacks
+    reader     -- CSV (any encoding, any delimiter) and XLSX -> headers + rows,
+                  streamed: the loader never holds the whole sheet
+    vocab      -- the fixed field vocabulary every downstream step reads; the
+                  two mandatory things (a firm name, a way to reach the firm)
+                  and where research fills everything else
+    columns    -- the ColumnReader seam: the AI reads the sheet (checked
+                  against the values) or the rules do; one ColumnMap either way
+    sniff      -- the rule reader: header synonyms + value shapes
     normalize  -- one raw row + column map -> the canonical row
     batches    -- rows -> numbered batches, processed one at a time
     health     -- a batch's canonical rows -> a data-health report

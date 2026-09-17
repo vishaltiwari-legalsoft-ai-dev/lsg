@@ -1,5 +1,6 @@
 """Column sniffing: the vendor layout, a completely different layout, generic
-headers rescued by value shapes, misleading headers, and mandatory reporting."""
+headers rescued by value shapes, misleading headers, and what is mandatory
+(a firm name and a way to reach the firm -- nothing else, D-042)."""
 
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ def _vendor_rows(n=5):
     ]
 
 
-def test_vendor_layout_maps_every_mandatory_field():
+def test_vendor_layout_maps_every_field_it_carries():
     cm = sniff_columns(VENDOR_HEADERS, _vendor_rows())
     assert cm.mapping["firm_name"] in ("Company Name", "Formatted Company Name")
     assert set(cm.columns_for("firm_name")) == {"Company Name", "Formatted Company Name"}
@@ -44,6 +45,10 @@ def test_vendor_layout_maps_every_mandatory_field():
     assert cm.mapping["city"] in ("Company City", "City")
     assert cm.mapping["linkedin"] == "Linkedin"
     assert cm.missing == []
+    assert cm.reader == "rules"
+    # what the vendor never gives, research will: a phone, an opening
+    assert "phone" in cm.research_fills and "job_post" in cm.research_fills
+    assert "firm_size" not in cm.research_fills and "location" not in cm.research_fills
 
 
 def test_a_different_sheet_maps_by_synonyms_and_location_free_text():
@@ -68,6 +73,8 @@ def test_a_different_sheet_maps_by_synonyms_and_location_free_text():
     assert cm.mapping["contacted_before"] == "Contacted?"
     assert cm.mapping["contacted_at"] == "Last Touch"
     assert cm.missing == []
+    # no opening, no LinkedIn, no software on the sheet: the careers page, a search, the site's code
+    assert cm.research_fills == ["job_post", "linkedin", "technology"]
 
 
 def test_generic_headers_are_rescued_by_value_shapes():
@@ -83,10 +90,29 @@ def test_generic_headers_are_rescued_by_value_shapes():
     assert cm.mapping["website"] == "C"
     assert cm.mapping["state"] == "D"
     assert cm.mapping["zip"] == "E"
-    # A is unmapped (a firm name cannot be told from values alone) -> mandatory missing
-    assert "firm_name" in cm.missing
-    assert "firm_size" in cm.missing and "firm_type" in cm.missing
-    assert "location" not in cm.missing
+    # A is unmapped (a firm name cannot be told from values alone) -> the one thing missing
+    assert cm.missing == ["firm_name"]
+    # size and type are not on the sheet; that is research's job, not a gap
+    assert "firm_size" in cm.research_fills and "firm_type" in cm.research_fills
+    assert "location" not in cm.research_fills
+
+
+def test_only_a_name_and_a_site_is_a_complete_sheet():
+    headers = ["Company", "Site"]
+    rows = [{"Company": f"Firm {i}", "Site": f"firm{i}.com"} for i in range(4)]
+    cm = sniff_columns(headers, rows)
+    assert cm.missing == []
+    assert cm.research_fills[:3] == ["firm_size", "firm_type", "job_post"]
+    assert "location" in cm.research_fills
+
+
+def test_a_name_with_no_way_to_reach_the_firm_is_missing_reach():
+    headers = ["Company", "Handle"]
+    rows = [{"Company": f"Firm {i}", "Handle": f"firm-{i}"} for i in range(4)]
+    cm = sniff_columns(headers, rows)
+    assert cm.missing == ["reach"]
+    fixed = cm.with_overrides({"Handle": "website"})
+    assert fixed.missing == [] and fixed.reader == "rules"
 
 
 def test_values_beat_a_misleading_header():
@@ -123,3 +149,10 @@ def test_overrides_and_round_trip():
     assert "Industry" not in fixed.columns_for("firm_type")
     again = ColumnMap.from_dict(fixed.to_dict())
     assert again.mapping == fixed.mapping and again.missing == fixed.missing
+    assert again.research_fills == fixed.research_fills and again.reader == "rules"
+
+
+def test_a_map_stored_before_the_reader_seam_still_loads():
+    old = {"guesses": [], "mapping": {"firm_name": "A"}, "secondary": {}, "missing": ["reach"]}
+    cm = ColumnMap.from_dict(old)
+    assert cm.reader == "rules" and cm.notes == [] and cm.research_fills == []

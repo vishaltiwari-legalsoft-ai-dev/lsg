@@ -1,9 +1,11 @@
 """The field vocabulary: the only names downstream steps read from a canonical
 row. A sheet's column becomes one of these or stays in `extra`.
 
-Mandatory (must be found before a sheet is worth loading): firm name, website,
-location (any of city/state/zip/address/free-text location), firm size and
-firm type. Everything else is welcome but optional.
+Only two things are mandatory (D-042): a firm name, and *a way to reach the
+firm* -- a website, an email (its domain is the website), or a location to
+search from. Everything else is research-fillable: the field says where the
+engine gets it when the sheet does not carry it, and the import screen says
+so instead of calling the sheet incomplete.
 """
 
 from __future__ import annotations
@@ -22,6 +24,9 @@ class Field:
     # city; but "Company Name" must never become person_name)
     vetoes: tuple[str, ...] = ()
     group: str | None = None  # mandatory group this field satisfies
+    # where research gets this when the sheet lacks it ("" = nowhere: it is
+    # bookkeeping the sheet alone can carry, like "contacted before")
+    filled_by: str = ""
 
 
 FIELDS: tuple[Field, ...] = (
@@ -36,34 +41,35 @@ FIELDS: tuple[Field, ...] = (
         "website", "Website",
         ("company url", "website", "web site", "url", "domain", "company website", "homepage",
          "web address", "company domain", "site", "website url", "web"),
-        "The firm's site, as given -- verified later.", group="website",
+        "The firm's site, as given -- verified later.", group="reach",
+        filled_by="a web search for the firm, when the sheet's is missing or wrong",
     ),
     Field(
         "city", "City",
         ("company city", "city", "town", "hq city"),
-        group="location",
+        group="reach", filled_by="the contact page",
     ),
     Field(
         "state", "State",
         ("company state", "state", "province", "region", "st", "state/province", "hq state"),
-        group="location",
+        group="reach", filled_by="the contact page",
     ),
     Field(
         "zip", "ZIP",
         ("zip", "zip code", "zipcode", "postal code", "postcode", "company zip"),
-        group="location",
+        group="reach", filled_by="the contact page",
     ),
     Field(
         "address", "Street address",
         ("address", "street", "street address", "company address", "address line 1",
          "address 1", "mailing address", "office address"),
-        group="location",
+        group="reach", filled_by="the contact page",
     ),
     Field(
         "location", "Location",
         ("location", "company location", "hq", "headquarters", "office location", "metro",
          "market", "city/state", "city, state", "area", "geography"),
-        "Free text such as 'Atlanta, GA'.", group="location",
+        "Free text such as 'Atlanta, GA'.", group="reach", filled_by="the contact page",
     ),
     Field("country", "Country", ("country", "company country", "hq country")),
     Field(
@@ -72,7 +78,8 @@ FIELDS: tuple[Field, ...] = (
          "number of employees", "no of employees", "# employees", "attorneys", "attorney count",
          "# of attorneys", "number of attorneys", "lawyers", "firm size", "staff", "staff count",
          "team size"),
-        "Headcount or attorney count, as given.", group="firm_size",
+        "Headcount or attorney count, as given.",
+        filled_by="the team page, LinkedIn's headcount, or the AI reading the site",
     ),
     Field(
         "firm_type", "Firm type",
@@ -81,7 +88,7 @@ FIELDS: tuple[Field, ...] = (
          "company description", "sector", "focus", "areas of practice", "practice type",
          "business type", "vertical"),
         "Industry, practice area or description -- a hint, never the tier.",
-        group="firm_type",
+        filled_by="the practice areas read off the site",
     ),
     Field(
         "job_post", "Job post",
@@ -89,7 +96,7 @@ FIELDS: tuple[Field, ...] = (
          "job title posted", "vacancy", "opening", "open jobs", "jobs", "job", "posting",
          "role posted", "position open"),
         "An opening the sheet already knows about.",
-        vetoes=("title", "job title"),
+        vetoes=("title", "job title"), filled_by="the careers page",
     ),
     Field(
         "person_name", "Contact name",
@@ -98,6 +105,7 @@ FIELDS: tuple[Field, ...] = (
          "lawyer name", "partner name", "principal"),
         vetoes=("company", "firm", "business", "account", "organization", "organisation",
                 "domain", "file"),
+        filled_by="the people named on the site",
     ),
     Field("first_name", "First name", ("first name", "first", "given name", "forename")),
     Field("last_name", "Last name", ("last name", "last", "surname", "family name")),
@@ -106,12 +114,15 @@ FIELDS: tuple[Field, ...] = (
         ("job title", "title", "designation", "role", "position title", "position",
          "contact title", "job role", "job function"),
         vetoes=("company", "firm", "post", "posting"),
+        filled_by="the title printed beside the name on the site",
     ),
     Field(
         "email", "Email",
         ("business email", "email", "e-mail", "email address", "work email", "contact email",
          "e mail", "mail", "email id", "primary email"),
         vetoes=("status", "quality", "valid", "verified", "pattern", "domain"),
+        group="reach",
+        filled_by="the contact page, a web search, or the firm's own address pattern",
     ),
     Field(
         "email_status", "Email status",
@@ -122,12 +133,13 @@ FIELDS: tuple[Field, ...] = (
         "phone", "Phone",
         ("phone", "phone number", "telephone", "company phone", "direct phone", "mobile",
          "tel", "office phone", "work phone", "contact number", "cell"),
+        filled_by="the contact page",
     ),
     Field(
         "linkedin", "LinkedIn",
         ("linkedin", "linkedin url", "linkedin profile", "li url", "linkedin link",
          "person linkedin", "contact linkedin"),
-        vetoes=("company linkedin",),
+        vetoes=("company linkedin",), filled_by="a web search",
     ),
     Field(
         "contacted_before", "Contacted before",
@@ -145,6 +157,7 @@ FIELDS: tuple[Field, ...] = (
     Field(
         "technology", "Technology",
         ("technology", "technologies", "tech stack", "software", "cms", "tools", "tech"),
+        filled_by="the site's own code",
     ),
     Field("notes", "Notes", ("notes", "comments", "remarks", "note", "comment", "memo")),
 )
@@ -154,19 +167,20 @@ BY_NAME: dict[str, Field] = {f.name: f for f in FIELDS}
 # A mandatory group is satisfied by any one of its fields being mapped.
 MANDATORY_GROUPS: dict[str, tuple[str, ...]] = {
     "firm_name": ("firm_name",),
-    "website": ("website",),
-    "location": ("city", "state", "zip", "address", "location"),
-    "firm_size": ("firm_size",),
-    "firm_type": ("firm_type",),
+    "reach": ("website", "email", "city", "state", "zip", "address", "location"),
 }
 
 MANDATORY_LABELS: dict[str, str] = {
     "firm_name": "Firm name",
-    "website": "Website",
-    "location": "Location (city, state, ZIP, address or a location column)",
-    "firm_size": "Firm size",
-    "firm_type": "Firm type or practice area",
+    "reach": "A way to reach the firm: a website, an email, or a location (city, state, "
+             "ZIP or address)",
 }
+
+# The location fields are one thing to a reader: "where the firm is". Listed
+# once, as `location`, when none of them is on the sheet.
+_LOCATION_FIELDS = ("city", "state", "zip", "address", "location")
+
+RESEARCH_FILLED: dict[str, str] = {f.name: f.filled_by for f in FIELDS if f.filled_by}
 
 
 def field_label_of(name: str | None) -> str | None:
@@ -181,6 +195,32 @@ def missing_mandatory(mapped_fields: set[str]) -> list[str]:
         group for group, members in MANDATORY_GROUPS.items()
         if not any(m in mapped_fields for m in members)
     ]
+
+
+def research_fills(mapped_fields: set[str]) -> list[str]:
+    """The research-fillable fields the sheet does not carry, in vocabulary
+    order -- what the engine will find for itself. A first+last name pair
+    counts as a contact name; any one location field counts as a location."""
+    mapped = set(mapped_fields)
+    if "first_name" in mapped and "last_name" in mapped:
+        mapped.add("person_name")
+    out: list[str] = []
+    for f in FIELDS:
+        if not f.filled_by or f.name in mapped:
+            continue
+        if f.name in _LOCATION_FIELDS:
+            continue
+        out.append(f.name)
+    if not any(m in mapped for m in _LOCATION_FIELDS):
+        out.append("location")
+    return out
+
+
+def research_fill_label(name: str) -> str:
+    """'Firm size — from the team page, LinkedIn's headcount, or the AI reading
+    the site', for the import screen."""
+    f = BY_NAME[name]
+    return f"{f.label} — from {f.filled_by}"
 
 
 @dataclass

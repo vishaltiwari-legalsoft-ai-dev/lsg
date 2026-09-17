@@ -23,13 +23,18 @@ from typing import Any
 import psycopg
 from psycopg.types.json import Jsonb
 
-from lge.ingest.batches import DEFAULT_BATCH_SIZE, Batch, plan_batches, slice_rows
+from lge.ingest.batches import DEFAULT_BATCH_SIZE, Batch, plan_batches
+from lge.ingest.columns import read_columns
 from lge.ingest.health import assess
 from lge.ingest.normalize import NORMALIZE_VERSION, normalize_row
-from lge.ingest.reader import Table, read_table
-from lge.ingest.sniff import ColumnMap, sniff_columns
+from lge.ingest.reader import count_rows, iter_batches, read_head
+from lge.ingest.sniff import ColumnMap
 from lge.norm import NORM_VERSION, norm_addr
 from lge.registry import RunContext, RunResult, component
+
+# How much of the sheet the health report and the column reader look at
+# before loading. The reader's model call sees far fewer (config/llm.yml).
+HEAD_ROWS = 2000
 
 # The email-as-identity-key rule (D-017) lives in normalize.resolve_domain; this
 # version travels with every observation so a rule change can be re-keyed.
@@ -161,22 +166,25 @@ def register_import(
     source_tag: str = "internal_firms",
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> dict[str, Any]:
-    """Read and sniff the sheet, record it and its batches. Loads nothing. The
-    same bytes registered twice return the first record."""
+    """Read the sheet's head, have the column reader map it, count its rows,
+    record it and its batches. Loads nothing. The same bytes registered twice
+    return the first record. The whole sheet is never held in memory."""
     p = Path(path)
     data = p.read_bytes()
     sha = hashlib.sha256(data).hexdigest()
+    del data
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM import_file WHERE sha256 = %s", (sha,))
         existing = cur.fetchone()
         if existing:
             return existing
 
-    table = read_table(p)
-    colmap = sniff_columns(table.headers, table.rows)
-    health = assess([normalize_row(r, colmap) for r in table.rows[:2000]])
+    table = read_head(p, HEAD_ROWS)
+    colmap = read_columns(table.headers, table.rows)
+    health = assess([normalize_row(r, colmap) for r in table.rows])
+    row_count = count_rows(p) if table.row_count >= HEAD_ROWS else table.row_count
     import_id = str(uuid.uuid4())
-    batches = plan_batches(table.row_count, batch_size)
+    batches = plan_batches(row_count, batch_size)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -187,9 +195,9 @@ def register_import(
             """,
             (
                 import_id, file_name or p.name, str(p.resolve()), sha, table.format,
-                table.row_count, source_tag, Jsonb(colmap.to_dict()), colmap.missing,
+                row_count, source_tag, Jsonb(colmap.to_dict()), colmap.missing,
                 batches[0].size if batches else batch_size, Jsonb(health.to_dict()),
-                Jsonb(table.notes),
+                Jsonb(table.notes + colmap.notes),
             ),
         )
         if batches:
@@ -213,8 +221,8 @@ def update_mapping(
         if imp["status"] != "mapped":
             raise ValueError(f"import {import_id} is {imp['status']}; the map is fixed")
         colmap = ColumnMap.from_dict(imp["column_map"]).with_overrides(overrides)
-        table = read_table(imp["stored_path"])
-        health = assess([normalize_row(r, colmap) for r in table.rows[:2000]])
+        table = read_head(imp["stored_path"], HEAD_ROWS)
+        health = assess([normalize_row(r, colmap) for r in table.rows])
         cur.execute(
             "UPDATE import_file SET column_map = %s, missing = %s, health = %s WHERE id = %s",
             (Jsonb(colmap.to_dict()), colmap.missing, Jsonb(health.to_dict()), import_id),
@@ -230,18 +238,18 @@ def update_mapping(
 def load_batch(
     conn: psycopg.Connection,
     imp: dict[str, Any],
-    table: Table,
+    headers: Sequence[str],
     colmap: ColumnMap,
     batch: Batch,
+    raw_rows: list[dict[str, str]],
 ) -> tuple[int, int, dict[str, Any]]:
-    """One batch -> observation rows. Returns (loaded, skipped_as_duplicate, health)."""
+    """One batch's rows -> observation rows. Returns (loaded, skipped_as_duplicate, health)."""
     fetched_at = imp["created_at"]
-    raw_rows = slice_rows(table.rows, batch)
     normalized = [normalize_row(r, colmap) for r in raw_rows]
     health = assess(normalized)
     tuples = [
         observation_tuple(
-            n, r, table.headers, source_tag=imp["source_tag"], fetched_at=fetched_at,
+            n, r, headers, source_tag=imp["source_tag"], fetched_at=fetched_at,
             import_id=str(imp["id"]), batch_no=batch.number,
         )
         for n, r in zip(normalized, raw_rows, strict=True)
@@ -276,23 +284,29 @@ def load_import(ctx: RunContext, import_id: str, *, only_batch: int | None = Non
     if imp["status"] == "loaded":
         return RunResult(skipped=1, notes=[f"import {import_id} already loaded"])
 
-    table = read_table(imp["stored_path"])
     colmap = ColumnMap.from_dict(imp["column_map"])
+    headers = read_head(imp["stored_path"], 0).headers
     with conn.cursor() as cur:
         cur.execute("UPDATE import_file SET status = 'loading' WHERE id = %s", (import_id,))
     ctx.checkpoint()
 
+    # Only the batches still to do are read off the sheet, in one pass.
+    pending: dict[int, dict[str, Any]] = {}
     for b in list_batches(conn, import_id):
         if only_batch is not None and b["batch_no"] != only_batch:
             continue
         if b["status"] == "loaded":
             result.skipped += 1
             continue
-        batch = Batch(b["batch_no"], b["row_start"], b["row_end"])
+        pending[b["batch_no"]] = b
+    plan = [Batch(b["batch_no"], b["row_start"], b["row_end"]) for b in pending.values()]
+
+    for batch, raw_rows in iter_batches(imp["stored_path"], plan):
+        b = pending[batch.number]
         with conn.cursor() as cur:
             _set_batch(cur, b["id"], status="loading", started_at=datetime.now(UTC), error=None)
         try:
-            loaded, skipped, health = load_batch(conn, imp, table, colmap, batch)
+            loaded, skipped, health = load_batch(conn, imp, headers, colmap, batch, raw_rows)
         except Exception as exc:  # noqa: BLE001 -- one batch must not sink the import
             conn.rollback()
             with conn.cursor() as cur:

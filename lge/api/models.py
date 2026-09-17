@@ -630,6 +630,7 @@ class FieldOption(BaseModel):
     name: str
     label: str
     mandatory_group: str | None
+    filled_by: str  # where research gets it when the sheet lacks it; "" when only a sheet can
 
 
 class ImportBatch(BaseModel):
@@ -651,6 +652,8 @@ class ImportSummary(BaseModel):
     status: str  # mapped | loading | loaded | failed
     status_display: str
     missing: list[str]  # mandatory data the sheet lacks, in plain words
+    research_fills: list[str]  # what the sheet lacks that research supplies, in plain words
+    reader: str  # which reader mapped the columns: "rules" | "llm"
     batch_size: int
     batches_total: int
     batches_loaded: int

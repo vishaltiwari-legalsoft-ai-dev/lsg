@@ -1077,6 +1077,10 @@
       },
       "FieldOption": {
         "properties": {
+          "filled_by": {
+            "title": "Filled By",
+            "type": "string"
+          },
           "label": {
             "title": "Label",
             "type": "string"
@@ -1100,7 +1104,8 @@
         "required": [
           "name",
           "label",
-          "mandatory_group"
+          "mandatory_group",
+          "filled_by"
         ],
         "title": "FieldOption",
         "type": "object"
@@ -1927,6 +1932,17 @@
             "title": "Notes",
             "type": "array"
           },
+          "reader": {
+            "title": "Reader",
+            "type": "string"
+          },
+          "research_fills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Research Fills",
+            "type": "array"
+          },
           "row_count": {
             "title": "Row Count",
             "type": "integer"
@@ -1948,6 +1964,8 @@
           "status",
           "status_display",
           "missing",
+          "research_fills",
+          "reader",
           "batch_size",
           "batches_total",
           "batches_loaded",
@@ -2047,6 +2065,17 @@
             "title": "Missing",
             "type": "array"
           },
+          "reader": {
+            "title": "Reader",
+            "type": "string"
+          },
+          "research_fills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Research Fills",
+            "type": "array"
+          },
           "row_count": {
             "title": "Row Count",
             "type": "integer"
@@ -2068,6 +2097,8 @@
           "status",
           "status_display",
           "missing",
+          "research_fills",
+          "reader",
           "batch_size",
           "batches_total",
           "batches_loaded",
