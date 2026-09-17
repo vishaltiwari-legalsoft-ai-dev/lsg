@@ -695,7 +695,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "research" | "find_contacts" | "disqualify" | "hold" | "assign";
+            action: "research" | "find_contacts" | "qualify" | "disqualify" | "hold" | "reopen" | "handoff" | "assign";
             /** Lead Ids */
             lead_ids: string[];
             /** Owner */
