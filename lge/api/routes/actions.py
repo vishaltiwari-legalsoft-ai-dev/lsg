@@ -72,12 +72,13 @@ JOB_DIR = _PROJECT_ROOT / ".local" / "jobs"
 FULL_STEPS = (
     "p1_site_map", "p2_fetch", "p3_render", "p4_text", "p5_jsonld", "p6_fee", "p7_tech",
     "px_site_rules", "px_site_facts", "reconcile", "r_site_contacts", "r_site_emails",
-    "r_search_links", "r_search_emails", "r3_email_pattern", "ja1_careers", "ja6_normalise",
+    "r_search_links", "r_search_emails", "r3_email_pattern", "r_email_guess", "ja1_careers",
+    "ja6_normalise",
     "ja6_closure", "ja7_pain_signals", "reconcile", "score",
 )
 CONTACT_STEPS = (
     "px_site_facts", "r_site_contacts", "r_site_emails", "r_search_links", "r_search_emails",
-    "r3_email_pattern", "reconcile", "score",
+    "r3_email_pattern", "r_email_guess", "reconcile", "score",
 )
 _MAX_BATCH = 100
 

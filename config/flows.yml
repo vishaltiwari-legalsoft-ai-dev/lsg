@@ -70,6 +70,7 @@ flows:
       - component: r_search_links
       - component: r_search_emails
       - component: r3_email_pattern
+      - component: r_email_guess
       - component: r4_verify
       - component: classify
       - component: ja1_careers
