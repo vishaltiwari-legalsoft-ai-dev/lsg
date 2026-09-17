@@ -1105,6 +1105,17 @@ it will take to work on a thousand leads -- answer these as an FAQ."
   DuckDuckGo at 8-12 s; Hunter minutes. About two hours with the keys, the better part of a
   day without. These are estimates from pacing, to be replaced by measured runs on the
   user's sheet.
+- **Second pass, the same day** ("make it interactive; this is basic and tasteless"). The
+  page's one bold thing is **a case file that builds itself** (`case-file-demo.tsx`): an
+  invented firm goes from a sheet row to a verified site, the people and the proof sentence
+  -- with the highlighter sweep, the system's one unprompted motion, as the climax -- to the
+  tier and urgency, every check green, and the first subject line. It plays once on load in
+  the hero (Replay to see it again; reduced motion shows the finished file at once), and the
+  same file is the instrument of the walkthrough: the six steps are a stepper, and picking
+  one shows what that step leaves behind. The questions became an index with the answer
+  beside it. Nothing else moves unless clicked; no new colours, faces or shapes. Found and
+  fixed on the way: a `div` inside a `p` (a hydration error), a state set inside an effect,
+  and a first paint that flashed the finished file before the play.
 
 ---
 
