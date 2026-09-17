@@ -1078,6 +1078,34 @@ upload a sheet with their leads.
   measurements are on the sheet the user uploads; the panel and the pipeline counts start
   at zero.
 
+## D-049 · The home page is the manual: how to use it, the tabs, how long, and the questions
+
+**Asked for (17 Sep 2026):** "beautify the home landing page ... a section on how a user can
+actually use this platform, what the different tabs are about, how to access it, how much time
+it will take to work on a thousand leads -- answer these as an FAQ."
+
+**Rulings:**
+- **The page keeps its shape** (D-037: five stations with live numbers, what needs a person,
+  the engine, the glossary -- ruled sections, no card grids, one panel style) and gains four
+  things in the same language: **How to use it** (six steps from a sheet to a ready lead,
+  each with what you do, what the engine does, where, and how long), **The tabs** (one line per
+  rail entry, linked), **Questions** (ten, collapsible, plain words) and a "Filled by research"
+  glossary entry. The hero's first button becomes *Upload a list* while the store is empty.
+- **Every answer is the engine's own truth, not a promise.** How to get in is localhost and the
+  README's three commands, with no login yet; a sheet needs a firm name and one way to reach
+  the firm; research over a list is batches of up to a hundred from the work queue (or `lge
+  flow profile_probe` from the command line); the three keys and what stops without them;
+  "ready" is the seven checks; it does not send, scrape LinkedIn or job boards; every number
+  carries its source; a wrong website is searched for and adopted only when its homepage names
+  the firm.
+- **The thousand-lead timing comes from the engine's settings**, step by step: reading the
+  sheet under a minute; website check ~10 min (twelve hosts at once, 2 s per host); reading
+  the sites 40-60 min (twelve pages a firm at that pace); facts and rules 10-20 min; search
+  15-20 min on Serper at a quarter second a query (~4,000 queries) versus ~11 hours on
+  DuckDuckGo at 8-12 s; Hunter minutes. About two hours with the keys, the better part of a
+  day without. These are estimates from pacing, to be replaced by measured runs on the
+  user's sheet.
+
 ---
 
 ## Standing rulings that were never in dispute
