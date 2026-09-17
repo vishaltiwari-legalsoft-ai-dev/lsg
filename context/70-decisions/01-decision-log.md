@@ -1026,6 +1026,35 @@ possibility to switch the verifier to NeverBounce, which they have used and foun
 - **Not verified live**: no `HUNTER_API_KEY` yet; both adapters are tested against recorded
   answers. The first live run over the probe's qualified firms is the measurement.
 
+## D-047 · The Qualified leads panel: seven checks, and only all seven is ready
+
+**Asked for (17 Sep 2026):** "a panel called qualified leads that will contain the leads on
+which all kind of work has been done and they are ready to be outreach."
+
+**Rulings:**
+- **A qualified lead is one on which every step is done**, and each step is a check with the
+  evidence it read: the site was read (a page of a kind the engine reads), the firm fits the
+  profile (tiered, not disqualified), a decision-maker is named (owner or office manager), an
+  address is on file, the address passed OUR verification (`valid` -- nothing less), a LinkedIn
+  profile is on the person, and the nine-touch journey renders. The pain signal is shown, not
+  required: a nurture journey renders without one.
+- **Almost is four or more of the six checks the database answers**; the journey is rendered
+  only for leads that pass the other six, so the list never pays for drafts it will not show.
+  The panel's second tab lists the almost-ready with exactly what is missing, and a strip says
+  what is holding them back in aggregate ("Address verified · 41") -- which is the work list.
+- **`GET /api/qualified`** (`lge/api/routes/qualified.py`) returns `QualifiedRow` = the work
+  queue's `LeadRow` plus `checks`, `ready`, `missing`, `why_now`; `counts` carry ready, almost,
+  checked and `missing_by_check`. Paged by offset (the set is small and ordered by
+  completeness in Python). **`/api/qualified/export.csv`** is the ready leads only -- the sheet
+  for the sending vendor, never the almost-ready.
+- **Nothing is recomputed.** The drafts endpoint's body became `drafts_for_row`, shared with
+  the panel; the checks read the store. The screen (`frontend/src/components/qualified/`) is
+  the fourth rail entry, with the fixture server deriving the same checks off its lead rows.
+- **On the real data today: 0 ready, 96 almost, of 21,948 checked.** What holds the 96 back:
+  a verified address (all 96), the journey (all 96 -- none is on the email list yet), a
+  LinkedIn profile (30), a tier (20), an address at all (5). That is the work list the two
+  keys unlock, in order; the panel shows the gap rather than lowering the bar.
+
 ---
 
 ## Standing rulings that were never in dispute
