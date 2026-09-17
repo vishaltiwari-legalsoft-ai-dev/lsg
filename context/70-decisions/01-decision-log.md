@@ -959,6 +959,41 @@ the attorneys/team pages stay because that is where the emails and the names com
 - **Reading a practice page is one config line away** (`practice: 1`) if the four lost fee
   readings turn out to matter at scale; the code does not change.
 
+## D-045 · Chunk 3: one search seam, three engines, the city in every people query
+
+**Built (17 Sep 2026)** as plan-v2 workstream 3. The user's call: "go with Serper"; keep
+the possibility to switch.
+
+**Rulings:**
+- **`lge/search` is the only way the engine searches the web.** `search(query, n, page=)`
+  returns rows of {title, href, body} -- the shape the DuckDuckGo path always returned, so
+  no consumer changed what it reads. Which engine answers is `settings.search_engine_name()`:
+  `serper` when its key exists, else `brave`, else `ddg`; `LGE_SEARCH_ENGINE` forces one.
+  `website_check`, `r_search_links` and `r_search_emails` default to it and still take an
+  injected `search`, so tests never reach an engine.
+- **The engine that answered is on the record.** Every claim from a search is tagged
+  `search:<engine>` (`lge.search.source()`), `search_log.engine` says which engine ran the
+  query (migration 101; earlier rows are `ddg`), and `config/precedence.yml` ranks
+  `search:serper` above `search:brave` above `search:ddg` for `review_count`.
+- **Pacing is per engine, in `config/search.yml`, one pacer for all** (`lge/search/pace.py`):
+  the steady gap with jitter, the rest once a window's worth went out, the retry after a
+  dropped connection, the one patient second try on a bot check and then the cooldown
+  (D-039's rules, no longer DuckDuckGo-specific). Serper runs at a query every quarter
+  second; DuckDuckGo keeps its 8-12 s.
+- **Google Business Profile comes from the engine's listings endpoint when it has one.**
+  Serper's `/places` returns the listing itself -- rating, review count, phone, website,
+  the Maps URL -- and `r_search_links` reads it at confidence 0.85 before falling back to
+  the snippets of a "google business reviews" query (0.6). The listing chosen is the one
+  whose name best overlaps the firm's once law words are set aside ("Hartley Injury Law,
+  P.C.", not "Hartley Dental"), and never one whose category is not a law practice.
+- **Every people query carries the firm's city** (D-042): `site:linkedin.com "<firm>" <city>`,
+  `"<firm>" "<person>" <city> linkedin`, `"<person>" "<firm>" <city> email`. The Recorder
+  tests match on the query's stem, so a firm without a city asks the old query.
+- **Not verified live.** No `SERPER_API_KEY` is in `.env` yet; the Serper and Brave adapters
+  are tested against recorded responses only. The first live run over the probe is the
+  measurement for this chunk: profiles found per firm, queries per firm, failure rate.
+- **Bing is not an option**: Microsoft retired its Web Search API in August 2025.
+
 ---
 
 ## Standing rulings that were never in dispute

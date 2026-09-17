@@ -102,6 +102,8 @@ Rules that hold across every chunk:
 
 **Deliverable:** the probe's search backlog drains in an hour instead of days, with the failure rate near zero; per firm a Google Business Profile line; per decision-maker a LinkedIn URL and headline where one is indexed.
 
+**Status — built 17 Sep 2026 (D-045), live run pending.** `lge/search` with `serper`, `brave`, `ddg`; the engine on every claim and log row; the listing endpoint for Google Business Profile; the city in every people query. Tested against recorded responses. The measurement above runs the day `SERPER_API_KEY` lands in `.env`.
+
 ### 4. LinkedIn — found from search results, never fetched
 
 **Target:** every named person at a qualified firm gets a profile URL and headline from the search results (the standing rule: LinkedIn pages are never opened). For decision-makers, an optional licensed enrichment call (Hunter.io first, Apollo or People Data Labs as alternatives) returns the email, its verification status, and the profile in one step — replacing pattern-minting for the people who matter. Every minted or found address carries its status; nothing is called verified without a verifier.
