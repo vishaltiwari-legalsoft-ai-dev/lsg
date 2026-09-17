@@ -37,6 +37,8 @@ export const queryKeys = {
   firms: (query: Omit<FirmsQuery, "cursor">) => ["firms", query] as const,
   firmSearch: (q: string) => ["firm-search", q] as const,
   firm: (id: string) => ["firm", id] as const,
+  qualified: (query: Omit<Parameters<typeof api.qualified>[0], "offset" | "limit">) =>
+    ["qualified", query] as const,
   handcheck: ["handcheck"] as const,
   imports: ["imports"] as const,
   import: (id: string) => ["import", id] as const,
@@ -76,6 +78,18 @@ export function useLeads(filters: Omit<LeadsQuery, "cursor" | "limit">) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.next_cursor ?? undefined,
     // Instant filters: the previous list stays put while the next one loads.
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Qualified leads, paged by offset: ready first, or the ones one step away. */
+export function useQualified(query: Omit<Parameters<typeof api.qualified>[0], "offset" | "limit">) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.qualified(query),
+    queryFn: ({ pageParam, signal }) =>
+      api.qualified({ ...query, offset: pageParam, limit: LEADS_PAGE_SIZE }, signal),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.next_offset ?? undefined,
     placeholderData: keepPreviousData,
   });
 }

@@ -28,6 +28,8 @@ import type {
   OutcomeRequest,
   OutcomeResponse,
   OverviewResponse,
+  QualifiedQuery,
+  QualifiedResponse,
   TodayResponse,
 } from "./types";
 
@@ -44,6 +46,17 @@ export function createApi(transport: Transport) {
 
     overview: (signal?: AbortSignal) =>
       transport.json<OverviewResponse>({ method: "GET", path: "/api/overview", signal }),
+
+    qualified: (query: QualifiedQuery, signal?: AbortSignal) =>
+      transport.json<QualifiedResponse>({
+        method: "GET",
+        path: "/api/qualified",
+        query: { ...query },
+        signal,
+      }),
+
+    exportQualifiedCsv: () =>
+      transport.text({ method: "GET", path: "/api/qualified/export.csv" }),
 
     leads: (query: LeadsQuery, signal?: AbortSignal) =>
       transport.json<LeadsResponse>({

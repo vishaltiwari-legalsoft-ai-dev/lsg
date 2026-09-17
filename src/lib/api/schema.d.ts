@@ -498,6 +498,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/qualified": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Qualified */
+        get: operations["list_qualified_api_qualified_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qualified/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Qualified Csv
+         * @description The ready leads as a sheet for the sending vendor -- never the almost-ready.
+         */
+        get: operations["export_qualified_csv_api_qualified_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/today": {
         parameters: {
             query?: never;
@@ -1467,6 +1504,86 @@ export interface components {
             email_verification: boolean;
             /** Places */
             places: boolean;
+        };
+        /** QualifiedCheck */
+        QualifiedCheck: {
+            /** Detail */
+            detail: string | null;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "site_read" | "fit" | "person" | "email" | "email_verified" | "linkedin" | "journey";
+            /** Label */
+            label: string;
+            /** Ok */
+            ok: boolean;
+        };
+        /** QualifiedCounts */
+        QualifiedCounts: {
+            /** Almost */
+            almost: number;
+            /** Checked */
+            checked: number;
+            /** Missing By Check */
+            missing_by_check: {
+                [key: string]: number;
+            };
+            /** Ready */
+            ready: number;
+        };
+        /** QualifiedResponse */
+        QualifiedResponse: {
+            counts: components["schemas"]["QualifiedCounts"];
+            /** Items */
+            items: components["schemas"]["QualifiedRow"][];
+            /** Next Offset */
+            next_offset: number | null;
+        };
+        /** QualifiedRow */
+        QualifiedRow: {
+            /** Band */
+            band: ("STRIKE" | "SEQUENCE" | "NURTURE" | "HOLD") | null;
+            /** Blockers */
+            blockers: string[];
+            /** Checks */
+            checks: components["schemas"]["QualifiedCheck"][];
+            contact: components["schemas"]["ContactSummary"] | null;
+            /** Contest */
+            contest: ("NONE" | "LOW" | "MED" | "HIGH") | null;
+            firm: components["schemas"]["FirmRef"];
+            /** Fit */
+            fit: number | null;
+            /** Grade */
+            grade: ("A" | "B") | null;
+            /** Id */
+            id: string;
+            /** Intent */
+            intent: number | null;
+            /** Missing */
+            missing: string[];
+            /** Next Action */
+            next_action: string;
+            /** Owner */
+            owner: string | null;
+            proof: components["schemas"]["Proof"] | null;
+            /** Ready */
+            ready: boolean;
+            /** Scored At */
+            scored_at: string | null;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "researching" | "no_website" | "needs_review" | "needs_contact" | "ready" | "parked" | "in_outreach" | "replied" | "handed_off" | "won" | "lost" | "disqualified" | "do_not_contact" | "needs_refresh";
+            /** Stage Display */
+            stage_display: string;
+            /** State */
+            state: string;
+            /** State Display */
+            state_display: string;
+            /** Why Now */
+            why_now: boolean;
         };
         /** QueueCounts */
         QueueCounts: {
@@ -2533,6 +2650,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatesResponse"];
+                };
+            };
+        };
+    };
+    list_qualified_api_qualified_get: {
+        parameters: {
+            query?: {
+                only?: string;
+                q?: string | null;
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QualifiedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_qualified_csv_api_qualified_export_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

@@ -43,6 +43,8 @@ import type {
   OutcomeRequest,
   OutcomeResponse,
   OverviewResponse,
+  QualifiedResponse,
+  QualifiedRow,
   TodayResponse,
 } from "./types";
 
@@ -113,6 +115,33 @@ function matchesLead(row: LeadRow, spec: RequestSpec): boolean {
     if ((verified === "true") !== isVerified) return false;
   }
   return true;
+}
+
+const CHECK_KEYS = ["site_read", "fit", "person", "email", "email_verified", "linkedin", "journey"] as const;
+
+/** The seven checks, read off a fixture row the way the engine reads its store. */
+function qualifiedRow(row: LeadRow): QualifiedRow {
+  const tier = row.firm.tier;
+  const fit = !!tier && tier !== "UNCLASSIFIED" && !tier.startsWith("DQ");
+  const contact = row.contact;
+  const verified = contact?.email_status === "valid";
+  const journey = (row.band === "SEQUENCE" || row.band === "NURTURE") && row.blockers.length === 0;
+  const checks = [
+    { key: "site_read" as const, label: "Website read", ok: true, detail: "The site was read" },
+    { key: "fit" as const, label: "Fits the profile", ok: fit, detail: fit ? row.firm.tier_display : "Not tiered yet" },
+    { key: "person" as const, label: "Decision-maker named", ok: !!contact, detail: contact ? `${contact.full_name}${contact.title ? `, ${contact.title}` : ""}` : "No owner or office manager named" },
+    { key: "email" as const, label: "Address on file", ok: !!contact?.email, detail: contact?.email ?? "No address for this person" },
+    { key: "email_verified" as const, label: "Address verified", ok: verified, detail: contact?.email ? (contact.email_status_display ?? "Unverified") : "No address to verify" },
+    { key: "linkedin" as const, label: "LinkedIn profile", ok: !!contact?.linkedin_url, detail: contact?.linkedin_url ?? "No profile found" },
+    { key: "journey" as const, label: "Journey drafted", ok: journey, detail: journey ? "9 touches drafted" : (row.blockers[0] ?? "Not on the email list yet") },
+  ];
+  return {
+    ...row,
+    checks,
+    ready: checks.every((c) => c.ok),
+    missing: checks.filter((c) => !c.ok).map((c) => c.label),
+    why_now: row.proof !== null,
+  };
 }
 
 function toRow(detail: LeadDetail): LeadRow {
@@ -346,6 +375,28 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
       if (!source) throw new ApiError(422, "bad_view", `There is no ${view} view.`, "Use one of the band tabs.");
       const { slice, next } = page(source.items.filter((row) => matchesLead(row, spec)), spec, FIXTURE_PAGE_LIMIT);
       return { items: slice, next_cursor: next, counts: counts(spec), stage_counts: stageCounts() } satisfies LeadsResponse;
+    }
+
+    if (method === "GET" && path === "/api/qualified") {
+      const only = param(spec, "only") ?? "ready";
+      const q = (param(spec, "q") ?? "").toLowerCase();
+      const rows = Object.values(db.leadDetails)
+        .map(toRow)
+        .map(qualifiedRow)
+        .filter((row) => !q || row.firm.name.toLowerCase().includes(q) || (row.firm.domain ?? "").includes(q));
+      const ready = rows.filter((r) => r.ready);
+      const almost = rows.filter((r) => !r.ready && r.checks.filter((c) => c.ok).length >= 4);
+      const chosen = only === "ready" ? ready : only === "almost" ? almost : [...ready, ...almost];
+      const offset = Number(param(spec, "offset") ?? 0);
+      const limit = Number(param(spec, "limit") ?? FIXTURE_PAGE_LIMIT);
+      const missing_by_check = Object.fromEntries(
+        CHECK_KEYS.map((key) => [key, almost.filter((r) => !r.checks.find((c) => c.key === key)?.ok).length]),
+      );
+      return {
+        items: chosen.slice(offset, offset + limit),
+        next_offset: offset + limit < chosen.length ? offset + limit : null,
+        counts: { ready: ready.length, almost: almost.length, checked: rows.length, missing_by_check },
+      } satisfies QualifiedResponse;
     }
 
     if (method === "GET" && path === "/api/overview") {
@@ -593,6 +644,19 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
     async text(spec: RequestSpec): Promise<string> {
       await delay(latencyMs);
       if (spec.path === "/api/leads/export.csv") return exportCsv(spec);
+      if (spec.path === "/api/qualified/export.csv") {
+        const ready = Object.values(db.leadDetails).map(toRow).map(qualifiedRow).filter((r) => r.ready);
+        const header = "firm,website,city,state,tier,decision_maker,title,email,email_status,linkedin,why_now,fit,urgency,lead";
+        const lines = ready.map((r) =>
+          [r.firm.name, r.firm.domain ?? "", r.firm.city ?? "", r.firm.state ?? "", r.firm.tier_display,
+           r.contact?.full_name ?? "", r.contact?.title ?? "", r.contact?.email ?? "",
+           r.contact?.email_status_display ?? "", r.contact?.linkedin_url ?? "", r.proof?.headline ?? "",
+           r.fit ?? "", r.intent ?? "", `/leads/${r.id}`]
+            .map((v) => `"${String(v).replaceAll('"', '""')}"`)
+            .join(","),
+        );
+        return [header, ...lines].join("\n") + "\n";
+      }
       throw new ApiError(404, "not_found", `No fixture for ${spec.path}.`, "Add it to the fixture server.");
     },
     reset() {

@@ -2,6 +2,7 @@
 export const NAV_ITEMS = [
   { href: "/", label: "Home", hint: "What the engine does, and where things stand" },
   { href: "/leads", label: "Work queue", hint: "Every lead, by what it needs next" },
+  { href: "/qualified", label: "Qualified leads", hint: "Every step done — ready to reach" },
   { href: "/firms", label: "Firms", hint: "Every firm, with everything read about it" },
   { href: "/imports", label: "Lists", hint: "Upload a sheet, check how it was read, load it" },
   { href: "/review/handcheck", label: "Accuracy check", hint: "The engine's reading of 50 firms, checked by hand" },

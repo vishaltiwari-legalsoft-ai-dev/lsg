@@ -45,6 +45,21 @@ export type LeadCounts = S["LeadViewCounts"];
 export type LeadView = keyof LeadCounts;
 export type LeadsResponse = S["LeadsResponse"];
 
+// ── Qualified leads ─────────────────────────────────────────────────────────
+
+export type QualifiedCheck = S["QualifiedCheck"];
+export type QualifiedCheckKey = QualifiedCheck["key"];
+export type QualifiedRow = S["QualifiedRow"];
+export type QualifiedCounts = S["QualifiedCounts"];
+export type QualifiedResponse = S["QualifiedResponse"];
+export type QualifiedOnly = "ready" | "almost" | "all";
+export interface QualifiedQuery {
+  only?: QualifiedOnly;
+  q?: string;
+  offset?: number;
+  limit?: number;
+}
+
 /** Narrower than the generated query (which types view/contest as string). */
 export interface LeadsQuery {
   view?: LeadView;
