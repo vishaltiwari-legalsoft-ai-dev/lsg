@@ -32,8 +32,10 @@ from urllib.parse import urlsplit
 
 import yaml
 
+from lge.fetch.config import kinds_version, wanted_kinds
 from lge.norm import norm_practice
 from lge.planes.p._claims import (
+    claim_run,
     compute_input_hash,
     config_fingerprint,
     fetch_documents_with_text,
@@ -44,7 +46,7 @@ from lge.planes.p._claims import (
 from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
-_VERSION = "px:v1"
+_VERSION = "px:v2"  # v2: a run retires what it did not re-derive (D-044)
 _SOURCE_PRACTICE = "rules:practice"
 _SOURCE_SITE = "rules:site"
 
@@ -117,12 +119,15 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         firm_ids_file=opts.get("firm_ids_file"),  # type: ignore[arg-type]
         limit=opts.get("limit"),  # type: ignore[arg-type]
     )
-    version = f"{_VERSION}:{config_fingerprint(_PRACTICE_CONFIG_PATH, _SITE_RULES_CONFIG_PATH)}"
+    fingerprint = config_fingerprint(_PRACTICE_CONFIG_PATH, _SITE_RULES_CONFIG_PATH)
+    version = f"{_VERSION}:{fingerprint}:{kinds_version()}"
 
     for firm_id in firm_ids:
         try:
-            rows = fetch_documents_with_text(ctx.conn, firm_id)
+            rows = fetch_documents_with_text(ctx.conn, firm_id, page_kinds=wanted_kinds())
             if not rows:
+                with claim_run(ctx.conn, firm_id, _SOURCE_PRACTICE, _SOURCE_SITE):
+                    pass  # no page the engine reads: earlier readings are retired
                 result.skipped += 1
                 continue
 
@@ -134,10 +139,11 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
                 if not should_run:
                     result.skipped += 1
                     continue
-                _claim_practice(ctx.conn, firm_id, rows)
-                _claim_spanish_intake(ctx.conn, firm_id, rows, store)
-                _claim_recruiter(ctx.conn, firm_id, rows)
-                _claim_gov(ctx.conn, firm_id, domain, rows)
+                with claim_run(ctx.conn, firm_id, _SOURCE_PRACTICE, _SOURCE_SITE):
+                    _claim_practice(ctx.conn, firm_id, rows)
+                    _claim_spanish_intake(ctx.conn, firm_id, rows, store)
+                    _claim_recruiter(ctx.conn, firm_id, rows)
+                    _claim_gov(ctx.conn, firm_id, domain, rows)
             result.processed += 1
         except Exception as exc:  # noqa: BLE001 -- per-firm isolation, never global
             result.failed += 1

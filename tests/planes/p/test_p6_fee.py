@@ -67,7 +67,7 @@ def _claims(conn, firm_id, attr):
 def test_contingency_evidence_written(db):
     firm_id = make_firm(db)
     doc_id = _insert_document(
-        db, firm_id, page_kind="fees", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        db, firm_id, page_kind="about", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
     )
     _insert_document_text(
         db, doc_id, "We work on a contingency basis. No fee unless we win your case."
@@ -152,7 +152,7 @@ def test_unknown_fee_is_still_written(db):
 def test_contingency_wins_by_page_real_estate(db):
     firm_id = make_firm(db)
     practice_id = _insert_document(
-        db, firm_id, page_kind="practice", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        db, firm_id, page_kind="home", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
     )
     _insert_document_text(
         db, practice_id, "No fee unless we win your personal injury case.", word_count=8
@@ -213,7 +213,7 @@ def test_firm_with_no_documents_is_skipped(db):
 def test_idempotent_rerun_writes_nothing_new(db):
     firm_id = make_firm(db)
     doc_id = _insert_document(
-        db, firm_id, page_kind="fees", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        db, firm_id, page_kind="about", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
     )
     _insert_document_text(db, doc_id, "No fee unless we win.")
 
@@ -230,7 +230,7 @@ def test_idempotent_rerun_writes_nothing_new(db):
 def test_changed_version_reparses(db, monkeypatch):
     firm_id = make_firm(db)
     doc_id = _insert_document(
-        db, firm_id, page_kind="fees", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        db, firm_id, page_kind="about", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
     )
     _insert_document_text(db, doc_id, "No fee unless we win.")
 
@@ -242,3 +242,28 @@ def test_changed_version_reparses(db, monkeypatch):
     second = p6_fee.run(_ctx(db))
     assert second.processed == 1
     assert second.skipped == 0
+
+
+def test_an_earlier_reading_from_a_page_no_longer_read_is_retired(db):
+    """The fee promise was on a practice page fetched later than the home page;
+    practice pages are no longer read (D-044). The old claim would have stood
+    as the freshest word on the firm."""
+    firm_id = make_firm(db)
+    doc_id = _insert_document(
+        db, firm_id, page_kind="home", fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    _insert_document_text(db, doc_id, "Welcome to our firm. We are here for you.")
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO firm_attribute (firm_id, attr, value, source, confidence, evidence, "
+            "observed_at) VALUES (%s, 'fee_model', '\"contingency\"', 'regex:p6', 0.9, "
+            "'no fee unless we win', %s)",
+            (firm_id, datetime(2026, 1, 5, tzinfo=UTC)),
+        )
+
+    result = p6_fee.run(_ctx(db))
+    assert result.processed == 1 and result.failed == 0
+
+    claims = _claims(db, firm_id, "fee_model")
+    assert [c["value"] for c in claims] == ["unknown"]
+    assert claims[0]["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC)

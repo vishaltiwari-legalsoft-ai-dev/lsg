@@ -114,9 +114,9 @@ def test_successful_fetch_stores_object_and_writes_document(db, tmp_path):
 def test_budgeted_keeps_the_most_valuable_pages():
     urls = [("https://f.com/team", "team"), ("https://f.com/", "home"),
             ("https://f.com/careers", "careers"), ("https://f.com/about", "about")]
-    # 4 pages at 2s fit easily: everything, most valuable first
+    # 4 pages at 2s fit easily: everything, most valuable first -- the config's order
     fetch, later = p2_fetch.budgeted(urls, 2.0)
-    assert [k for _u, k in fetch] == ["home", "careers", "about", "team"] and later == []
+    assert [k for _u, k in fetch] == ["home", "about", "team", "careers"] and later == []
     # 4 pages at 600s do not: one page (the homepage), the rest left for later
     fetch, later = p2_fetch.budgeted(urls, 600.0)
     assert fetch == [("https://f.com/", "home")]
@@ -189,39 +189,40 @@ def test_crawl_respects_the_per_host_time_budget(db, tmp_path, monkeypatch):
 
 @respx.mock
 def test_links_on_fetched_pages_are_crawled_within_caps(db, tmp_path):
-    # D-030: the firm's testimonials, offices and news live a click or two
-    # away from the homepage. Duplicate bytes are written once; a 200 that is
-    # an error page is marked, not read.
+    # D-030: the firm's testimonials and team live a click or two away from
+    # the homepage. D-044: a link to a kind the config does not read (offices,
+    # blog) is recognised and left alone. Duplicate bytes are written once; a
+    # 200 that is an error page is marked, not read.
     respx.get("https://example.com/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\n")
     )
-    offices_html = "<html><body><p>Atlanta and Macon offices.</p></body></html>"
+    testimonials_html = (
+        '<html><body><blockquote>Great lawyers.</blockquote>'
+        ' <a href="/our-team/">Meet the team</a></body></html>'
+    )
     respx.get("https://example.com/").mock(return_value=httpx.Response(200, html=(
         '<html><body><a href="/testimonials/">Testimonials</a>'
         ' <a href="/our-offices/">Our Offices</a>'
         ' <a href="/blog/">Blog</a> <a href="/careers-old/">Careers</a>'
         ' <a href="/index.html">Home again</a></body></html>'
     )))
-    respx.get("https://example.com/testimonials/").mock(return_value=httpx.Response(200, html=(
-        '<html><body><blockquote>Great lawyers.</blockquote>'
-        ' <a href="/blog/new-office-in-macon/">New office in Macon</a></body></html>'
-    )))
-    respx.get("https://example.com/our-offices/").mock(
-        return_value=httpx.Response(200, html=offices_html)
+    respx.get("https://example.com/testimonials/").mock(
+        return_value=httpx.Response(200, html=testimonials_html)
     )
-    respx.get("https://example.com/blog/").mock(
-        return_value=httpx.Response(200, html="<html><body><h1>Page not found</h1></body></html>")
+    offices = respx.get("https://example.com/our-offices/").mock(
+        return_value=httpx.Response(200, html="<html><body><p>Atlanta and Macon.</p></body></html>")
+    )
+    blog = respx.get("https://example.com/blog/").mock(
+        return_value=httpx.Response(200, html="<html><body><p>Posts.</p></body></html>")
     )
     respx.get("https://example.com/careers-old/").mock(
-        return_value=httpx.Response(200, html=offices_html)
+        return_value=httpx.Response(200, html=testimonials_html)
     )
     respx.get("https://example.com/index.html").mock(
         return_value=httpx.Response(200, html="<html><body>Home page text</body></html>")
     )
-    respx.get("https://example.com/blog/new-office-in-macon/").mock(
-        return_value=httpx.Response(
-            200, html="<html><body><p>We opened in Macon.</p></body></html>"
-        )
+    respx.get("https://example.com/our-team/").mock(
+        return_value=httpx.Response(200, html="<html><body><h1>Page not found</h1></body></html>")
     )
 
     firm_id = make_firm(db, domain="example.com")
@@ -235,13 +236,15 @@ def test_links_on_fetched_pages_are_crawled_within_caps(db, tmp_path):
     assert result.processed == 1
     docs = {d["url"]: d for d in get_documents(db, firm_id)}
 
-    # followed: testimonials, offices, blog (from home) and the news post (from testimonials)
+    # followed: testimonials (from home) and the team page (from testimonials)
     assert "https://example.com/testimonials/" in docs
-    assert docs["https://example.com/our-offices/"]["page_kind"] == "locations"
-    assert docs["https://example.com/blog/new-office-in-macon/"]["page_kind"] == "news"
+    assert docs["https://example.com/our-team/"]["page_kind"] == "team"
+    # a link to a kind the config does not read is recognised and never fetched
+    assert "https://example.com/our-offices/" not in docs and offices.call_count == 0
+    assert "https://example.com/blog/" not in docs and blog.call_count == 0
     # a 200 that is an error page is marked, and never read for meaning
-    assert docs["https://example.com/blog/"]["soft_404"] is True
-    # the same bytes as /our-offices/ -> written once, the first URL stands
+    assert docs["https://example.com/our-team/"]["soft_404"] is True
+    # the same bytes as /testimonials/ -> written once, the first URL stands
     assert "https://example.com/careers-old/" not in docs
     # 'home' is never crawled into (index.html), and the crawl left its map behind
     assert "https://example.com/index.html" not in docs
@@ -251,7 +254,7 @@ def test_links_on_fetched_pages_are_crawled_within_caps(db, tmp_path):
             "ORDER BY url", (firm_id,),
         )
         crawled = cur.fetchall()
-    assert {r["page_kind"] for r in crawled} == {"testimonials", "locations", "news", "careers"}
+    assert {r["page_kind"] for r in crawled} == {"testimonials", "careers", "team"}
     assert "found by crawling" in result.notes[0]
 
     # a second run: the crawl rows do not change the key, nothing is fetched again
@@ -321,11 +324,11 @@ def test_404_probe_is_fetch_ok_and_not_text_extracted(db, tmp_path):
     respx.get("https://example.com/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\n")
     )
-    respx.get("https://example.com/fees").mock(return_value=httpx.Response(404, text="Not Found"))
+    respx.get("https://example.com/about").mock(return_value=httpx.Response(404, text="Not Found"))
 
     firm_id = make_firm(db, domain="example.com")
     make_lead(db, firm_id)
-    insert_site_map(db, firm_id, "https://example.com/fees", "fees", discovered_via="probe")
+    insert_site_map(db, firm_id, "https://example.com/about", "about", discovered_via="probe")
 
     p2_fetch.run(
         ctx(db, live=True, user_agent=UA),
@@ -344,13 +347,13 @@ def test_404_probe_is_fetch_ok_and_not_text_extracted(db, tmp_path):
 @respx.mock
 def test_robots_disallowed_path_is_recorded_not_fetched(db, tmp_path):
     respx.get("https://example.com/robots.txt").mock(
-        return_value=httpx.Response(200, text="User-agent: *\nDisallow: /admin\n")
+        return_value=httpx.Response(200, text="User-agent: *\nDisallow: /contact\n")
     )
-    admin_route = respx.get("https://example.com/admin")
+    admin_route = respx.get("https://example.com/contact")
 
     firm_id = make_firm(db, domain="example.com")
     make_lead(db, firm_id)
-    insert_site_map(db, firm_id, "https://example.com/admin", "other", discovered_via="probe")
+    insert_site_map(db, firm_id, "https://example.com/contact", "contact", discovered_via="probe")
 
     p2_fetch.run(
         ctx(db, live=True, user_agent=UA),

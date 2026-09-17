@@ -38,7 +38,7 @@ tier_determining: [fee_model, primary_practice, attorney_count]
 # source not in this attribute's precedence list is excluded before
 # resolution even begins, not merely deprioritized.
 exclusive_attrs:
-  - attorney_count          # llm(team page) ONLY
+  - attorney_count          # llm(team page), else the attorneys the site names (D-044)
   - staff_ratio              # llm only
   - has_hired_support_roles  # internal_jobs only (doc-02 job-history additions)
   - support_roles_posted     # internal_jobs only
@@ -109,6 +109,7 @@ precedence:
   attorney_count:
     - llm:p9
     - llm:p8
+    - site:page               # attorneys counted on the attorneys/team page, 0.65
 
   # regex(site) > llm(site). Disagreement has its own escalation rule
   # (reconcile.py: regex vs. any llm claim, before an llm:p9 claim exists

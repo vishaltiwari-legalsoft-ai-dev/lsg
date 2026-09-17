@@ -35,7 +35,7 @@ import psycopg
 
 from lge.db import writer
 from lge.fetch.client import EmptyUserAgentError, Fetcher, HostBlockTracker, host_of
-from lge.fetch.config import load_crawl_config, rate_defaults
+from lge.fetch.config import crawl_into_kinds, load_crawl_config, rate_defaults, wanted_kinds
 from lge.fetch.decode import decode_html
 from lge.fetch.orchestrate import gather_bounded
 from lge.fetch.pagecheck import looks_like_soft_404, visible_words
@@ -51,11 +51,8 @@ logger = logging.getLogger("lge.planes.p2")
 
 _HTML_LIKE_STATUSES = range(200, 300)
 
-# Kinds worth following a link to. 'other' and 'home' are never crawled into.
-WANTED_KINDS = (
-    "practice", "careers", "contact", "about", "attorneys", "team",
-    "locations", "testimonials", "news", "fees",
-)
+# Which kinds are worth following a link to is config/crawl.yml's `caps`
+# (lge.fetch.config.crawl_into_kinds): every wanted kind but 'home'.
 MAX_DEPTH = 2  # links from the initial pages, and links from those
 
 
@@ -80,12 +77,12 @@ class FirmFetch:
     discovered: list[tuple[str, str]] = field(default_factory=list)  # (url, kind) found by crawling
 
 
-# The pages worth the most when a host's Crawl-delay means we cannot have them all.
-_KIND_PRIORITY = {
-    "home": 0, "careers": 1, "practice": 2, "contact": 3, "fees": 4, "about": 5,
-    "attorneys": 6, "team": 7, "locations": 8, "testimonials": 9, "news": 10,
-}
 HOST_TIME_BUDGET_S = 300.0
+
+
+def _kind_rank(kind: str) -> int:
+    wanted = wanted_kinds()
+    return wanted.index(kind) if kind in wanted else len(wanted)
 
 
 def budgeted(
@@ -94,8 +91,9 @@ def budgeted(
     """(fetch this run, leave for later). A host asking for a long Crawl-delay is
     honoured, but must not hold the whole batch: cavanaghlawgroup.com declares 600s,
     which made one firm's 13 pages a two-hour tail behind every other host (D-026).
-    What fits the per-host budget is fetched, most valuable pages first."""
-    ordered = sorted(urls, key=lambda u: _KIND_PRIORITY.get(u[1], 9))
+    What fits the per-host budget is fetched, most valuable pages first -- the
+    config's own order of kinds."""
+    ordered = sorted(urls, key=lambda u: _kind_rank(u[1]))
     if not crawl_delay_s or crawl_delay_s * len(ordered) <= HOST_TIME_BUDGET_S:
         return ordered, []
     keep = max(1, int(HOST_TIME_BUDGET_S // crawl_delay_s))
@@ -179,7 +177,7 @@ async def _fetch_one_firm(
                     elif not policy.slow and depth < MAX_DEPTH:
                         base = doc.final_url or url
                         for link, lkind in extract_homepage_links(doc.body, base, domain):  # type: ignore[arg-type]
-                            if link in seen_urls or lkind not in WANTED_KINDS:
+                            if link in seen_urls or lkind not in crawl_into_kinds():
                                 continue
                             if len(seen_urls) >= page_budget:
                                 break
@@ -218,17 +216,19 @@ async def _fetch_all_firms(
 def _load_site_maps(
     conn: psycopg.Connection, firm_ids: list[str]
 ) -> dict[str, list[tuple[str, str, str]]]:
-    """(url, kind, via) per firm. Rows the crawler itself discovered
-    (via='crawl') are fetched again but never change the idempotency key,
-    or every run would re-fetch everything it found the run before."""
+    """(url, kind, via) per firm, for the kinds the config reads. Rows the
+    crawler itself discovered (via='crawl') are fetched again but never
+    change the idempotency key, or every run would re-fetch everything it
+    found the run before. A row of a kind no longer read (an old map's
+    practice pages) is left where it is and not fetched."""
     if not firm_ids:
         return {}
     out: dict[str, list[tuple[str, str, str]]] = {fid: [] for fid in firm_ids}
     with conn.cursor() as cur:
         cur.execute(
             "SELECT firm_id, url, page_kind, discovered_via FROM site_map "
-            "WHERE firm_id = ANY(%s) ORDER BY firm_id, url",
-            (firm_ids,),
+            "WHERE firm_id = ANY(%s) AND page_kind = ANY(%s) ORDER BY firm_id, url",
+            (firm_ids, list(wanted_kinds())),
         )
         for row in cur.fetchall():
             out[str(row["firm_id"])].append((row["url"], row["page_kind"], row["discovered_via"]))

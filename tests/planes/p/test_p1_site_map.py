@@ -66,17 +66,17 @@ def test_probe_urls_match_the_task_brief_exactly():
         "https://example.com/our-attorneys",
     ]
     assert probes["team"] == ["https://example.com/our-team", "https://example.com/team"]
-    assert probes["practice"] == ["https://example.com/practice-areas"]
     assert probes["contact"] == ["https://example.com/contact", "https://example.com/contact-us"]
     assert probes["careers"] == [
         "https://example.com/careers",
         "https://example.com/jobs",
         "https://example.com/employment-opportunities",
     ]
-    assert probes["fees"] == ["https://example.com/fees"]
+    # a kind the config does not read (cap 0) is not probed for (D-044)
+    assert "practice" not in probes and "fees" not in probes and "news" not in probes
 
 
-def test_apply_caps_home_practice_and_other_kinds():
+def test_apply_caps_reads_only_the_wanted_kinds():
     by_kind = {
         "home": [("https://x/", "sitemap")],
         "practice": [(f"https://x/practice-{i}", "sitemap") for i in range(6)],
@@ -90,9 +90,10 @@ def test_apply_caps_home_practice_and_other_kinds():
     out = _apply_caps(by_kind)
     kinds = [k for _u, k, _v in out]
     assert kinds.count("home") == 1
-    assert kinds.count("practice") == 6  # the practice cap
+    assert kinds.count("practice") == 0  # cap 0: classified, never mapped (D-044)
+    assert kinds.count("fees") == 0
     assert kinds.count("attorneys") == 2  # both fit under the attorneys cap of 3
-    assert len(out) <= 30
+    assert len(out) <= 12
 
 
 def test_apply_caps_prefers_sitemap_over_probe_within_a_kind():
@@ -102,16 +103,18 @@ def test_apply_caps_prefers_sitemap_over_probe_within_a_kind():
     assert out[0] == ("https://x/about", "about", "sitemap")
 
 
-def test_apply_caps_per_kind_and_total_of_30():
+def test_apply_caps_per_kind_and_total_of_12():
     by_kind: dict[str, list[tuple[str, str]]] = {}
     for kind in ("home", "practice", "about", "attorneys", "team", "contact", "careers",
                  "fees", "locations", "testimonials", "news"):
         by_kind[kind] = [(f"https://x/{kind}-{i}", "sitemap") for i in range(8)]
     out = _apply_caps(by_kind)
     kinds = [k for _u, k, _v in out]
-    # 1 + 6 + 2 + 3 + 3 + 2 + 3 + 1 + 2 + 3 + 4 = 30, exactly the total
-    assert (kinds.count("news"), kinds.count("testimonials"), kinds.count("locations")) == (4, 3, 2)
-    assert len(out) == 30
+    # home 1 + contact 1 + about 1 + attorneys 3 + team 2 + careers 2 + testimonials 2 = 12
+    assert (kinds.count("news"), kinds.count("testimonials"), kinds.count("locations")) == (0, 2, 0)
+    assert kinds.count("attorneys") == 3 and kinds.count("practice") == 0
+    assert kinds[0] == "home"  # the config's order is the map's order
+    assert len(out) == 12
 
 
 @pytest.mark.parametrize(
@@ -223,19 +226,20 @@ def test_sitemap_index_one_level_and_lifecycle_to_profiling(db):
     rows = site_map_rows(db, firm_id)
     kinds = {r["page_kind"] for r in rows}
     # sub1+sub2 cover home/about/attorneys/contact/careers via sitemap;
-    # practice/fees/team are missing from both sub-sitemaps -> probed.
+    # team is missing from both sub-sitemaps -> probed. practice/fees are not
+    # read at all (cap 0), so they are neither taken from the sitemap nor probed.
     assert {"home", "about", "attorneys", "contact", "careers"} <= kinds
-    assert "practice" in kinds  # added via probe
     assert "team" in kinds  # added via probe
+    assert "practice" not in kinds and "fees" not in kinds
     by_url = {r["url"]: r["discovered_via"] for r in rows}
     assert by_url["https://example.com/careers"] == "sitemap"
-    assert by_url["https://example.com/practice-areas"] == "probe"
+    assert by_url["https://example.com/our-team"] == "probe"
 
     assert lead_state(db, firm_id) == "PROFILING"
 
 
 @respx.mock
-def test_practice_and_other_kind_caps_from_flat_sitemap(db):
+def test_a_dropped_kind_in_the_sitemap_is_not_mapped(db):
     # the mapper reads the homepage nav before blind probes
     respx.get("https://example.com/").mock(return_value=httpx.Response(200, html="<html></html>"))
     respx.get("https://example.com/robots.txt").mock(
@@ -250,16 +254,11 @@ def test_practice_and_other_kind_caps_from_flat_sitemap(db):
     p1_site_map.run(ctx(db, live=True, user_agent=UA), limit=10, default_interval_s="0")
 
     rows = site_map_rows(db, firm_id)
-    practice_urls = sorted(r["url"] for r in rows if r["page_kind"] == "practice")
-    assert len(practice_urls) == 6  # the fixture's six all fit under the practice cap of 6
-    assert practice_urls[:4] == [
-        "https://example.com/practice-areas/bankruptcy",
-        "https://example.com/practice-areas/criminal",
-        "https://example.com/practice-areas/family-law",
-        "https://example.com/practice-areas/immigration",
-    ]
+    # the fixture lists six practice pages; the engine no longer reads that kind
+    assert [r for r in rows if r["page_kind"] == "practice"] == []
     team_urls = [r["url"] for r in rows if r["page_kind"] == "team"]
     assert len(team_urls) == 2  # both probes fit under the team cap
+    assert len(rows) <= 12
     assert all(r["discovered_via"] == "probe" for r in rows if r["page_kind"] == "team")
     # 'other' never makes it into site_map at all.
     assert not any(r["page_kind"] == "other" for r in rows)

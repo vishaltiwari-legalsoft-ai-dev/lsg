@@ -8,7 +8,9 @@ Nothing here is a component itself -- no `@component` registration in this modul
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +23,64 @@ from lge.store.objects import ObjectStore
 # ---------------------------------------------------------------------------
 # Claims
 # ---------------------------------------------------------------------------
+
+
+_current_run: ContextVar[ClaimRun | None] = ContextVar("lge_claim_run", default=None)
+
+
+class ClaimRun:
+    """Every claim one reader writes for one firm in one derivation. When the
+    run closes, the reader's earlier claims for that firm that this run did
+    not write again are retired: a claim read off a page the engine no
+    longer reads (D-044), or off a page since marked a soft 404, must not
+    stand as the freshest word on the firm. Deterministic claims are
+    re-derived from stored HTML -- the HTML is the audit trail, not the row.
+    """
+
+    def __init__(self, conn: psycopg.Connection, firm_id: Any, sources: tuple[str, ...]) -> None:
+        self.conn = conn
+        self.firm_id = str(firm_id)
+        self.sources = sources
+        self.keys: set[tuple[str, str, Any]] = set()
+        self.retired = 0
+
+    def record(self, firm_id: Any, attr: str, source: str, observed_at: Any) -> None:
+        if str(firm_id) == self.firm_id and source in self.sources:
+            self.keys.add((attr, source, observed_at))
+
+    def retire(self) -> int:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "SELECT attr, source, observed_at FROM firm_attribute "
+                "WHERE firm_id = %s AND source = ANY(%s)",
+                (self.firm_id, list(self.sources)),
+            )
+            stale = [
+                (r["attr"], r["source"], r["observed_at"]) for r in cur.fetchall()
+                if (r["attr"], r["source"], r["observed_at"]) not in self.keys
+            ]
+            for attr, source, observed_at in stale:
+                cur.execute(
+                    "DELETE FROM firm_attribute WHERE firm_id = %s AND attr = %s "
+                    "AND source = %s AND observed_at = %s",
+                    (self.firm_id, attr, source, observed_at),
+                )
+        self.retired = len(stale)
+        return self.retired
+
+
+@contextmanager
+def claim_run(conn: psycopg.Connection, firm_id: Any, *sources: str) -> Iterator[ClaimRun]:
+    """Wrap one firm's derivation. Every `write_claim` under it is recorded;
+    on a clean exit the reader's other claims for the firm are retired. An
+    exception leaves everything as it was."""
+    run = ClaimRun(conn, firm_id, sources)
+    token = _current_run.set(run)
+    try:
+        yield run
+        run.retire()
+    finally:
+        _current_run.reset(token)
 
 
 def write_claim(
@@ -60,7 +120,11 @@ def write_claim(
             """,
             (firm_id, attr, Jsonb(value), source, confidence, evidence, observed_at),
         )
-        return cur.rowcount > 0
+        changed = cur.rowcount > 0
+    run = _current_run.get()
+    if run is not None:
+        run.record(firm_id, attr, source, observed_at)  # written this run, changed or not
+    return changed
 
 
 # ---------------------------------------------------------------------------

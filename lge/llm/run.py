@@ -22,6 +22,7 @@ import yaml
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
 
+from lge.fetch.config import only_wanted
 from lge.llm import grounding
 from lge.llm.client import LLMCallError, call_openrouter
 from lge.llm.prompt import PageDoc, build_system_prompt, build_user_message, select_and_trim
@@ -49,7 +50,7 @@ def load_pages(ctx: RunContext, firm_id: str) -> list[PageDoc]:
             JOIN document_text dt ON dt.document_id = d.id
             WHERE d.firm_id = %s AND d.page_kind = ANY(%s) AND dt.main_text IS NOT NULL
             """,
-            (firm_id, list(_PAGE_KINDS)),
+            (firm_id, list(only_wanted(_PAGE_KINDS))),
         )
         rows = cur.fetchall()
     return [

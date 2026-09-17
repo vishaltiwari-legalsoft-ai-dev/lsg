@@ -26,7 +26,9 @@ import lxml.html
 from lxml import etree
 
 from lge.classify.fee import detect_fee_model
+from lge.fetch.config import kinds_version, only_wanted
 from lge.planes.p._claims import (
+    claim_run,
     compute_input_hash,
     config_fingerprint,
     fetch_documents_with_text,
@@ -37,7 +39,8 @@ from lge.planes.p._claims import (
 from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
-_VERSION = "p6:v3"  # v2: the whole visible page, not only P4's main text; v3: negation
+# v2: the whole visible page; v3: negation; v4: a run retires what it did not re-derive.
+_VERSION = "p6:v4"
 # contact / attorneys / team added after the live probe: "No fee unless we win" often
 # sits on the contact page. careers stays out (job ads use "fee" in other senses).
 _PAGE_KINDS = ("practice", "fees", "home", "about", "other", "contact", "attorneys", "team")
@@ -93,12 +96,16 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         firm_ids_file=opts.get("firm_ids_file"),  # type: ignore[arg-type]
         limit=opts.get("limit"),  # type: ignore[arg-type]
     )
-    version = f"{_VERSION}:{config_fingerprint(_FEE_CONFIG_PATH)}"
+    version = f"{_VERSION}:{config_fingerprint(_FEE_CONFIG_PATH)}:{kinds_version()}"
 
     for firm_id in firm_ids:
         try:
-            rows = fetch_documents_with_text(ctx.conn, firm_id, page_kinds=_PAGE_KINDS)
+            rows = fetch_documents_with_text(
+                ctx.conn, firm_id, page_kinds=only_wanted(_PAGE_KINDS)
+            )
             if not rows:
+                with claim_run(ctx.conn, firm_id, _SOURCE):
+                    pass  # no page the engine reads: the earlier fee reading is retired
                 result.skipped += 1
                 continue
 
@@ -118,16 +125,17 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
                 fee = detect_fee_model(sections)
                 observed_at = max(r["fetched_at"] for r in rows)
 
-                write_claim(
-                    ctx.conn,
-                    firm_id,
-                    "fee_model",
-                    fee.value,
-                    _SOURCE,
-                    fee.confidence,
-                    fee.evidence,
-                    observed_at,
-                )
+                with claim_run(ctx.conn, firm_id, _SOURCE):
+                    write_claim(
+                        ctx.conn,
+                        firm_id,
+                        "fee_model",
+                        fee.value,
+                        _SOURCE,
+                        fee.confidence,
+                        fee.evidence,
+                        observed_at,
+                    )
             result.processed += 1
         except Exception as exc:  # noqa: BLE001 -- per-firm isolation, never global
             result.failed += 1

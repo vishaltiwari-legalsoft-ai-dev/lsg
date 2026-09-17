@@ -86,11 +86,12 @@ def test_the_site_becomes_claims(db, tmp_path):
     assert set(claims["review_profiles"]["value"]) == {"avvo", "yelp"}
     assert claims["google_maps_url"]["value"].startswith("https://www.google.com/maps/")
 
-    assert claims["latest_post_date"]["value"] == "2026-08-12"
-    assert len(claims["recent_posts"]["value"]) == 3
-    assert [g["cue"] for g in claims["growth_news"]["value"]] == [
-        "opens new marietta office", "joins"
-    ]
+    # the news page is on file but news is not a kind the engine reads (D-044)
+    assert "latest_post_date" not in claims and "recent_posts" not in claims
+    # the two attorneys named on the team page are the firm's size, as a floor
+    assert claims["attorney_count"]["value"] == 2
+    assert float(claims["attorney_count"]["confidence"]) == 0.65
+    assert "2 attorney(s) named on" in claims["attorney_count"]["evidence"]
 
     assert claims["live_chat_vendor"]["value"] == "Intaker"
     assert claims["online_intake_form"]["value"] is True
@@ -141,7 +142,7 @@ def test_gaps_name_what_the_pages_read_lack(db, tmp_path):
     gaps = {g["gap"] for g in claims["site_gaps"]["value"]}
     assert gaps == {
         "no_careers_page", "no_online_intake", "no_live_chat", "no_spanish", "stale_copyright",
-        "no_testimonials", "no_news", "no_support_staff_listed", "no_social_presence",
+        "no_testimonials", "no_support_staff_listed", "no_social_presence",
         "no_review_link",
     }
     assert claims["online_intake_form"]["value"] is False
@@ -183,3 +184,51 @@ def test_claims_carry_the_page_fetch_time(db, tmp_path):
     claims = _claims(db, firm_id)
     assert claims["phone_e164"]["observed_at"] == when
     assert claims["site_gaps"]["observed_at"] == when
+
+
+def test_a_claim_from_a_page_no_longer_read_is_retired(db, tmp_path):
+    """A gap list or a post list read off a news page stood as the freshest word
+    on the firm after news stopped being a kind the engine reads (D-044)."""
+    store = ObjectStore(tmp_path)
+    firm_id = make_firm(db, domain="retire.example")
+    make_lead(db, firm_id)
+    doc_id = insert_document(db, store, firm_id, "<html><body><h1>Retire Law</h1></body></html>",
+                             url="https://retire.example/", page_kind="home")
+    later = datetime(2026, 1, 5, tzinfo=UTC)
+    with db.cursor() as cur:
+        cur.execute("UPDATE document SET fetched_at = %s WHERE id = %s",
+                    (datetime(2026, 1, 1, tzinfo=UTC), doc_id))
+        cur.execute(
+            "INSERT INTO firm_attribute (firm_id, attr, value, source, confidence, evidence, "
+            "observed_at) VALUES "
+            "(%s, 'recent_posts', '[]', 'site:page', 0.8, 'old news page', %s), "
+            "(%s, 'site_gaps', '[{\"gap\": \"no_news\"}]', 'site:page', 0.8, 'old', %s)",
+            (firm_id, later, firm_id, later),
+        )
+
+    result = px_site_facts.run(ctx(db), store=store)
+    assert result.processed == 1
+    assert "retired: 2" in result.notes[-1]
+    claims = _claims(db, firm_id)
+    assert "recent_posts" not in claims
+    assert claims["site_gaps"]["observed_at"] == datetime(2026, 1, 1, tzinfo=UTC)
+    assert "no_news" not in {g["gap"] for g in claims["site_gaps"]["value"]}
+
+
+def test_a_firm_with_no_readable_page_keeps_no_site_claims(db, tmp_path):
+    store = ObjectStore(tmp_path)
+    firm_id = make_firm(db, domain="gone.example")
+    make_lead(db, firm_id)
+    # the only page on file is of a kind the engine does not read
+    insert_document(db, store, firm_id, "<html><body><p>PI</p></body></html>",
+                    url="https://gone.example/practice-areas/", page_kind="practice")
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO firm_attribute (firm_id, attr, value, source, confidence, evidence, "
+            "observed_at) VALUES (%s, 'phone_e164', '\"+14045550100\"', 'site:page', 0.85, "
+            "'x', now())",
+            (firm_id,),
+        )
+    result = px_site_facts.run(ctx(db), store=store)
+    assert result.skipped == 1 and "retired: 1" in result.notes[-1]
+    assert _claims(db, firm_id) == {}

@@ -33,8 +33,10 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+from lge.fetch.config import kinds_version, wanted_kinds
 from lge.planes.p import _site_facts as sf
 from lge.planes.p._claims import (
+    claim_run,
     compute_input_hash,
     config_fingerprint,
     fetch_documents,
@@ -47,7 +49,9 @@ from lge.registry import RunContext, RunResult, component
 from lge.store.objects import ObjectStore, get_store
 
 _COMPONENT = "px_site_facts"
-_VERSION = "px_facts:v5"  # v5: a section heading is the designation of the names under it
+# v5: a heading is the designation of the names under it.
+# v6: a run retires what it did not re-derive (D-044).
+_VERSION = "px_facts:v6"
 _MAX_PEOPLE_PER_FIRM = 60
 _SOURCE = "site:page"
 _CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "site_facts.yml"
@@ -63,6 +67,10 @@ _STALE_COPYRIGHT_YEARS = 2
 _CONFIDENCE = 0.85
 _CONFIDENCE_ADDRESS = 0.8
 _CONFIDENCE_LIST = 0.8
+# attorneys counted by name on the attorneys/team page: a floor the firm itself
+# printed, not a statement of size. Above reconcile's 0.6 bar so it can tier;
+# below the LLM's stated count, which outranks it (config/precedence.yml).
+_CONFIDENCE_COUNTED = 0.65
 
 
 @dataclass
@@ -200,11 +208,14 @@ def site_gaps(facts: Facts, *, today: date | None = None) -> list[dict[str, str]
     read = facts.kinds_read
     if not read:
         return gaps
+    # A gap about a page kind is claimed only when the engine reads that kind:
+    # "no news page" means nothing on a crawl that never looks for one.
+    wanted = set(wanted_kinds())
 
     def gap(name: str, evidence: str) -> None:
         gaps.append({"gap": name, "evidence": evidence})
 
-    if "careers" not in read:
+    if "careers" in wanted and "careers" not in read:
         gap("no_careers_page", "no careers page among the pages read")
     if read & {"contact", "home"} and not facts.intake_form:
         gap("no_online_intake", "no intake form on the contact or home page")
@@ -214,9 +225,9 @@ def site_gaps(facts: Facts, *, today: date | None = None) -> list[dict[str, str]
         gap("no_spanish", "no Spanish page, hreflang or phrase on the pages read")
     if facts.copyright_year and facts.copyright_year <= today.year - _STALE_COPYRIGHT_YEARS:
         gap("stale_copyright", f"footer says © {facts.copyright_year}")
-    if not facts.testimonials and read & {"home", "testimonials"}:
+    if "testimonials" in wanted and not facts.testimonials and read & {"home", "testimonials"}:
         gap("no_testimonials", "no client quotes on the pages read")
-    if "news" not in read and "home" in read:
+    if "news" in wanted and "news" not in read and "home" in read:
         gap("no_news", "no blog or news page among the pages read")
     elif facts.posts:
         latest = date.fromisoformat(facts.posts[0]["date"])
@@ -285,6 +296,13 @@ def write_facts(conn: Any, firm_id: Any, facts: Facts) -> int:
         claim("staff_listed", counts, _CONFIDENCE_LIST,
               f"{counts['attorneys']} attorneys, {counts['support']} support, "
               f"{counts['other']} other")
+        # The firm's own attorneys page is a source of firm size (D-044): the
+        # names it lists are a floor. Only from a page that lists the team --
+        # two names in a footer say nothing about how many there are.
+        if counts["attorneys"] >= 1 and read & set(_LOOSE_PEOPLE_KINDS):
+            claim("attorney_count", counts["attorneys"], _CONFIDENCE_COUNTED,
+                  f"{counts['attorneys']} attorney(s) named on "
+                  f"{facts.people_page_url or 'the site'}")
     if facts.testimonials or read & {"testimonials", "home"}:
         first = facts.testimonials[0] if facts.testimonials else None
         claim("testimonials", facts.testimonials[:10], _CONFIDENCE_LIST,
@@ -344,13 +362,21 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
         firm_ids_file=opts.get("firm_ids_file"),  # type: ignore[arg-type]
         limit=opts.get("limit"),  # type: ignore[arg-type]
     )
-    version = f"{_VERSION}:{config_fingerprint(_CONFIG_PATH)}"
+    version = f"{_VERSION}:{config_fingerprint(_CONFIG_PATH)}:{kinds_version()}"
     claims_written = 0
+    claims_retired = 0
 
     for firm_id in firm_ids:
         try:
-            docs = fetch_documents(ctx.conn, firm_id, status_200_only=True)
+            docs = fetch_documents(
+                ctx.conn, firm_id, page_kinds=wanted_kinds(), status_200_only=True
+            )
             if not docs:
+                # no page of a kind the engine reads: nothing this reader once
+                # said about the firm can stand
+                with claim_run(ctx.conn, firm_id, _SOURCE) as run:
+                    pass
+                claims_retired += run.retired
                 result.skipped += 1
                 continue
             domain = _firm_domain(ctx.conn, firm_id)
@@ -361,13 +387,17 @@ def run(ctx: RunContext, *, store: ObjectStore | None = None, **opts: object) ->
                 if not should_run:
                     result.skipped += 1
                     continue
-                facts = read_firm(docs, domain, store)
-                claims_written += write_facts(ctx.conn, firm_id, facts)
+                with claim_run(ctx.conn, firm_id, _SOURCE) as run:
+                    facts = read_firm(docs, domain, store)
+                    claims_written += write_facts(ctx.conn, firm_id, facts)
+                claims_retired += run.retired
             result.processed += 1
         except Exception as exc:  # noqa: BLE001 -- per-firm isolation, never global
             result.failed += 1
             result.notes.append(f"{_COMPONENT} firm={firm_id}: {exc}")
         ctx.checkpoint()
 
-    result.notes.append(f"claims written or changed: {claims_written}")
+    result.notes.append(
+        f"claims written or changed: {claims_written}; retired: {claims_retired}"
+    )
     return result

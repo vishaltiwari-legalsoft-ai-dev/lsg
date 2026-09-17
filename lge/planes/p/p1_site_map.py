@@ -31,7 +31,7 @@ from lxml import etree
 
 from lge.db import lifecycle
 from lge.fetch.client import EmptyUserAgentError, Fetcher, HostBlockTracker
-from lge.fetch.config import load_crawl_config, rate_defaults
+from lge.fetch.config import kind_cap, load_crawl_config, rate_defaults, wanted_kinds
 from lge.fetch.orchestrate import gather_bounded
 from lge.fetch.ratelimit import HostRateLimiter
 from lge.fetch.robots import RobotsCache, RobotsPolicy
@@ -42,10 +42,8 @@ from lge.registry import RunContext, RunResult, component
 
 logger = logging.getLogger("lge.planes.p1")
 
-_OTHER_KINDS = (
-    "about", "attorneys", "team", "contact", "careers", "fees",
-    "locations", "testimonials", "news",
-)
+# Which kinds are mapped, and in what order, is config/crawl.yml's `caps`
+# (lge.fetch.config.wanted_kinds) -- there is no list of kinds in this file.
 
 
 @functools.lru_cache(maxsize=1)
@@ -73,6 +71,7 @@ def probe_urls(domain: str) -> dict[str, list[str]]:
     return {
         kind: [urljoin(base + "/", path.lstrip("/")) for path in paths]
         for kind, paths in cfg["probe_paths"].items()
+        if kind_cap(kind) > 0  # a kind the engine does not read is not probed for
     }
 
 
@@ -95,7 +94,8 @@ def _sitemap_cap() -> int:
 # it joins the domain in the idempotency key, so already-mapped firms are mapped
 # again without the domain having to change. v2: hiring anchors and paths read off
 # real homepages (D-026). v3: locations, testimonials and news kinds; caps to 30.
-MAPPER_VERSION = "3"
+# v4: six kinds, twelve pages -- the map is what config/crawl.yml `caps` says (D-044).
+MAPPER_VERSION = "4"
 
 
 def mapper_input_hash(domain: str | None) -> str:
@@ -298,10 +298,8 @@ def _apply_caps(by_kind: dict[str, list[tuple[str, str]]]) -> list[tuple[str, st
         for url, via in entries[: min(limit, room)]:
             out.append((url, kind, via))
 
-    take("home", caps["home"])
-    take("practice", caps["practice"])
-    for kind in _OTHER_KINDS:
-        take(kind, caps.get(kind, caps["other"]))
+    for kind in wanted_kinds():  # config order: home first
+        take(kind, kind_cap(kind))
     return out
 
 

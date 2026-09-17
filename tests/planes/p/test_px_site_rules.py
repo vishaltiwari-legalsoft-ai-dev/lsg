@@ -93,7 +93,7 @@ def _claims(conn, firm_id, attr):
 
 def test_personal_injury_wins_by_page_real_estate(db):
     firm_id = make_firm(db)
-    _insert_page(db, firm_id, _PI_TEXT, page_kind="practice", fetched_at=_JAN1)
+    _insert_page(db, firm_id, _PI_TEXT, page_kind="home", fetched_at=_JAN1)
     _insert_page(
         db, firm_id, _DIVORCE_ONCE_TEXT, page_kind="home", fetched_at=_JAN2
     )
@@ -110,7 +110,7 @@ def test_personal_injury_wins_by_page_real_estate(db):
     assert len(primary[0]["evidence"]) <= 90  # ~80 chars of context
 
     # Confidence must equal norm_practice's own confidence x 0.8 exactly.
-    practice_weight = float(len(_PI_TEXT.split()))
+    practice_weight = float(len(_PI_TEXT.split())) * 0.5  # a home page now, like the other
     home_weight = float(len(_DIVORCE_ONCE_TEXT.split())) * 0.5
     expected = norm_practice([(_PI_TEXT, practice_weight), (_DIVORCE_ONCE_TEXT, home_weight)])
     assert float(primary[0]["confidence"]) == pytest.approx(expected.confidence * 0.8)
@@ -121,12 +121,13 @@ def test_personal_injury_wins_by_page_real_estate(db):
 
 
 def test_footer_page_kinds_never_considered(db):
-    # 'other' and 'attorneys' are not in the practice/home/about set at all.
+    # 'other' is not a kind the engine reads at all (D-044): the reader sees no
+    # pages for the firm and writes nothing.
     firm_id = make_firm(db)
     _insert_page(db, firm_id, _PI_TEXT, page_kind="other", fetched_at=_JAN1)
 
     result = px_site_rules.run(_ctx(db))
-    assert result.processed == 1
+    assert result.processed == 0 and result.skipped == 1
     assert _claims(db, firm_id, "primary_practice") == []
 
 
@@ -234,11 +235,11 @@ def test_no_recruiter_mention_writes_no_claim(db):
 
 
 def test_recruiter_mention_outside_scoped_pages_ignored(db):
-    # 'practice' is not team/careers/about.
+    # 'home' is read for practice areas, but is not team/careers/about.
     firm_id = make_firm(db)
     _insert_page(
         db, firm_id, "Our legal recruiter helped build this practice group.",
-        page_kind="practice", fetched_at=_JAN1,
+        page_kind="home", fetched_at=_JAN1,
     )
 
     result = px_site_rules.run(_ctx(db))
@@ -291,7 +292,7 @@ def test_non_gov_domain_writes_no_gov_claim(db):
 def test_idempotent_rerun_writes_nothing_new(db, tmp_path):
     store = ObjectStore(tmp_path)
     firm_id = make_firm(db, domain="publicdefender.example.gov")
-    _insert_page(db, firm_id, _PI_TEXT, page_kind="practice", fetched_at=_JAN1)
+    _insert_page(db, firm_id, _PI_TEXT, page_kind="home", fetched_at=_JAN1)
     _insert_page(
         db, firm_id, "Hablamos Español. Consulta gratis.", page_kind="contact",
         fetched_at=_JAN1,
@@ -324,12 +325,12 @@ def test_idempotent_rerun_writes_nothing_new(db, tmp_path):
 def test_changed_version_reparses(db, tmp_path, monkeypatch):
     store = ObjectStore(tmp_path)
     firm_id = make_firm(db)
-    _insert_page(db, firm_id, _PI_TEXT, page_kind="practice", fetched_at=_JAN1)
+    _insert_page(db, firm_id, _PI_TEXT, page_kind="home", fetched_at=_JAN1)
 
     first = px_site_rules.run(_ctx(db), store=store)
     assert first.processed == 1
 
-    monkeypatch.setattr(px_site_rules, "_VERSION", "px:v2")
+    monkeypatch.setattr(px_site_rules, "_VERSION", "px:test-bump")
     second = px_site_rules.run(_ctx(db), store=store)
     assert second.processed == 1
     assert second.skipped == 0

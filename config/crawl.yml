@@ -101,24 +101,31 @@ probe_paths:
   testimonials: ['/testimonials', '/reviews']
   news:         ['/blog', '/news']
 
-# Per-firm caps on the pages read: applied by P1 to the initial map (home
-# first, then practice, then every other kind) and by P2 to the links it
-# discovers on fetched pages, until `total` is reached. A kind without its
-# own line gets `other`.
+# Per-firm caps on the pages read -- and the list of what the engine reads
+# at all (D-044). A kind above zero is mapped by P1, crawled into by P2 and
+# read by every claim reader; a kind at zero is still classified (so a link
+# to it is recognised) but never fetched or read. The order is the map
+# order and the fetch priority when a slow host cannot have them all. A
+# kind without its own line gets `other`.
+#
+# Six kinds: what the firm is about, who works there, how to reach it, what
+# clients say, whether it is hiring. Practice, news, locations and fees were
+# read before (30 pages a firm); the probe showed practice pages alone were
+# a third of every page fetched, for facts the home and about pages carry.
 caps:
   home: 1
-  practice: 6
-  careers: 3
-  contact: 2
-  about: 2
+  contact: 1
+  about: 1
   attorneys: 3
-  team: 3
-  locations: 2
-  testimonials: 3
-  news: 4
-  fees: 1
-  other: 2
-  total: 30
+  team: 2
+  careers: 2
+  testimonials: 2
+  practice: 0
+  locations: 0
+  news: 0
+  fees: 0
+  other: 0
+  total: 12
 
 sitemap:
   max_urls_read: 2000
