@@ -110,7 +110,7 @@ Rules that hold across every chunk:
 
 **Deliverable:** % of decision-makers at qualified probe firms with (a) a LinkedIn profile, (b) an email, (c) a *verified* email.
 
-**Status — built 17 Sep 2026 (D-046), live run pending.** Hunter behind `r1_enrich` (finder) and `r4_verify` (verifier), NeverBounce as the verifier switch, both chosen by the settings. Tested against recorded answers. The measurement above runs the day `HUNTER_API_KEY` lands in `.env`.
+**Status — built 17 Sep 2026 (D-046), revised the same day (D-050).** Addresses are found by our own scraping — site, search results, the firm's pattern; no finder vendor (the Hunter adapter stays unselected). Verification is rented from a verification-only service: NeverBounce or ZeroBounce, both adapters in `r4_verify`, chosen by whichever key exists. The measurement above runs the day a verification key lands in `.env`.
 
 ### 5. Strict ICP — one checklist, each rule with evidence
 
@@ -134,7 +134,7 @@ Pain → solution → hook for every pain kind the engine detects (six today; fi
 |---|---|---|
 | Serper.dev API key | workstream 3 (search, Google Business Profile) | `.env` as `SERPER_API_KEY` |
 | Brave Search API key (optional) | fallback engine | `.env` as `BRAVE_API_KEY` |
-| Hunter.io API key | workstream 4 (decision-maker email + verification) | `.env` as `HUNTER_API_KEY` |
+| A verification-only key — NeverBounce or ZeroBounce | workstream 4 (verifying addresses; finding them is our own scraping, D-050) | `.env` as `NEVERBOUNCE_API_KEY` or `ZEROBOUNCE_API_KEY` |
 | OpenRouter key (already held) | workstreams 1, 2 (sheet reader, team-page headcount, fee model) | `.env` as `OPENROUTER_API_KEY` |
 | The strict ICP, in words | workstream 5 | this file, decisions below |
 

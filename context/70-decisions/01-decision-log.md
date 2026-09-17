@@ -1119,6 +1119,33 @@ it will take to work on a thousand leads -- answer these as an FAQ."
 
 ---
 
+## D-050 · Addresses are found by our own scraping; a vendor only verifies them
+
+**Asked for (17 Sep 2026):** "Hunter does the same thing we are trying to make ... we are
+building this in-house, for our own company. We have data that needs to be cleaned, it gives
+direction, then we run scraping jobs. Why are you sending me to Hunter?"
+
+**Rulings:**
+- **No lead-generation product in the pipeline.** The engine finds decision-makers' addresses
+  itself: printed on the site (`r_site_emails`), in search-result snippets
+  (`r_search_emails`), and by the firm's own address pattern learned from one real address
+  (`r3_email_pattern`) -- 2,319 of 2,745 named people on the probe, with no vendor. The Hunter
+  finder built in D-046 stays in the code as an adapter that is never selected:
+  `LGE_EMAIL_FINDER` defaults to `none` in practice because no key will be added.
+- **Verification is the one thing scraping cannot do**, and it stays rented: it is an SMTP
+  conversation with the firm's mail server, which a residential connection cannot hold and
+  which gets an IP blacklisted when done at volume. A *verification-only* service is a
+  utility, not a competitor: NeverBounce (known to the user, dearer) or ZeroBounce, about a
+  cent an address. Both adapters exist in `r4_verify`; the settings pick whichever key is
+  present. If neither is bought, addresses stay `unverified`, the sending vendor's bounce
+  check is the last line, and nothing reaches "ready" inside the engine -- shown, not hidden.
+- **Serper stays**: Google's results through an API is infrastructure for our own search
+  jobs, not a lead product.
+- **The ask to the manager is therefore two utilities**: Serper credits (~$50 for the whole
+  list) and a verification balance (~$10-20 for the first thousand decision-makers).
+
+---
+
 ## Standing rulings that were never in dispute
 
 Recorded here because they are load-bearing and easy to erode:
