@@ -470,7 +470,7 @@ const TIMING: { step: string; time: string; why: string }[] = [
   { step: "Reading the sites", time: "40–60 minutes", why: "Twelve pages per firm at that same pace; slow hosts and pages that need a browser add to it." },
   { step: "Facts, fee model, practice, pain", time: "10–20 minutes", why: "Local computing over the pages already stored — no network." },
   { step: "LinkedIn, listings, addresses by search", time: "15–20 minutes", why: "Around four thousand queries at a quarter second each on Serper. On the free engine, at 8–12 seconds a query, this alone is about eleven hours — which is why the key matters." },
-  { step: "Finding and verifying addresses", time: "minutes, not hours", why: "One Hunter call per decision-maker without an address, one per address to verify." },
+  { step: "Confirming addresses", time: "minutes, not hours", why: "One verifier call per candidate: the engine builds the candidates from the person's name and the firm's domain and stops at the first real one — two or three on average, about a cent each." },
 ];
 
 function Timing() {
@@ -548,14 +548,16 @@ const FAQ: { q: string; short: string; a: React.ReactNode }[] = [
   },
   {
     q: "Which keys make it work fully?",
-    short: "OpenRouter, Serper, Hunter — one line each.",
+    short: "OpenRouter, Serper, a verifier — one line each.",
     a: (
       <>
         Three, each one line in the engine&apos;s settings file. <span className="text-ink">OpenRouter</span> lets the AI
         read sheets and sites. <span className="text-ink">Serper</span> is the web search — LinkedIn profiles, Google
-        Business listings, addresses in search results. <span className="text-ink">Hunter</span> finds and verifies the
-        decision-maker&apos;s address. Without Serper and Hunter the platform still reads sites and finds people, but
-        no address gets verified and nothing reaches Ready on Qualified leads.
+        Business listings, addresses in search results. A verification service —{" "}
+        <span className="text-ink">NeverBounce</span> or ZeroBounce — confirms that an address exists; the engine finds
+        the addresses itself, from the site, search results, the firm&apos;s pattern and the person&apos;s own name.
+        Without Serper and a verifier the platform still reads sites and finds people, but no address gets
+        confirmed and nothing reaches Ready on Qualified leads.
       </>
     ),
   },
