@@ -3,6 +3,15 @@ purpose: The actual copy. Ready to send.
 logic: see outreach-journey.md for who gets which
 ---
 
+> **Rewritten 22 Sep 2026 (D-060).** The words below are the first draft, kept
+> for the reasoning under each one -- why that sentence, why that order, why no
+> numbers in touch 4. **`journey/copy/*.md` is now the copy itself**, rewritten
+> for Legal Soft's actual offer: pre-vetted people, free to interview, working
+> in under three days, HIPAA-trained. Every email also carries a signature and
+> an opt-out line, appended by the renderer from `config/sender.yml`. The five
+> rules in outreach-journey.md did not change, and neither did which email goes
+> to whom.
+
 # Email drafts
 
 Written for **Tier 1A** (PI & mass tort, contingency, 2–25 attorneys) — the beachhead, and

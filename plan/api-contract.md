@@ -6,8 +6,11 @@ is the spec both are built to; if they disagree, fix the code, not the doc.**
 
 Conventions:
 - JSON, `snake_case`, ISO 8601 UTC timestamps, cursor pagination (`cursor`, `limit` ≤ 200).
-- The API binds to `127.0.0.1:8000`. CORS allows `http://localhost:3000` and
-  `http://127.0.0.1:3000` only.
+- The API binds to `127.0.0.1:8100`. The screens run on `127.0.0.1:5000` (also opened as
+  `localhost:5000`) and reach the API through their own `/api` proxy, so the browser is
+  same-origin; CORS allows `http://localhost:5000` and `http://127.0.0.1:5000` only, for a page
+  calling the API directly. Port 3000 belongs to another project on this machine and is refused
+  (D-056).
 - Errors: `{"error": {"code": "not_found", "message": "Lead not found.", "fix": "Check the id."}}`
   with the matching HTTP status.
 - **Display strings come from the backend** (`display`, `label`, `headline`, `source_label`). The
@@ -181,7 +184,7 @@ The sample is 50 firms from the probe that have documents, stable across calls.
 `POST /api/handcheck/{firm_id}/{attr}` with `{correct: boolean, corrected_value?: string}` → `204`.
 
 ### Meta and pipeline (read-only)
-- `GET /api/meta/providers` → `{ai_extraction: boolean, email_verification: boolean, places: boolean, crawler_identity: string}`. Booleans only — **never key values**.
+- `GET /api/meta/providers` → `{ai_extraction: boolean, email_verification: boolean, places: boolean, crawler_identity: string}`. Booleans only — **never key values**. Each is asked of the seam that does the work (D-054): `email_verification` is true when the verification step would run (a verifier chosen and its key set); `places` is true when the Google Business Profile is looked up directly — the search engine in use has a listings endpoint (Serper) and its key is set. `GOOGLE_PLACES_API_KEY` is read by nothing.
 - `GET /api/pipeline/alerts` → `{items: {name, label, state, value, detail}[]}`
 - `GET /api/pipeline/gates` → `{items: {name, label, passed, report}[]}` (fast gates only: invariants, g1_identity, g3_tier_distribution, g7_coverage)
 
@@ -235,6 +238,87 @@ interface IdentityReviewItem { id: number; reason: string /* plain words */; rul
   `{decision: "merge" | "keep_separate", survivor_id?: string, note?: string}` → `{message: string}`.
   `merge` without `survivor_id` keeps the firm with more observations (then the older one).
   Every decision is written to `review_decision`.
+
+---
+
+## Revision 3 — one recipe, one set of list rules (D-054, additive)
+
+**A research job's steps are the flow's.** `POST /api/firms/{id}/research` with scope `full`
+runs the components of the `research` flow in `config/flows.yml`, scope `contacts` those of
+`find_contacts` — the same recipe `lge flow` runs, gates left out. Each step carries its plain
+label from the engine; the screen keeps no map of its own.
+
+```ts
+interface JobStep { name: string; label: string /* "Move the lead forward" */
+  status: "pending" | "running" | "done" | "failed"; note?: string | null }
+```
+
+**The list rules hold a lead back from the Qualified panel and its sheet** exactly as they do
+from every list: parked, a portal or competitor's customer, the firm or its domain on the
+do-not-contact list. Such a lead is neither ready nor almost, and never on
+`/api/qualified/export.csv`. An address on the do-not-contact list is not an address on file.
+
+```ts
+interface QualifiedCounts { /* …ready, almost, checked, missing_by_check… */
+  withheld: {label: string /* "Do not contact", "Parked" */; count: number}[] }  // most first
+```
+
+---
+
+## Revision 4 — the email journey (D-057, additive)
+
+**`day` is days after the first email.** The screens show it as "Day {day + 1}": the first
+email goes on Day 1. A skipped touch carries `day: 0` and no meaning; it would have gone on the
+schedule's day.
+
+**Each drafted email names the templates it was built from**, its own wording first, then any
+paragraph set into it. Empty for a skipped touch. **A lead with no emails says why in words**
+beside the code, so no screen shows `unresolved_token:cms`.
+
+```ts
+interface Touch { step; day; subject; body; skipped_reason; templates: string[] /* ["1-open-role", "1-paragraph-pi"] */ }
+interface DraftsResponse { band; excluded_reason: string | null
+  excluded_display: string | null /* "An email needs the case system, and it is not known" */; touches: Touch[] }
+```
+
+### `GET /api/journey` → `JourneyResponse`
+The nine emails in order, each with its day (edits applied) and original day, its plain title,
+purpose and what varies it, and every template that can serve it: wording as it stands and as
+written, when it is used, the fill-ins an edit may use, and the paragraph slot an email must keep.
+Plus the tracks (Sequence, Nurture with its `pace`, Strike, Hold), the fill-in glossary, the
+banned phrases, the latest day an email can move to, and the example firm's options.
+
+```ts
+interface JourneyTemplate { id: string; step: number; kind: "email" | "paragraph"; used_when: string
+  subject: string | null; body: string; original_subject: string | null; original_body: string
+  edited_at: string | null; fill_ins: string[]; keeps: string | null }
+interface JourneyStep { step: number; day: number; original_day: number; title: string
+  purpose: string; varies_by: string; templates: JourneyTemplate[] }
+interface JourneyTrack { band: Band; label: string; description: string; steps: number[]; pace: number }
+interface JourneyResponse { steps: JourneyStep[]; tracks: JourneyTrack[]
+  fill_ins: {token: string; label: string; meaning: string}[]; banned_phrases: string[]
+  max_day: number; tiers: {value: string; label: string}[]; pains: {value: string; label: string}[] }
+```
+
+### `PUT /api/journey/templates/{id}` `{subject?: string | null, body: string}` → `JourneyTemplate`
+New wording for every lead from now on. Refused with `422 invalid_copy` (the message says every
+reason) for a banned phrase, a fill-in the template cannot fill, a stray brace, a paragraph slot
+not kept exactly once, or an empty subject or body. A paragraph's subject is ignored. Saving the
+original back is a restore. `DELETE` restores the original.
+
+### `PUT /api/journey/days` `{days: {step, day}[]}` → `JourneyResponse`
+The whole schedule: an email left out goes back to its original day. Email 1 is always Day 1;
+each later email must come after the one before, by Day 91 at the latest (`422 invalid_days`).
+`DELETE` restores every original day. Nurture keeps its pace over the new days.
+
+### `GET /api/journey/example?tier&pain&system&band` → `JourneyExample`
+An invented firm's journey, rendered by `build_journey` with the saved edits, so the screen
+shows real emails before any lead is ready.
+
+```ts
+interface JourneyExample { firm: string; person: string; tier; pain; system: boolean
+  band: "SEQUENCE" | "NURTURE"; drafts: DraftsResponse }
+```
 
 ---
 

@@ -49,11 +49,19 @@ The same role has **opposite economics** depending on how the firm bills. Touch 
 fee-model-specific and must never be genericised — it is the entire ICP compressed into three
 sentences.
 
-### 5. Short, plain, one ask
+### 5. A proper email, and one ask
 
-50–90 words. Lowercase subject lines. No attachments, no tracking pixels, no link shorteners —
-small firms run aggressive filtering, and a bare link to their own careers page reads better
-than a redirect anyway.
+**Rewritten 22 Sep 2026 (D-061).** 90–130 words: "Hi {first_name}," then the observation, what
+it usually means, what we would do, why we are worth an hour, and one ask. It ends with the
+sign-off and signature the renderer appends (`config/sender.yml`), which carries the postal
+address and the opt-out line US law requires.
+
+**Subject lines are sentence case and specific** — the role and how long it has been open, the
+second posting, the two open seats, the tort. They were lowercase fragments until the owner
+said, rightly, that they read as junk.
+
+No attachments, no tracking pixels, no link shorteners — small firms run aggressive filtering,
+and a bare link to their own careers page reads better than a redirect anyway.
 
 Never *"I hope this email finds you well."*
 

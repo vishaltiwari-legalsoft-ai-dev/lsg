@@ -4,6 +4,8 @@ Lead Gen Engine · planned 11 Sep 2026
 Builder: solo + Claude · Assets in hand: firm dataset export only
 
 > **17 Sep 2026:** the *order* of work is now set by [plan/plan-v2.md](plan/plan-v2.md) — scraping, web search and LinkedIn first; outreach refinement last. The scope below still stands; the milestone sequence does not.
+>
+> **18 Sep 2026:** the next work is [plan/plan-v3.md](plan/plan-v3.md) (D-053) — rows triaged into Batch 1 and Batch 2 on the way in, enrichment queued by batch priority, an AI pain analysis and enrichment report, then Actual Leads and a recorded handover to vendors. It wires plan-v2's pieces together; it does not replace them.
 
 Knowledge base: [context/](context/) — 39 chunks. This plan references it rather than
 repeating it. Start with [context/INDEX.md](context/INDEX.md).

@@ -1169,6 +1169,510 @@ pattern only once *one* real address is known; a firm with none stayed empty.
   the `profile_probe` flow, before `r4_verify`. Inert without a verifier key, like R4. The
   home page's key question no longer names Hunter.
 
+## D-052 · The review of the day's changes: four findings, four fixes, one new guard
+
+**Asked for (18 Sep 2026):** "invoke the senior software agent, analyze the whole code base
+from raw leads in through enrichment, find bugs, make the system more robust." Two read-only
+reviews ran: a bug review of everything changed on 17 Sep, and an end-to-end systems review.
+This entry records the first; the second follows as it lands.
+
+**Findings and rulings:**
+- **Critical, and mine.** The chunk-3 patch slid `_write_listing` in between the `@component`
+  decorator and `run()` in `r_search_links`, so the registry held the helper: every research
+  job's LinkedIn step and the whole-list flow would have died with a `TypeError` at that step,
+  and the flow runner has no per-step guard, so the nightly run would have stopped there. The
+  per-component tests call `module.run` directly and the job tests fake the registry, so
+  nothing caught it. The decorator is back on `run()`, and **`tests/test_registry_steps.py`
+  now asserts that every step named in `config/flows.yml` and in the research jobs' step
+  lists is registered as a function whose first parameter is `ctx`** -- the path the CLI,
+  the flow runner and the API actually call. A patch that lands a decorator on the wrong
+  function fails that test.
+- **The address claim carried its printed text.** `px_site_facts` popped `raw` off the address
+  dict and put it straight back on the same object, so `site:page` wrote seven keys where
+  `site:jsonld` writes six, and reconcile's "two sources agree" branch (D-031) never fired for
+  the very case it was written for. The claim is a copy without the text; the text stays in
+  `evidence`.
+- **`/api/qualified` did every lead's work on every page load.** The database now returns only
+  leads at least four checks along, counts the rest, and the journey is rendered for at most
+  500 candidates per request (the rest say "not checked in this view" and count as almost).
+  A universe of a hundred thousand leads is one filtered pass, not a round-trip per lead.
+- **Batch decisions could not qualify, reopen or hand off**, though the single-lead endpoint
+  could; the batch action list now carries every decision action.
+- **Not bugs, checked:** the streaming reader's batch arithmetic, the search pacer's state
+  machine and client lifetimes, the claim-run retirement on exceptions, the verifier and
+  finder idempotency.
+
+## D-053 · The three-step engine: triage the rows, enrich by priority batch, hand over on record
+
+**Asked for (18 Sep 2026):** the user's handwritten brief. "Law Firm Name, Website, Location,
+Job Post, Firm Size → bare minimum ... All 5 cols present → Make Batch 1. Law Firm name absent
+→ Discard the lead ... Make Batch 2 ... If the batch size > 250 rows, then the batch will be
+made into sub-batches of 250 ... Priority to process Batch 1 is always higher than Batch 2 ...
+Pain Point Analyzer: it is not a scraper, this is just an LLM ... All the enriched leads will
+land in a dump called Actual Leads ... create a Handover Lead Base document ... leads that have
+been handed over to the vendor will have a status." And: "do not write code first; be thorough,
+review, and make a plan." The engine was read against the brief (three read-only sweeps, the
+load-bearing claims checked by hand), the cross-check and the build order written as
+`plan/plan-v3.md`, and four of its six questions settled the same evening.
+
+**Rulings:**
+- **The order of the next work is `plan/plan-v3.md`**: mend what drifted → triage the rows →
+  the enrichment queue → enrichment to the brief → the pain analyzer and the enrichment report
+  → Actual Leads and the handover. It does not replace plan-v2: v2's seams, search, address
+  finding and verification are what v3 wires together. Plan before build still holds (D-042).
+- **Five fields make a row complete; a firm name makes it workable.** The five are firm name,
+  website, location, job post, firm size, each counted only when usable (a website that yields
+  no domain is missing). All five → Batch 1. No firm name → discarded before the store, onto a
+  rejects list the screen shows and the user can download; today such a row becomes a firm
+  called "Unknown Firm". A name with anything missing → Batch 2. This loosens D-043's second
+  mandatory group: "a way to reach the firm" stops blocking the load; completeness now decides
+  the order rows are worked in, not whether they enter.
+- **A sheet missing one of the five columns loads, with a warning, every row in Batch 2** (the
+  user's choice over refusing it, or judging rows on the columns present). A sheet with no
+  firm-name column is refused, since every row would be discarded.
+- **Sub-batches are 250 firms for both batches** (the brief's "1000 (?)" for Batch 2 was settled
+  at 250), counted after duplicates merge. Batch 1 always goes before Batch 2, across sheets;
+  the rule applies between sub-batches, so new Batch 1 work waits at most one running
+  sub-batch. The queue starts itself when a sheet finishes loading.
+- **Batch 2 opens with identify**: the existing website finder, wired in at last. It checks the
+  place as well as the name when the sheet gave one; a firm with a name and no place is adopted
+  only when the answer is unambiguous. A firm that cannot be identified is parked with its
+  reason, never enriched blind.
+- **The crawl reads five pages**: landing, about, careers, testimonials, one staff page. The
+  contact page goes; phone and address come from the Google Business Profile, now kept whole.
+  The loss in addresses found is measured on the first sheet and contact comes back (one config
+  line) if it hurts. Supersedes D-044's six kinds and twelve pages.
+- **Pain is analysed by the AI over everything the store holds**, each pain carrying the
+  sentence that proves it and its source; a pain with no evidence in the store is dropped.
+  `ja7`'s rules become inputs to it. The prompt and model go through the AI-engineering review
+  before they change.
+- **Everything that finishes enrichment lands in Actual Leads, with its checklist; only a lead
+  passing every check can be handed over** (the user's choice over admitting ready leads only).
+  One definition of ready, shared by the panel and every export, list hygiene always applied.
+- **A handover is on record**: vendor, leads, time, who. The Handover Lead Base document is
+  generated locally on request; a lead handed to one vendor is not handed to a second by
+  accident; outcomes come back through the existing outcome buttons. Sending stays out of scope.
+- **Found in the cross-check, fixed first:** the Research button's step list has drifted from
+  the flow. It skips the AI's reading of the site, the verification of any address found on the
+  site or in search (only a predicted address gets checked, by the predictor itself), and
+  `classify`. A lead researched from the screen therefore stays at PROFILING, "Researching" in
+  the work queue, however much was found. And `/api/qualified/export.csv` skips the list
+  hygiene `build_list` applies, so a customer's or a cooling-off domain can reach the vendor
+  sheet.
+- **Still open:** whether the sheet's firm size becomes the lowest-ranked source of size
+  (reverses part of D-016 and D-044, which kept a purchased list's employee range out on
+  purpose); and the two keys. Without a NeverBounce or ZeroBounce key the email predictor skips
+  every person; without a Serper key Batch 2's search is DuckDuckGo, and a bot check stops it.
+
+## D-054 · Phase 0: one research recipe, one set of list rules, lights that ask the engine
+
+**Asked for (18 Sep 2026):** "start karo bhai" -- begin plan-v3, phase 0: mend what drifted
+before building on it.
+
+**Rulings:**
+- **The research recipe lives in `config/flows.yml` alone.** A flow step may now be
+  `{flow: <name>}`, replaced by that flow's steps where it stands (`lge/ops/config.py:
+  load_flows`); an include that loops, names no flow, or carries options is refused at load
+  time. `research` = read_site → G3 → find_people → classify → read_openings → reconcile →
+  score; `find_contacts` = px_site_facts → find_people → reconcile → classify → score;
+  `profile_probe` = research + build_list; `nightly` opens with read_openings. Expanded,
+  nightly is exactly what it was; profile_probe gains one reconcile before the score (the
+  hiring facts the careers pages write reach the score in the same run, as the button's list
+  already did).
+- **The Research button runs the flow's components** (`research_steps(scope)` in
+  `lge/api/routes/actions.py`), gates left out -- a gate judges the whole universe, and one
+  firm is not a distribution. It now includes the four its own list had lost: the AI reading
+  (p8, p9), address verification (r4) and classify, so a lead researched from the screen moves
+  through its states instead of sitting at PROFILING. `tests/test_registry_steps.py` holds the
+  button to the flow, every step to a plain label, and the research flows to carrying no
+  per-step options a job would not pass.
+- **A firm list narrows P9's trigger, never replaces it.** `firm_ids_file` used to bypass the
+  trigger query, so every firm researched from the screen would have been sent to Opus 5. A
+  listed firm is now escalated only when a trigger fires for it (low confidence, fee model
+  mixed or unknown, tier 1A, an open conflict); `--opt force=1` keeps the old override for a
+  deliberate re-run. The docstring always said this; the code did not.
+- **One set of list rules for every list and sheet.** `lge/export/list.py` names each rule once
+  (parked, portal or competitor's customer, suppressed firm, suppressed domain) and exports
+  `HYGIENE_EXCLUSION_SQL`; the Qualified panel and `/api/qualified/export.csv` read it. A lead
+  a rule holds back is neither ready nor almost, and the panel says how many were held back
+  and why ("Do not contact 2 · Parked 1"). Until now the vendor sheet applied none of them: a
+  paying customer's firm could reach it. An address on the do-not-contact list (scope
+  `email`) is not an address any list carries -- nothing writes that scope yet, but the
+  send-time guard expects it and the sheet is now the last gate.
+- **Found by the new tests, and fixed:** a decision-maker with no address at all made the
+  Qualified query's "address verified" check NULL rather than false, the sum of the checks
+  NULL, and the lead vanished from the panel instead of showing as one step away. Introduced
+  by D-052's move of the filter into the database; `IS TRUE` closes it, with a test.
+- **The provider lights ask the seams.** `email_verification` is `r4_verify.configured_provider`
+  (the verifier a run would use, key and all); `places` is `lge.search.has_listings` (the
+  search engine in use has a listings endpoint -- Serper -- and its key is set). The old
+  `places` read a `GOOGLE_PLACES_API_KEY` nothing reads. The inert list says "Google Business
+  Profile lookup".
+- **Job steps carry their label from the engine** (`lge.api.labels.step_label`); the screen's
+  own map, which had already missed the email predictor, is gone.
+- **Measured:** 1,273 backend tests pass (26 of them new); the frontend typechecks, lints and passes 56
+  tests, and the live contract check passes against the running engine. On this machine today:
+  AI reading on, email verification off, Business Profile lookup off -- the two keys of D-053.
+
+## D-055 · The interface redesigned: the blue back, the three steps as the spine
+
+**Asked for (18 Sep 2026):** "I'm giving you an authority, use the design skill, the UI UX
+revamping skill, and redesign the whole UI of this platform." Every screen was screenshotted
+with sample data first (headless Chrome over the DevTools protocol), a UX audit ran alongside,
+and the system was rebuilt screen by screen with a screenshot after each. The spec is
+`plan/ui-design-system.md` ("Blue-back"), which replaces "The Record".
+
+**Rulings:**
+- **The rail is the brief.** Navigation is Home, then the three steps of plan-v3 -- *1 Raw
+  leads* (Sheets), *2 Enrichment* (Work queue, Firms, Accuracy check), *3 Handover* (Actual
+  leads) -- with counts only where something waits for a person. The separate five-step
+  "pipeline" list in the rail is gone (one navigation model, not two). The screen you are on is
+  a white tab joined to the sheet.
+- **Names follow the user's words.** "Lists" is **Sheets**, "Qualified leads" is **Actual leads**
+  (the URL stays `/qualified`), the queue's "Contact" column is **Decision-maker**, "Gate G2" is
+  **Before the list widens**, "in the universe" is **on file**. Stale route titles and loading
+  states ("Imports", "Leads", "Hand-check", a not-found page offering "Go to Today") were fixed.
+- **Blue-back frame, one sheet per screen, no card grids.** Pale legal blue desk and rail, each
+  screen a white sheet (18px corners, no shadow); tables ruled across the sheet; proof unboxed;
+  a frame only for a specimen or the item under review.
+- **Type: Archivo and Caslon.** Archivo replaces Rubik for the interface; its narrow cut carries
+  the Legal Soft wordmark's condensed voice into titles and live figures. Libre Caslon Display
+  sets a firm's name as a caption; Libre Caslon Text keeps the record. This departs from the
+  brand kit's Rubik on purpose: the wordmark itself is a heavy condensed grotesque, and Rubik's
+  rounded terminals were the least legal thing on screen.
+- **Home opens on the work, then teaches.** The strongest proof in the system (with who to write
+  to and "Copy first email") or, before there is any, the self-building demo; the three steps
+  with live numbers and their screens; what is waiting and what the engine is doing; then, under
+  a heavy rule, the manual the user asked for on 17 Sep (how to use it, the questions, the
+  words). The unused Today screen and band tabs were deleted.
+- **The lead page is two columns.** The reading (proof, people, drafts with touch 1 open) and a
+  pinned working side (next step, decisions, outcome buttons, notes, history, numbers): 3,953px
+  became about 1,800. The case file beside the queue keeps one column with its outcome bar pinned.
+- **The work queue lost its chrome.** Search, priority, tier and pain inline, the rest behind
+  "More filters (n)"; Radix menus instead of native selects; a real "Export a list" menu; a row
+  shows its next step and owner, not the stage its tab already names; the proof runs to two lines.
+- **Sheets explains itself when empty.** A drop zone, the upload button waiting for a file, and
+  "Start with a sheet of law firms" with the three things that happen to one.
+- **Found on the way:** the dev server refused `127.0.0.1` (only `localhost` hydrated), so a
+  screen opened by IP sat on its skeletons forever -- `allowedDevOrigins` now lists it; the
+  "couldn't reach the engine" error told people to run `uv run lge serve`, which Application
+  Control blocks here -- it now gives `.venv\Scripts\python.exe -m lge serve`; "1 people".
+- **From the UX audit, applied:** a setup notice where a switched-off provider would look like a
+  fault -- Actual leads says "Address checking is off, so no lead can be ready to hand over" and
+  which key to add, and Home lists every switched-off key under the hero; the Actual leads tab
+  is **Ready to hand over**, so "ready" no longer means two things (the queue's "Ready to reach"
+  stays); the lead page's blue button is the lead's own next step (Find people and emails for a
+  lead that needs a person, Qualify for one that needs a decision, Research for one still being
+  read); a Strike lead says it is written by hand instead of "no touches"; research steps say
+  "Nothing new to read" or "Switched off until its key is set" instead of
+  `processed=1 skipped=0 failed=0`, with the raw text only under Details on a failure; Sheets
+  shows how many rows carry each of the five fields of the brief instead of a health score out of
+  100, and loses its rows-per-batch picker (its 250 read as the brief's enrichment batch); one
+  address badge everywhere; no count on the rail's Accuracy check (the engine's is 50 minus what
+  was checked, so it read "50 waiting" on an empty store); no "checks waiting" on Home for queues
+  with no screen; the priority beside urgency on each queue row.
+- **From the audit, not applied, and why:** hiding the outcome buttons before a lead is ready (an
+  opt-out can come at any stage); renaming Home to Overview (the user's word is Home); "Hand off
+  to sales" to "Pass to sales" and "Unknown -- not guessed" to other words (the backend sends the
+  same strings; a frontend-only change would mix two vocabularies -- a backend copy pass, best
+  done with the handover work of plan-v3 phase 5); a live "ready" count on the rail (it would
+  run the Actual leads query on every screen).
+- **Unchanged on purpose:** every API shape, every keyboard shortcut, the highlighter's single
+  sweep, the plain-words and write-the-unknowns rules, and the backend's own display strings
+  (a few still carry "word -- fragment" labels such as "Catch-all -- failure"; changing them
+  is a backend copy pass). Backend gaps the audit found, for later: the sample fixtures carry
+  urgency above the engine's cap of 50, and a Strike lead in them has drafts the engine never
+  writes.
+
+## D-056 · Ports: the screens on 5000, the engine on 8100, both on this machine only
+
+**Asked for (18 Sep 2026):** "launch this on the local host 5000 ... there's one more website
+that is running on the local host 3000, so do not disturb those servers ... for the backend
+also use some other port."
+
+**Rulings:**
+- **The screens run on 5000, the engine on 8100.** `npm run dev`, `dev:fixtures` and `start`
+  take `-p 5000`; `lge serve` defaults to `--port 8100`; the screens' `/api` proxy defaults
+  `LGE_API_ORIGIN` to `http://127.0.0.1:8100`. Port 3000 belongs to another project on this
+  machine (a Next app in `ghi-worktrees`) and is never stopped, reused or trusted; 8000 and
+  3100 are simply no longer used.
+- **CORS names our own screens only:** `http://localhost:5000` and `http://127.0.0.1:5000`. It
+  used to name 3000 -- written when these screens were meant to run there -- which on this
+  machine meant the *other* project's pages could read our contacts. A test now refuses both
+  3000 origins by name. The screens never need CORS (the proxy makes them same-origin); the list
+  is for a page calling the engine directly.
+- **The screens bind to `127.0.0.1` too (`-H 127.0.0.1`).** Next's default is every interface:
+  the dev server announced `http://192.168.0.208:5000`, and its proxy would have handed anyone
+  on the same network what the engine keeps to `127.0.0.1` -- contacts included. The old 3100
+  server had the same hole. `localhost:5000` still works (the browser falls back from `::1` to
+  `127.0.0.1`); the network address is now refused on both ports.
+- **Measured:** engine health direct and through the proxy on both hostnames; every screen
+  hydrates on `localhost:5000` and `127.0.0.1:5000`; the live contract check passes against 8100;
+  91 API tests, the frontend's 56 and its typecheck and lint pass; port 3000 kept its process
+  throughout. The live database is empty -- created 17 Sep 22:54 and never written to (no
+  insert or delete on any table), and the raw-page store holds no files -- so the screens show
+  their empty states until a sheet is loaded.
+
+## D-057 · The Email journey screen: the lifecycle day by day, its wording and days editable
+
+**Asked for (19 Sep 2026):** while the NeverBounce and Serper credits are arranged, "work on the
+last stage that is the handover ... draft emails the whole life cycle, what we will be sending
+on the day one, day two and day three ... Can you create that panel also?" Plan-v3 phase 5,
+started ahead of phases 1–4.
+
+**What existed:** nine touches over 28 days, rendered per lead from `journey/copy/` by
+`build_journey` (plan/outreach-journey.md, plan/email-drafts.md), shown only at the foot of a
+lead's page; no way to see the journey as a whole, and no way to change a word of it.
+
+**Rulings:**
+- **A screen in step 3, `/journey` ("Email journey"),** beside Actual leads. A day line (a
+  numbered square per email on its day, dashed when this firm would not get it; to scale where
+  the days allow, evenly on a phone), then each email as the engine writes it, for an example
+  firm or one lead (`?lead=`, linked from the lead's drafts). The example firm is invented
+  (Dana Whitfield at "Harbor & Vale Law", Atlanta) and rendered by `build_journey` itself
+  (`GET /api/journey/example`), so the screen shows real emails before any lead exists; its
+  tier, pain, case system and track are in the URL. When the firm would get nothing, the
+  reason is given in words and every version is still listed. The working side: the schedule,
+  the tracks, what to record when a firm answers (the outcome buttons' own names), the rules.
+- **Days are counted from Day 1** on every screen (`Day {day + 1}`); the API keeps days after
+  email 1. The pieces are *emails*, not *touches* (the lead page follows).
+- **Edits sit beside the originals, never over them.** `journey_copy_edit` (template path →
+  subject, body) and `journey_day_edit` (email → day), migration 102. The copy files and
+  `sequences.yml` stay the originals the golden tests pin; "Restore the original" deletes the
+  row; saving the original wording back is a restore. Chosen over rewriting the files because
+  a screen edit would otherwise break the test suite and live only as an uncommitted diff.
+- **One read path for every renderer:** `lge.export.list.fetch_journey_edits`, passed to
+  `build_journey(lead, edits)` by the lead's drafts, the work queue's classification (and so
+  `build_list` and the vendor sheet), Actual leads' journey check (read once per request, up
+  to 500 renders) and Home's first draft. No two places can show different words.
+- **What an edit may not do, checked by the engine and, word for word, by the screen as the
+  person types:** use a banned phrase (sequences.yml); use a fill-in the template's original did
+  not use, other than `{first_name}` and `{firm_name}` -- a detail some firms lack would drop
+  those leads instead of sending a gap (outreach-journey.md: "a token that cannot resolve means
+  the lead does not go out"); drop or double the tier's paragraph slot; leave a stray brace;
+  an empty or multi-line subject. Advice only: the word count, capitals in a subject.
+- **The days move as one schedule:** email 1 always on Day 1, each later email after the one
+  before, by Day 91; an email left out of a save goes back to its own day; Nurture keeps its
+  pace (`JourneyTrack.pace`) over the new days.
+- **Found and fixed:** the days were written twice -- in `sequences.yml` and again in
+  `build.py` -- so the config file's promise that "tuning a day offset never needs a code
+  change" was false. `build.py` now reads the file. The journey's refusal codes
+  (`unresolved_token:cms`, `fee_model_unresolved:…`, `no_touch1_variant:…`) reached the work
+  queue and Actual leads almost raw ("Unresolved token:cms"), and the lead page showed them
+  raw; `reason_display` now words them ("An email needs the case system, and it is not
+  known") and a lead's drafts carry the words as `excluded_display`.
+- **Contract (Revision 4, additive):** `Touch.templates` (which templates built each email),
+  `DraftsResponse.excluded_display`, `GET /api/journey`, `PUT/DELETE /api/journey/templates/{id}`, `PUT/DELETE /api/journey/days`,
+  `GET /api/journey/example`. The catalogue of templates, with each one's plain "used when",
+  is `lge/journey/catalogue.py`; a test renders every tier × pain × case system × track and
+  holds every file the renderer used to its place in the catalogue, and every catalogued file
+  to being reachable.
+- **Found, not fixed, and why:** (1) the copy files are hard-wrapped at ~70 characters and the
+  breaks survive into every rendered and copied email -- ragged on a phone once pasted. Joining
+  the lines of each paragraph at render is a line of code, but it changes every email's layout
+  and the golden tests pin the wrapped text: the user's call. (2) Email 8's `{days_open}` is
+  counted on the day the draft is rendered, not the day it goes (Day 26) -- right only if copied
+  on the day; belongs with saving each lead's journey when it is handed over (phase 5). (3) Tiers
+  2 and 3 share touch 2's personal-injury paragraph (a known gap a test already names).
+- **Measured:** 22 catalogue tests and 19 API tests new; the whole engine suite passes (1,316,
+  one skipped); the frontend passes 70 tests, typecheck and lint, and the live contract
+  check (7) against the running engine; photographed at 1440 and 390 wide, the Nurture track
+  (Day 1, 15, 57), a firm that would get nothing, and the editor refusing "replace" as it was
+  typed. The live database had migration 102 applied; the engine was restarted by PID on 8100.
+
+
+## D-058 · The Pain Point Analyzer: an AI reads the record, and must prove every pain
+
+**Asked for (22 Sep 2026):** the user, looking at nine researched firms, said the
+brief's enrichment was not there -- "no Google business profile ... no reviews ...
+no email that you verify from NeverBounce ... a lot of things we discussed have not
+been implemented." True, and the answer was to start phase 4 of plan-v3 with the
+part that needs no new key: the analyser the brief calls "an AI, not a scraper",
+plus the per-lead enrichment report it feeds (the report is the next piece).
+
+**Where the rest stands, measured on their own nine firms:** the business profile
+is never read (it needs Serper; four firms hold only a maps link found in search),
+review text is never read (counts and profile links only, from 92 DuckDuckGo
+searches), and all 52 addresses on file are unverified because no verifier key is
+set -- the predictor that invents an address for a person who has none is
+deliberately inert without one. Two firms' sites cannot be read at all
+(`aroldlawfirm.com` does not resolve; `hohlaw.com` has an invalid certificate), and
+four more were read in full by all three readers with no statement of how the firm
+charges, so they stay untiered by the standing "never guess fee_model" rule.
+
+**Rulings:**
+- **One call per firm over the whole record, never a crawl.** `ja8_pain` assembles
+  ten labelled blocks from claims already in the store -- the firm, what the site
+  lacks and shows, the people, the testimonials, the reviews, the listing, the open
+  roles, the news, and what the fixed rules already flagged -- and asks the cheap
+  tier for the pains. `ja7_pain_signals` stays as a cheap input to it, not as the
+  analysis, exactly as the phase describes.
+- **A pain must quote ONE line of the record.** Grounding is per line, per block,
+  with punctuation folded (curly quotes, long dashes) and a floor of three words,
+  and a whole line always counts however short. The first draft's flat "is it
+  somewhere in the record" check let a hallucination be proved by welding the tail
+  of one block to the head of another, and threw away true pains the moment the
+  model retyped an apostrophe -- both measured by the AI-engineering review, both
+  closed. `source` is corrected to the block that actually holds the line.
+- **What is thrown away leaves a trace.** Dropped pains are stored with the claim
+  as [kind, reason], counted in the run's notes and recorded on the `llm_call` row.
+  Three pains were dropped on the first live run over the user's firms.
+- **The summary is marked unverified.** Nothing can check free text, so when every
+  pain is dropped the summary is replaced with a fixed line, and the claim carries
+  `summary_grounded: false` so no one quotes it as evidence. A model that found
+  nothing and said so keeps its own words.
+- **Cost and blast radius.** Haiku 4.5, about a cent a firm (~$1.15 for 250),
+  `--opt max_usd` and `--opt dry_run=1` before any spend, and idempotent on
+  `task_run.input_hash`, so an unchanged record costs nothing. The step sits in the
+  `research` flow after `reconcile`, **not** in `nightly`: nightly + a record that
+  shifts slightly would re-pay for every firm every night. `continue_on_fail: true`
+  and a per-firm `try/except`, so one firm cannot take a run of 250 with it, and a
+  broken answer raises rather than marking the firm done for good.
+- **Visible where the work is:** a "What hurts" section on the lead page and the
+  firm record -- the summary, then each pain with its quoted line, the block it came
+  from, and what it costs the firm; and a closing line naming everything that was
+  read. It is kept out of the raw claims table, where it would be a wall of JSON.
+- **Found in the data while building:** Fuchsberg's attorney count says 2 while 28
+  people are on file, and Duron's "business listing" is a Google Maps link to
+  Manhattan for a Chicago firm -- both upstream, both worth fixing when the listing
+  is read properly in phase 3.
+- **Disproved by evidence:** the AI-engineering review predicted the API would
+  reject the schema outright, because strict structured outputs are documented as
+  not supporting `minimum`/`maximum`. Six live calls through OpenRouter returned
+  valid answers, so the stripping fix it proposed was not made; the same keywords
+  have been in p8's schema all along. Everything else it found was adopted.
+- **Measured:** 18 tests on the schema, the record and the grounding, including the
+  welded-line, fragment, retyped-punctuation and forged-header cases; the whole
+  engine suite passes; the frontend typechecks, lints, passes 72 tests and the live
+  contract check. On the user's nine firms: 6 analysed, 3 pains dropped for want of
+  proof, and three firms honestly reporting that the record proves nothing.
+
+
+## D-059 · Home says what is built, what is half built, and what it waits on
+
+**Asked for (22 Sep 2026):** "mention this on home page what parts are built and
+how much is needed from api tools -- my team will need a tour soon so i want to be
+clear from the start."
+
+**Rulings:**
+- **The engine states its own build status.** `config/capabilities.yml` holds the
+  three steps of the brief and every part of them, each marked `built`, `partial`
+  or `planned` with a line of plain words, and `GET /api/meta/capabilities` serves
+  it. The screen renders what the engine says; it keeps no list of its own. A part
+  is `built` only when a person can use it from the screen today.
+- **Whether a key is present is never written in that file.** Each part names the
+  outside service it needs, and the endpoint asks the engine's own seams whether
+  that service is on -- so a key arriving turns "Idle until Address checking is
+  switched on" into a finished part with nobody editing anything.
+- **Three outside services, named with what they unlock and what they cost:** the
+  AI reader (OpenRouter, on), address checking (NeverBounce, no key) and search and
+  business listings (Serper, no key). Only the setting's name is ever shown, never
+  a value. What the AI has cost is read from its own call log, so the number on
+  screen is the real one ($0.52 over 29 readings today), not an estimate.
+- **Hunter is not among them.** Finding an address stays in-house by the user's
+  standing decision -- our own scraping plus the predictor -- and a vendor only
+  verifies. Hunter remains wired in the settings as a verifier option and still
+  sits first in that order; removing it is offered and not yet done.
+- **Where it sits:** on Home, directly under the three steps with their live
+  numbers and above the manual, because the first thing a visitor on a walk-through
+  should get is an honest map. It says 12 of 23 parts built, 4 partly there, 7 to
+  come, and 5 built parts idle for want of a key.
+- **It has to be kept honest.** A part that ships moves in that file in the same
+  session, the way a decision that changes behaviour gets an entry here; the rule
+  is written into the backend's CLAUDE.md so it is not forgotten.
+- **Measured:** 5 tests, including one that a planned part never claims to be
+  waiting on a key, one that a built part stops waiting the moment its key is set,
+  and one that no key value can reach the response; the whole engine suite passes;
+  the frontend typechecks, lints, passes 73 tests and the live contract check
+  against the running engine.
+
+
+## D-060 · The journey's emails rewritten, and every email signed
+
+**Asked for (22 Sep 2026):** "in email journey sample emails looks junk make
+sample email journey ... like a cold emailing expert for legalsoft.com."
+
+**What was actually wrong.** Two things, and only one of them was the words.
+Every email ended after its question: no sender, no company, no reply address,
+no postal address and no way to say stop. An email like that reads as a
+circular whatever it says, and in the United States a commercial one owes the
+reader an address and an opt-out (CAN-SPAM). Nothing in the engine had ever
+handled any of it. The copy itself also never used what Legal Soft actually
+sells -- read from legalsoft.com: pre-vetted people, free to interview, someone
+working in under three days, HIPAA-trained, 2,500 placed across 1,000+ firms --
+and asked a managing partner for "a short call", the one thing they have least
+of.
+
+**Rulings:**
+- **Every email carries a signature**, appended by the renderer from
+  `config/sender.yml`: who it is from, Legal Soft and the site, the reply
+  address, then the postal address and the line telling people how to stop.
+  What is not configured is left out, never invented -- `sender_missing` names
+  each blank in plain words and the Email journey screen shows them as **Not
+  ready to send** until they are filled in. The file ships with the name, reply
+  address and postal address blank, because those are the user's to give.
+- **The copy is rewritten, the strategy untouched.** The pain sentence still
+  opens, capacity never replacement, the opening seat still touches no client,
+  touch 3 is still the fee model's own arithmetic, and 5, 6 and 7 still answer
+  the blocker, admit the wrong guess and look for the administrator. What
+  changed: the ask is now small and concrete (two candidate profiles, free to
+  interview, someone starting in under three days) instead of a call; the
+  offer's real facts carry the claims; the throat-clearing is gone; and the
+  emails read as a person wrote them, contractions and all.
+- **`journey/copy/*.md` is the copy; `plan/email-drafts.md` keeps the
+  reasoning.** The doc now says so at the top rather than pretending to be the
+  words. The five rules in outreach-journey.md did not change, and the banned
+  phrases still cannot appear -- the check runs over every file.
+- **The golden tests pin the new words**, and a new one asserts every rendered
+  email ends with the signature, names Legal Soft and says how to stop.
+- **Measured:** 113 journey tests, 117 API tests, the whole engine suite, and
+  the frontend's 73 with its live contract check. Read end to end on screen for
+  a 1A firm with an open role, the same firm with the post gone back up, and
+  the hourly tier.
+
+
+## D-061 · Proper emails: a subject that earns the open, a body, and a sign-off
+
+**Asked for (22 Sep 2026), after the first rewrite:** "make impact full mail
+subject catchy professional and do proper mail body not an half ass job."
+
+**What was still wrong.** The emails were terse by rule -- 50 to 90 words, a
+lowercase fragment for a subject, an opening that began "Dana —" with no
+greeting and ended on a question with nothing under it. That reads as a note
+scribbled between meetings, not as a firm writing to a firm.
+
+**Rulings, and the two standing rules they change:**
+- **Subjects are sentence case and specific.** "Your paralegal opening, and a
+  faster way to fill it"; "The {role} role at your firm, posted a second time";
+  "Two seats open at {firm_name}, which one first?"; "{tort} intake, and the
+  records volume behind it"; "Confidentiality, supervision, and how this
+  actually works". They name the thing the firm already knows about itself,
+  which is what earns the open -- never a teaser.
+- **Bodies are 90 to 130 words** with a shape: "Hi {first_name}," then the
+  observation, what it usually means, what we would do about it, why we are
+  worth an hour (pre-vetted, free to interview, starting in under three days,
+  HIPAA-trained), and one ask. outreach-journey.md rule 5 is rewritten to say
+  so; the old 50–90 and "lowercase subject lines" are gone.
+- **Every email signs off.** `config/sender.yml` gained `sign_off` ("Best
+  regards,"), and the signature now reads sign-off, name and title, Legal Soft
+  and the site, the reply address, then a rule and the legal footer. The name,
+  reply address and postal address are still deliberately blank, and the screen
+  still says **Not ready to send** until they are filled in.
+- **One wrapping for the copy, 74 characters**, applied to all thirty files.
+  Which exposed the wrap problem properly: `{role}` and `{posted_date}` expand
+  when they are filled in, so the sent lines are not the file's lines and never
+  can be. Joining each paragraph at render is the fix, and it is still the
+  user's call -- now with a second reason to take it.
+- **Contractions restored.** "It is possible I have been writing" is not how
+  anyone types; the pass that formalised them was mine, and it was wrong.
+- **Measured:** the 113 journey tests re-pinned to the new words -- every
+  variant assertion keeps its purpose (this variant was selected, this token
+  resolved, a review is never quoted back, tier 4 is never pitched a paralegal)
+  and only the words it looks for changed; the two full-body goldens now pin
+  the rendered text, signature stripped by asking the renderer for it. The
+  whole engine suite, the frontend's 73 tests, lint, typecheck and the live
+  contract check all pass, and the journey was read end to end on screen.
+
 ---
 
 ## Standing rulings that were never in dispute
