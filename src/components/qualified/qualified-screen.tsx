@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { Panel } from "@/components/layout/panel";
+import { EmailStatusBadge } from "@/components/record/status-badge";
 import { Unknown } from "@/components/record/unknown";
 import { TitleBar } from "@/components/shell/title-bar";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
+import { SetupNotice } from "@/components/states/setup-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ const CHECK_ORDER: QualifiedCheckKey[] = [
 ];
 
 const TABS: { only: QualifiedOnly; label: string }[] = [
-  { only: "ready", label: "Ready to reach" },
+  { only: "ready", label: "Ready to hand over" },
   { only: "almost", label: "One step away" },
 ];
 
@@ -52,7 +53,7 @@ function StepMarks({ row }: { row: QualifiedRow }) {
             title={`${c.label}: ${c.detail ?? (c.ok ? "done" : "missing")}`}
             className={cn(
               "inline-flex size-5 items-center justify-center rounded-[4px] border",
-              c.ok ? "border-ledger/40 bg-ledger-wash text-ledger" : "border-redline/40 bg-redline-wash text-redline",
+              c.ok ? "border-ledger/40 bg-ledger-wash text-ledger" : "border-redline/45 bg-sheet text-redline",
             )}
           >
             {c.ok ? <CheckIcon className="size-3" aria-hidden="true" /> : <MinusIcon className="size-3" aria-hidden="true" />}
@@ -66,9 +67,9 @@ function StepMarks({ row }: { row: QualifiedRow }) {
 
 function QualifiedSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading qualified leads">
+    <div aria-busy="true" aria-label="Loading actual leads">
       {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="flex items-center gap-6 border-b border-rule px-6 py-3 last:border-b-0">
+        <div key={i} className="flex items-center gap-6 border-b border-rule py-3.5 last:border-b-0">
           <div className="grid w-[26%] gap-1.5">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-1/2" />
@@ -90,7 +91,7 @@ async function downloadReadyCsv() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `qualified-leads-${toDateInputValue(new Date())}.csv`;
+  a.download = `ready-leads-${toDateInputValue(new Date())}.csv`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -98,7 +99,7 @@ async function downloadReadyCsv() {
 }
 
 /**
- * Qualified leads: the leads on which every step has been done -- site read,
+ * Actual leads: every lead the engine has worked, and whether each has had every step done -- site read,
  * fit, a named decision-maker, an address, the address verified, a LinkedIn
  * profile, the journey drafted -- and the ones one step away, with exactly
  * what is missing. Tab and search live in the URL.
@@ -133,22 +134,22 @@ export function QualifiedScreen() {
   return (
     <>
       <TitleBar
-        title="Qualified leads"
+        title="Actual leads"
         meta={
           counts
-            ? `${formatCount(counts.ready)} ready · ${formatCount(counts.almost)} one step away · ${formatCount(counts.checked)} checked`
+            ? `${formatCount(counts.ready)} ready to hand over, ${formatCount(counts.almost)} one step away, of ${formatCount(counts.checked)} worked`
             : undefined
         }
         actions={
           <Button
-            variant="secondary"
-            size="sm"
+            variant={counts && counts.ready > 0 ? "primary" : "secondary"}
+            size="md"
             disabled={exporting || !counts || counts.ready === 0}
             onClick={async () => {
               setExporting(true);
               try {
                 await downloadReadyCsv();
-                toast.success("Exported the ready leads as CSV");
+                toast.success("Downloaded the ready leads for the vendor");
               } catch (error) {
                 toast.error(describeError(error));
               } finally {
@@ -156,19 +157,21 @@ export function QualifiedScreen() {
               }
             }}
           >
-            {exporting ? "Exporting…" : "Export the ready leads (CSV)"}
+            {exporting ? "Downloading…" : "Download for the vendor"}
           </Button>
         }
       />
       <div className="grid max-w-[84rem] gap-5 px-8 pt-6 pb-16">
-        <p className="max-w-[72ch] text-body text-slate">
-          A lead is qualified when every step is done: the site was read, the firm fits the profile, a
-          decision-maker is named, their address is on file and verified, their LinkedIn profile is found,
-          and the journey drafts. Nothing less goes to outreach.
+        <p className="max-w-[74ch] text-body text-slate">
+          Every lead the engine has worked, with the seven checks it has to pass: the site read, the firm a
+          fit, a decision-maker named, their address on file and verified, their LinkedIn profile found, and
+          the journey drafted. Only a lead with all seven goes to a vendor.
         </p>
 
+        <SetupNotice only={["Email verification"]} />
+
         <div className="flex flex-wrap items-center gap-4">
-          <div role="tablist" aria-label="Which leads" className="flex gap-1 rounded-control border border-rule bg-sheet p-0.5">
+          <div role="tablist" aria-label="Which leads" className="flex gap-1 rounded-control border border-rule-strong/70 bg-paper p-1">
             {TABS.map((tab) => {
               const count = counts ? (tab.only === "ready" ? counts.ready : counts.almost) : null;
               const active = only === tab.only;
@@ -180,8 +183,8 @@ export function QualifiedScreen() {
                   aria-selected={active}
                   onClick={() => update({ only: tab.only === "ready" ? null : tab.only })}
                   className={cn(
-                    "h-8 rounded-[6px] px-3 text-table transition-colors duration-75",
-                    active ? "bg-cobalt-wash text-cobalt-deep font-medium" : "text-slate hover:bg-paper",
+                    "h-8 rounded-[5px] px-3.5 text-body transition-colors duration-75",
+                    active ? "bg-sheet font-semibold text-ink shadow-[0_0_0_1px_var(--color-rule-strong)]" : "text-slate hover:text-ink",
                   )}
                 >
                   {tab.label}
@@ -197,7 +200,7 @@ export function QualifiedScreen() {
             />
             <Input
               type="search"
-              aria-label="Search qualified leads by firm name or domain"
+              aria-label="Search actual leads by firm name or domain"
               placeholder="Search by firm or domain"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -205,6 +208,18 @@ export function QualifiedScreen() {
             />
           </div>
         </div>
+
+        {counts && counts.withheld.length > 0 ? (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-table text-slate">
+            <span>Kept off this list and the export by the list rules:</span>
+            {counts.withheld.map((entry) => (
+              <span key={entry.label} className="inline-flex items-center gap-1 rounded-[4px] border border-rule bg-sheet px-2 py-0.5">
+                <span className="text-ink">{entry.label}</span>
+                <span className="tabular-nums">{formatCount(entry.count)}</span>
+              </span>
+            ))}
+          </p>
+        ) : null}
 
         {only === "almost" && holdingBack.length > 0 ? (
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-table text-slate">
@@ -218,22 +233,25 @@ export function QualifiedScreen() {
           </p>
         ) : null}
 
-        <Panel className={cn("overflow-hidden transition-opacity duration-150", qualified.isPlaceholderData && "opacity-60")}>
+        <section
+          aria-label={only === "ready" ? "Ready to hand over" : "One step away"}
+          className={cn("border-t border-rule transition-opacity duration-150", qualified.isPlaceholderData && "opacity-60")}
+        >
           {qualified.isPending ? (
             <QualifiedSkeleton />
           ) : qualified.isError ? (
-            <div className="px-6 py-6">
+            <div className="py-6">
               <ErrorState error={qualified.error} onRetry={() => void qualified.refetch()} />
             </div>
           ) : items.length === 0 ? (
-            <div className="px-6">
+            <div>
               {q ? (
-                <EmptyState title={`No qualified lead matches “${q}”.`}>
+                <EmptyState title={`No actual lead matches “${q}”.`}>
                   Try part of the firm&apos;s name, or the domain without www.
                 </EmptyState>
               ) : only === "ready" ? (
                 <EmptyState
-                  title="No lead has every step done yet."
+                  title="Nothing is ready to hand over yet."
                   action={
                     counts && counts.almost > 0 ? (
                       <Button variant="secondary" size="sm" onClick={() => update({ only: "almost" })}>
@@ -242,8 +260,8 @@ export function QualifiedScreen() {
                     ) : null
                   }
                 >
-                  A lead appears here only when all seven steps are done. The nearest ones are one or two
-                  steps short — usually a verified address or a LinkedIn profile.
+                  A lead is ready when all seven checks pass. The nearest ones are one or two steps short,
+                  usually a verified address or a LinkedIn profile.
                 </EmptyState>
               ) : (
                 <EmptyState title="Nothing is close yet.">
@@ -255,22 +273,21 @@ export function QualifiedScreen() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[64rem] border-collapse text-left">
-                <caption className="sr-only">Qualified leads. Select a lead to open it.</caption>
+                <caption className="sr-only">Actual leads. Select a lead to open it.</caption>
                 <thead>
                   <tr className="border-b border-rule text-meta text-slate">
-                    <th scope="col" className="h-9 w-[20%] pl-6 font-normal">Firm</th>
-                    <th scope="col" className="w-[16%] font-normal">Decision-maker</th>
-                    <th scope="col" className="w-[22%] font-normal">Address</th>
-                    <th scope="col" className="w-[7%] font-normal">LinkedIn</th>
-                    <th scope="col" className="w-[13%] font-normal">Why now</th>
-                    <th scope="col" className="pr-6 font-normal">{only === "ready" ? "Steps" : "Missing"}</th>
+                    <th scope="col" className="h-10 w-[20%] font-medium">Firm</th>
+                    <th scope="col" className="w-[16%] font-medium">Decision-maker</th>
+                    <th scope="col" className="w-[22%] font-medium">Address</th>
+                    <th scope="col" className="w-[7%] font-medium">LinkedIn</th>
+                    <th scope="col" className="w-[13%] font-medium">Why now</th>
+                    <th scope="col" className="font-medium">{only === "ready" ? "Steps" : "Missing"}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((row) => {
                     const person = check(row, "person");
                     const email = check(row, "email");
-                    const verified = check(row, "email_verified");
                     const linkedin = check(row, "linkedin");
                     return (
                       <tr
@@ -278,7 +295,7 @@ export function QualifiedScreen() {
                         onClick={() => router.push(`/leads/${row.id}`)}
                         className="cursor-pointer border-b border-rule text-table transition-colors duration-75 last:border-b-0 hover:bg-paper"
                       >
-                        <td className="max-w-0 truncate py-2.5 pr-4 pl-6">
+                        <td className="max-w-0 truncate py-3 pr-4">
                           <Link href={`/leads/${row.id}`} className="text-body font-medium text-ink hover:underline">
                             {row.firm.name}
                           </Link>
@@ -291,11 +308,9 @@ export function QualifiedScreen() {
                         </td>
                         <td className="max-w-0 pr-4">
                           {email?.ok ? (
-                            <div className="grid gap-0.5">
-                              <span className="truncate text-ink" title={email.detail ?? undefined}>{email.detail}</span>
-                              <span className={cn("truncate text-meta", verified?.ok ? "text-ledger" : "text-redline")}>
-                                {verified?.detail}
-                              </span>
+                            <div className="grid justify-items-start gap-1">
+                              <span className="max-w-full truncate text-ink" title={email.detail ?? undefined}>{email.detail}</span>
+                              <EmailStatusBadge contact={row.contact} />
                             </div>
                           ) : (
                             <Unknown>{email?.detail ?? "No address"}</Unknown>
@@ -319,12 +334,12 @@ export function QualifiedScreen() {
                         <td className="max-w-0 truncate pr-4 text-ink">
                           {row.proof ? row.proof.headline : <Unknown>{row.why_now ? "A signal is open" : "No open signal"}</Unknown>}
                         </td>
-                        <td className="pr-6">
+                        <td>
                           {only === "ready" ? (
                             <StepMarks row={row} />
                           ) : (
                             <div className="grid gap-1">
-                              <span className="text-redline">{row.missing.join(" · ")}</span>
+                              <span className="text-ink">{row.missing.join(", ")}</span>
                               <StepMarks row={row} />
                             </div>
                           )}
@@ -336,7 +351,7 @@ export function QualifiedScreen() {
               </table>
             </div>
           )}
-        </Panel>
+        </section>
 
         {qualified.hasNextPage ? (
           <div className="flex items-center gap-4">

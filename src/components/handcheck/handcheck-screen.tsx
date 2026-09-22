@@ -36,18 +36,20 @@ function nextOpenIndex(firm: HandcheckSampleFirm, from: number, justDecided: str
 function GatePanel({ gate }: { gate: HandcheckResponse["gate"] }) {
   const pct = Math.min(100, (gate.reviewed_firms / gate.needed) * 100);
   return (
-    <Panel aria-labelledby="gate-heading" className="grid gap-4 px-6 py-5">
+    <section aria-labelledby="gate-heading" className="grid gap-3 border-t border-rule pt-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="gate-heading" className="text-meta text-slate">
-          Gate G2
+        <h2 id="gate-heading" className="text-body font-semibold text-ink">
+          Before the list widens
         </h2>
         <StatusBadge state={gate.passed ? "verified" : "unverified"}>
           {gate.passed ? "Passed" : "Not passed yet"}
         </StatusBadge>
       </div>
-      <p className="text-title text-ink tabular-nums">
-        {formatCount(gate.reviewed_firms)}
-        <span className="text-body text-slate"> of {gate.needed} firms reviewed</span>
+      <p className="flex items-baseline gap-2">
+        <span className="type-narrow text-headline leading-none font-semibold text-ink tabular-nums">
+          {formatCount(gate.reviewed_firms)}
+        </span>
+        <span className="text-body text-slate">of {gate.needed} firms reviewed</span>
       </p>
       <div
         role="progressbar"
@@ -55,19 +57,19 @@ function GatePanel({ gate }: { gate: HandcheckResponse["gate"] }) {
         aria-valuemin={0}
         aria-valuemax={gate.needed}
         aria-valuenow={gate.reviewed_firms}
-        className="h-1.5 w-full overflow-hidden rounded-[2px] bg-rule"
+        className="h-2 w-full overflow-hidden rounded-full bg-rule"
       >
-        <div className={cn("h-full", gate.passed ? "bg-ledger" : "bg-ink")} style={{ width: `${pct}%` }} />
+        <div className={cn("h-full rounded-full", gate.passed ? "bg-ledger" : "bg-cobalt")} style={{ width: `${pct}%` }} />
       </div>
       <p className="text-table text-slate">{gate.rule}</p>
-    </Panel>
+    </section>
   );
 }
 
 function AccuracyPanel({ accuracy }: { accuracy: HandcheckResponse["accuracy"] }) {
   return (
-    <Panel aria-labelledby="accuracy-heading" className="px-6 pt-5 pb-3">
-      <h2 id="accuracy-heading" className="pb-2 text-meta text-slate">
+    <section aria-labelledby="accuracy-heading" className="border-t border-rule pt-4">
+      <h2 id="accuracy-heading" className="pb-2 text-body font-semibold text-ink">
         Accuracy by attribute
       </h2>
       <table className="w-full text-table">
@@ -107,7 +109,7 @@ function AccuracyPanel({ accuracy }: { accuracy: HandcheckResponse["accuracy"] }
           ))}
         </tbody>
       </table>
-    </Panel>
+    </section>
   );
 }
 
@@ -120,8 +122,8 @@ function KeysPanel() {
     ["K", "Previous firm"],
   ];
   return (
-    <Panel aria-labelledby="keys-heading" className="px-6 py-5">
-      <h2 id="keys-heading" className="pb-3 text-meta text-slate">
+    <section aria-labelledby="keys-heading" className="border-t border-rule pt-4">
+      <h2 id="keys-heading" className="pb-3 text-body font-semibold text-ink">
         Keys
       </h2>
       <dl className="grid gap-2">
@@ -134,7 +136,7 @@ function KeysPanel() {
           </div>
         ))}
       </dl>
-    </Panel>
+    </section>
   );
 }
 
@@ -405,7 +407,7 @@ function Checker({ data }: { data: HandcheckResponse }) {
             <p className="text-meta text-slate tabular-nums">
               Firm {firmIndex + 1} of {sample.length} in the sample
             </p>
-            <h2 id="checked-firm" className="text-title font-medium text-ink">
+            <h2 id="checked-firm" className="caption text-caption-sm text-ink">
               {firm.name}
             </h2>
             <p className="text-table text-slate">
@@ -476,15 +478,16 @@ export function HandcheckScreen() {
   const handcheck = useHandcheck();
   return (
     <>
-      <TitleBar title="Accuracy check" meta="50 firms the engine read, checked by hand — the gate before the full crawl" />
+      <TitleBar title="Accuracy check" meta="50 firms the engine read, checked by hand before the list widens" />
       <div className="max-w-[80rem] px-8 pt-6 pb-16">
         {handcheck.isPending ? (
           <HandcheckSkeleton />
         ) : handcheck.isError ? (
           <ErrorState error={handcheck.error} onRetry={() => void handcheck.refetch()} />
         ) : handcheck.data.sample.length === 0 ? (
-          <EmptyState title="No probe firms to check yet.">
-            The sample fills with 50 firms once the probe has crawled firms that have documents.
+          <EmptyState title="No firms to check yet.">
+            The sample fills with 50 firms once the engine has read some firms&apos; sites. Upload a sheet and
+            research it first.
           </EmptyState>
         ) : (
           <Checker data={handcheck.data} />

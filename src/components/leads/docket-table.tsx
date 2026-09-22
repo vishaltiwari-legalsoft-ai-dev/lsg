@@ -9,7 +9,7 @@ import { EmailStatusBadge } from "@/components/record/status-badge";
 import { TierMark } from "@/components/record/tier-mark";
 import { Unknown } from "@/components/record/unknown";
 import type { LeadRow } from "@/lib/api/types";
-import { ROLE_LABEL } from "@/lib/labels";
+import { PRIORITY_HINT, PRIORITY_LABEL, ROLE_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 type ColumnMeta = { th?: string; td?: string };
@@ -43,18 +43,23 @@ function ContactLine({ row }: { row: LeadRow }) {
   );
 }
 
-/** Where the lead is as a person works it, and what to do next. */
-function StageLine({ lead, className }: { lead: LeadRow; className?: string }) {
+/**
+ * What to do next, and who owns it. The stage itself is the tab the queue is
+ * on, so a row does not repeat it.
+ */
+function NextLine({ lead, className }: { lead: LeadRow; className?: string }) {
   return (
-    <span className={cn("block truncate text-meta", className)} title={lead.next_action}>
-      <span className="text-ink">{lead.stage_display}</span>
-      <span className="text-slate"> · {lead.next_action}</span>
-      {lead.owner ? <span className="text-slate"> · {lead.owner}</span> : null}
+    <span className={cn("grid min-w-0 gap-0.5", className)}>
+      <span className="line-clamp-2 text-table text-ink" title={lead.next_action}>
+        {lead.next_action}
+      </span>
+      {lead.owner ? <span className="truncate text-meta text-slate">Owner: {lead.owner}</span> : null}
     </span>
   );
 }
 
 function FirmCell({ lead }: { lead: LeadRow }) {
+  const place = [lead.firm.city, lead.firm.state].filter(Boolean).join(", ");
   return (
     <div className="grid min-w-0 gap-0.5">
       <Link
@@ -66,11 +71,11 @@ function FirmCell({ lead }: { lead: LeadRow }) {
             event.preventDefault();
           }
         }}
-        className="line-clamp-2 text-body font-medium text-ink hover:underline"
+        className="line-clamp-2 text-body font-semibold text-ink hover:underline"
       >
         {lead.firm.name}
       </Link>
-      <span className="truncate text-meta text-slate">{lead.firm.domain ?? lead.firm.city ?? ""}</span>
+      <span className="truncate text-meta text-slate">{place || lead.firm.domain || ""}</span>
     </div>
   );
 }
@@ -78,7 +83,7 @@ function FirmCell({ lead }: { lead: LeadRow }) {
 const firmColumn = helper.display({
   id: "firm",
   header: "Firm",
-  meta: { th: "w-[24%] min-w-48", td: "min-w-0" },
+  meta: { th: "w-[21%] min-w-44", td: "min-w-0" },
   cell: ({ row }) => <FirmCell lead={row.original} />,
 });
 
@@ -105,7 +110,7 @@ const entryColumn = helper.display({
                 event.preventDefault();
               }
             }}
-            className="min-w-0 truncate text-body font-medium text-ink hover:underline"
+            className="min-w-0 truncate text-body font-semibold text-ink hover:underline"
           >
             {lead.firm.name}
           </Link>
@@ -124,7 +129,9 @@ const entryColumn = helper.display({
           <ContactLine row={lead} />
         </span>
         <Blockers lead={lead} />
-        <StageLine lead={lead} />
+        <span className="truncate text-meta text-slate" title={lead.next_action}>
+          Next: {lead.next_action}
+        </span>
       </div>
     );
   },
@@ -148,7 +155,8 @@ const painColumn = helper.display({
       <div className="grid min-w-0 gap-1">
         <span className="truncate text-table text-ink">{proof.headline}</span>
         {proof.quote ? (
-          <span className="quotation block truncate text-quote-table leading-snug text-ink">
+          // Two lines of the firm's own words: the proof is the point of the row.
+          <span className="quotation line-clamp-2 text-quote-table leading-snug text-ink" title={proof.quote}>
             <Highlight>{proof.quote}</Highlight>
           </span>
         ) : null}
@@ -160,8 +168,8 @@ const painColumn = helper.display({
 /** The primary contact and role, with the email status beneath — always in words. */
 const contactColumn = helper.display({
   id: "contact",
-  header: "Contact",
-  meta: { th: "w-[23%] min-w-60", td: "min-w-0" },
+  header: "Decision-maker",
+  meta: { th: "w-[19%] min-w-52", td: "min-w-0" },
   cell: ({ row }) => {
     const lead = row.original;
     const c = lead.contact;
@@ -180,25 +188,43 @@ const contactColumn = helper.display({
         </span>
         <EmailStatusBadge contact={c} />
         <Blockers lead={lead} className="max-w-full" />
-        <StageLine lead={lead} className="max-w-full" />
       </div>
     );
   },
 });
 
+const nextColumn = helper.display({
+  id: "next",
+  header: "Next step",
+  meta: { th: "w-[15%] min-w-36", td: "min-w-0" },
+  cell: ({ row }) => <NextLine lead={row.original} />,
+});
+
+/** Urgency, set narrow and heavy like every live figure; its word is the column head. */
 const intentColumn = helper.display({
   id: "intent",
   header: () => <span className="block text-right">Urgency</span>,
-  meta: { th: "w-28", td: "text-right" },
-  cell: ({ row }) =>
-    row.original.intent === null ? (
-      <Unknown className="text-meta whitespace-nowrap">Not scored</Unknown>
-    ) : (
-      <span className="text-body text-ink tabular-nums">{row.original.intent}</span>
-    ),
+  meta: { th: "w-24", td: "text-right" },
+  cell: ({ row }) => {
+    const { intent, band } = row.original;
+    return (
+      <div className="grid justify-items-end gap-1">
+        {intent === null ? (
+          <Unknown className="text-meta whitespace-nowrap">Not scored</Unknown>
+        ) : (
+          <span className="type-narrow text-subtitle leading-none font-semibold text-ink tabular-nums">{intent}</span>
+        )}
+        {band ? (
+          <span className="text-meta text-slate" title={PRIORITY_HINT[band]}>
+            {PRIORITY_LABEL[band]}
+          </span>
+        ) : null}
+      </div>
+    );
+  },
 });
 
-const FULL_COLUMNS = [firmColumn, tierColumn, painColumn, contactColumn, intentColumn];
+const FULL_COLUMNS = [firmColumn, tierColumn, painColumn, contactColumn, nextColumn, intentColumn];
 const COMPACT_COLUMNS = [entryColumn, intentColumn];
 const NO_TICKS: ReadonlySet<string> = new Set();
 
@@ -265,7 +291,7 @@ export const DocketTable = memo(function DocketTable({
                 key={header.id}
                 scope="col"
                 className={cn(
-                  "h-9 px-3 text-meta font-normal text-slate last:pr-8",
+                  "h-10 px-3 text-meta font-medium text-slate last:pr-8",
                   !onToggle && "first:pl-8",
                   header.column.columnDef.meta?.th,
                 )}
@@ -314,7 +340,7 @@ export const DocketTable = memo(function DocketTable({
                 <td
                   key={cell.id}
                   className={cn(
-                    "px-3 py-3 last:pr-8",
+                    "px-3 py-3.5 last:pr-8",
                     !onToggle && "first:pl-8",
                     cell.column.columnDef.meta?.td,
                   )}

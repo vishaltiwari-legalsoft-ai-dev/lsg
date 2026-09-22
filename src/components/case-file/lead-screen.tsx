@@ -1,14 +1,18 @@
 "use client";
 
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 
-import { Panel } from "@/components/layout/panel";
+import { TierMark } from "@/components/record/tier-mark";
 import { TitleBar, TitlePlaceholder } from "@/components/shell/title-bar";
 import { buttonVariants } from "@/components/ui/button";
 import { useLead } from "@/lib/api/hooks";
 import { CaseFile } from "./case-file";
 
-/** The lead on its own page: everything expanded, keys live anywhere. */
+/**
+ * The lead on its own page: the firm's name as the caption of its record,
+ * and the case file opened into its two columns. Keys are live anywhere.
+ */
 export function LeadScreen({ id }: { id: string }) {
   const lead = useLead(id);
   const title = lead.data?.firm.name ?? (lead.isPending ? null : "Lead");
@@ -16,22 +20,21 @@ export function LeadScreen({ id }: { id: string }) {
   return (
     <>
       <TitleBar
+        caption={Boolean(lead.data)}
         title={title ?? <TitlePlaceholder />}
-        meta={lead.data ? lead.data.stage_display : undefined}
+        // The stage and the next step lead the working side; the header keeps to the tier.
+        meta={lead.data ? <TierMark firm={lead.data.firm} /> : undefined}
         actions={
           <Link
             href={`/leads?stage=${lead.data?.stage ?? "needs_review"}&lead=${encodeURIComponent(id)}`}
             className={buttonVariants({ variant: "ghost" })}
           >
-            Back to the work queue
+            <ArrowLeftIcon aria-hidden="true" />
+            Work queue
           </Link>
         }
       />
-      <div className="max-w-[60rem] px-8 pt-8 pb-16">
-        <Panel>
-          <CaseFile id={id} mode="page" />
-        </Panel>
-      </div>
+      <CaseFile id={id} mode="page" />
     </>
   );
 }

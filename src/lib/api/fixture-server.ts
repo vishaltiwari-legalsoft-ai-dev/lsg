@@ -11,10 +11,14 @@ import draftsJson from "@/fixtures/drafts.json";
 import firmDetailsJson from "@/fixtures/firm-details.json";
 import firmsJson from "@/fixtures/firms.json";
 import handcheckJson from "@/fixtures/handcheck.json";
+import capabilitiesJson from "@/fixtures/capabilities.json";
 import healthJson from "@/fixtures/health.json";
+import journeyExamplesJson from "@/fixtures/journey-examples.json";
+import journeyJson from "@/fixtures/journey.json";
 import leadDetailsJson from "@/fixtures/lead-details.json";
 import leadsJson from "@/fixtures/leads.json";
 import todayJson from "@/fixtures/today.json";
+import { copyProblems, dayProblems } from "@/lib/journey";
 
 import { ApiError } from "./errors";
 import type { RequestSpec, Transport } from "./transport";
@@ -32,9 +36,14 @@ import type {
   FirmDetail,
   FirmsResponse,
   HandcheckDecision,
+  CapabilitiesResponse,
   HandcheckResponse,
   HealthResponse,
   JobResponse,
+  JourneyCopyEdit,
+  JourneyDay,
+  JourneyExample,
+  JourneyResponse,
   LeadCounts,
   LeadDetail,
   LeadRow,
@@ -57,6 +66,10 @@ interface FixtureDb {
   firms: FirmsResponse;
   firmDetails: Record<string, FirmDetail>;
   handcheck: HandcheckResponse;
+  capabilities: CapabilitiesResponse;
+  journey: JourneyResponse;
+  /** Sequence renders of an invented firm, keyed `tier|pain|system`, from the engine itself. */
+  journeyExamples: Record<string, JourneyExample>;
 }
 
 const VIEWS: LeadView[] = ["STRIKE", "SEQUENCE", "NURTURE", "PHONE", "EXCLUDED", "UNSCORED"];
@@ -76,7 +89,25 @@ function loadDb(): FixtureDb {
     firms: firmsJson,
     firmDetails: firmDetailsJson,
     handcheck: handcheckJson,
+    capabilities: capabilitiesJson,
+    journey: journeyJson,
+    journeyExamples: journeyExamplesJson,
   }) as unknown as FixtureDb;
+}
+
+/**
+ * A nurture render from the sequence's: the engine writes the same words and
+ * only picks the nurture emails, at a slower pace (journey/sequences.yml). The
+ * example firms always carry a pain, so the first email is always among them.
+ */
+function asNurture(example: JourneyExample, journey: JourneyResponse): JourneyExample {
+  const track = journey.tracks.find((t) => t.band === "NURTURE");
+  const steps = track?.steps ?? [];
+  const pace = track?.pace ?? 1;
+  const touches = example.drafts.excluded_reason
+    ? []
+    : example.drafts.touches.filter((t) => steps.includes(t.step)).map((t) => ({ ...t, day: t.day * pace }));
+  return { ...example, band: "NURTURE", drafts: { ...example.drafts, band: "NURTURE", touches } };
 }
 
 const notFound = (what: string) =>
@@ -395,7 +426,7 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
       return {
         items: chosen.slice(offset, offset + limit),
         next_offset: offset + limit < chosen.length ? offset + limit : null,
-        counts: { ready: ready.length, almost: almost.length, checked: rows.length, missing_by_check },
+        counts: { ready: ready.length, almost: almost.length, checked: rows.length, missing_by_check, withheld: [] },
       } satisfies QualifiedResponse;
     }
 
@@ -446,10 +477,17 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
     if ((m = path.match(/^\/api\/firms\/([^/]+)\/research$/)) && method === "POST") {
       const firmId = decodeURIComponent(m[1]);
       const scope = (spec.body as { scope?: string })?.scope ?? "full";
-      const steps = (scope === "full"
-        ? ["p1_site_map", "p2_fetch", "px_site_facts", "r_site_contacts", "r_search_emails", "score"]
-        : ["px_site_facts", "r_site_contacts", "r_search_emails", "score"]
-      ).map((name) => ({ name, status: "done" as const, note: "processed=1 skipped=0 failed=0" }));
+      const read: [string, string][] = [["p1_site_map", "Map the site"], ["p2_fetch", "Read the pages"]];
+      const people: [string, string][] = [
+        ["px_site_facts", "People, offices, testimonials, gaps"],
+        ["r_site_contacts", "People into contacts"],
+        ["r_search_emails", "Search for addresses"],
+        ["classify", "Move the lead forward"],
+        ["score", "Score"],
+      ];
+      const steps = (scope === "full" ? [...read, ...people] : people).map(([name, label]) => ({
+        name, label, status: "done" as const, note: "processed=1 skipped=0 failed=0",
+      }));
       const now = new Date().toISOString();
       const job: ActionJob = {
         id: `job-${jobs.size + 1}`, kind: scope === "full" ? "research" : "find_contacts",
@@ -616,6 +654,8 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
       return firm;
     }
 
+    if (method === "GET" && path === "/api/meta/capabilities") return db.capabilities;
+
     if (method === "GET" && path === "/api/handcheck") return db.handcheck;
 
     if ((m = path.match(/^\/api\/handcheck\/([^/]+)\/([^/]+)$/)) && method === "POST") {
@@ -629,6 +669,52 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
       };
       recomputeHandcheck();
       return undefined;
+    }
+
+    if (method === "GET" && path === "/api/journey") return db.journey;
+
+    if (method === "GET" && path === "/api/journey/example") {
+      const key = `${param(spec, "tier") ?? "1A"}|${param(spec, "pain") ?? "open_role"}|${param(spec, "system") ?? "true"}`;
+      const example = db.journeyExamples[key];
+      if (!example) {
+        throw new ApiError(
+          404, "not_found", "The sample data has no example for this firm.",
+          "Start the engine to see every kind of firm.",
+        );
+      }
+      return param(spec, "band") === "NURTURE" ? asNurture(example, db.journey) : example;
+    }
+
+    if ((m = path.match(/^\/api\/journey\/templates\/([^/]+)$/)) && (method === "PUT" || method === "DELETE")) {
+      const template = db.journey.steps.flatMap((s) => s.templates).find((t) => t.id === decodeURIComponent(m![1]));
+      if (!template) throw new ApiError(404, "not_found", "There is no such email.", "Reload the Email journey screen.");
+      if (method === "DELETE") {
+        Object.assign(template, { subject: template.original_subject, body: template.original_body, edited_at: null });
+        return template;
+      }
+      const edit = spec.body as JourneyCopyEdit;
+      const subject = template.kind === "email" ? (edit.subject ?? "").trim() : null;
+      const body = edit.body.replace(/\r\n/g, "\n").replace(/^\n+|\n+$/g, "");
+      const problems = copyProblems(template, subject, body, db.journey.banned_phrases);
+      if (problems.length > 0) {
+        throw new ApiError(422, "invalid_copy", problems.join(" "), "Change the wording and save again.");
+      }
+      const original = subject === template.original_subject && body === template.original_body;
+      Object.assign(template, { subject, body, edited_at: original ? null : new Date().toISOString() });
+      return template;
+    }
+
+    if (path === "/api/journey/days" && (method === "PUT" || method === "DELETE")) {
+      const given = method === "PUT" ? (spec.body as { days: JourneyDay[] }).days : [];
+      const days = Object.fromEntries(
+        db.journey.steps.map((s) => [s.step, given.find((d) => d.step === s.step)?.day ?? s.original_day]),
+      );
+      const problems = dayProblems(days, db.journey.max_day);
+      if (problems.length > 0) {
+        throw new ApiError(422, "invalid_days", problems.join(" "), "Change the days and save again.");
+      }
+      for (const step of db.journey.steps) step.day = days[step.step];
+      return db.journey;
     }
 
     throw new ApiError(404, "not_found", `No fixture for ${method} ${path}.`, "Add it to the fixture server.");

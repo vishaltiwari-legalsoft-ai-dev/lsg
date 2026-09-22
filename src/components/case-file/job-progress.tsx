@@ -9,28 +9,21 @@ import type { ActionJob, JobStep } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const STEP_LABEL: Record<string, string> = {
-  p1_site_map: "Map the site",
-  p2_fetch: "Read the pages",
-  p3_render: "Render JavaScript pages",
-  p4_text: "Extract the text",
-  p5_jsonld: "Read structured data",
-  p6_fee: "Read the fee model",
-  p7_tech: "Fingerprint the software",
-  px_site_rules: "Practice areas and rules",
-  px_site_facts: "People, offices, testimonials, news, gaps",
-  reconcile: "Reconcile the record",
-  r_site_contacts: "People into contacts",
-  r_site_emails: "Addresses printed on the site",
-  r_search_links: "Search for LinkedIn profiles and reviews",
-  r_search_emails: "Search for addresses",
-  r3_email_pattern: "Learn the address pattern, mint the rest",
-  ja1_careers: "Read the careers page",
-  ja6_normalise: "Normalise the postings",
-  ja6_closure: "Close filled postings",
-  ja7_pain_signals: "Pain into intent",
-  score: "Score",
-};
+/**
+ * A step's outcome in words. The engine's note is a count ("processed=1
+ * skipped=0 failed=0 -- ..."); a finished step needs none -- the tick says it.
+ */
+function stepWords(step: JobStep): string | null {
+  if (step.status === "failed") return "Didn't finish";
+  if (!step.note || step.status !== "done") return null;
+  if (/inert|not configured|not set/i.test(step.note)) return "Switched off until its key is set";
+  const m = /processed=(\d+) skipped=(\d+) failed=(\d+)/.exec(step.note);
+  if (!m) return null;
+  const [processed, skipped, failures] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  if (failures > 0) return "Finished, with a problem";
+  if (processed === 0 && skipped > 0) return "Nothing new to read";
+  return null;
+}
 
 function StepGlyph({ status }: { status: JobStep["status"] }) {
   if (status === "done") return <CheckIcon className="size-3.5 text-ledger" aria-hidden="true" />;
@@ -42,7 +35,9 @@ function StepGlyph({ status }: { status: JobStep["status"] }) {
 
 /**
  * A research job's progress, step by step, polled while it runs. When it
- * finishes, everything the case file shows is refetched once.
+ * finishes, everything the case file shows is refetched once. Each step's
+ * plain label comes from the engine, which reads the steps from the same
+ * recipe the full run uses.
  */
 export function JobProgress({ job: initial, leadId }: { job: ActionJob; leadId?: string }) {
   const active = initial.status === "queued" || initial.status === "running";
@@ -65,11 +60,17 @@ export function JobProgress({ job: initial, leadId }: { job: ActionJob; leadId?:
 
   const done = job.steps.filter((s) => s.status === "done").length;
   const running = job.status === "queued" || job.status === "running";
+  // A run fails two ways: a step broke, or the run stopped part-way because the
+  // engine restarted under it. Calling the second "a failed step" sent a person
+  // hunting for a step with a cross beside it, and there is none.
+  const brokeAtAStep = job.steps.some((s) => s.status === "failed");
+  const when = job.finished_at ? formatDateTime(job.finished_at) : "";
   const heading =
     job.status === "queued" ? "Research queued"
     : job.status === "running" ? `Researching — ${done} of ${job.steps.length} steps done`
-    : job.status === "done" ? `Research finished ${job.finished_at ? formatDateTime(job.finished_at) : ""}`
-    : `Research finished with a failed step ${job.finished_at ? formatDateTime(job.finished_at) : ""}`;
+    : job.status === "done" ? `Research finished ${when}`
+    : brokeAtAStep ? `Research finished with a failed step ${when}`
+    : `Research stopped after ${done} of ${job.steps.length} steps ${when}`;
 
   return (
     <section
@@ -81,6 +82,9 @@ export function JobProgress({ job: initial, leadId }: { job: ActionJob; leadId?:
       )}
     >
       <p className="text-body font-medium text-ink">{heading}</p>
+      {job.status === "failed" && job.error ? (
+        <p className="text-table text-redline">{job.error}</p>
+      ) : null}
       <ol className="grid gap-1">
         {job.steps.map((step, i) => (
           <li key={`${step.name}-${i}`} className="grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-2 text-table">
@@ -88,9 +92,13 @@ export function JobProgress({ job: initial, leadId }: { job: ActionJob; leadId?:
               <StepGlyph status={step.status} />
             </span>
             <span className={cn("truncate", step.status === "pending" ? "text-slate" : "text-ink")}>
-              {STEP_LABEL[step.name] ?? step.name}
-              {step.note && step.status !== "pending" ? (
-                <span className="text-slate"> — {step.note}</span>
+              {step.label}
+              {stepWords(step) ? <span className="text-slate">: {stepWords(step)}</span> : null}
+              {step.status === "failed" && step.note ? (
+                <details className="text-meta text-slate">
+                  <summary className="cursor-pointer">Details</summary>
+                  <span className="block whitespace-normal">{step.note}</span>
+                </details>
               ) : null}
             </span>
           </li>

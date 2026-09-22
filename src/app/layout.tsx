@@ -1,23 +1,33 @@
 import type { Metadata } from "next";
-import { Libre_Caslon_Text, Rubik } from "next/font/google";
+import { Archivo, Libre_Caslon_Display, Libre_Caslon_Text } from "next/font/google";
 
 import { Rail } from "@/components/shell/rail";
 import { Providers } from "./providers";
 import "./globals.css";
 
-// Rubik: Legal Soft's brand-kit portal face, for the whole interface.
-const rubik = Rubik({
+// Archivo: the interface. Its width axis gives titles and figures the
+// narrow, heavy voice of the Legal Soft wordmark (`type-narrow`).
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-rubik",
+  axes: ["wdth"],
+  variable: "--font-archivo",
   display: "swap",
 });
 
-// Libre Caslon Text: the record only — evidence quotations and quoted email copy.
+// Libre Caslon Text: the record -- the sentences the engine read, the emails it drafts.
 const caslon = Libre_Caslon_Text({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "700"],
   style: ["normal", "italic"],
   variable: "--font-caslon",
+  display: "swap",
+});
+
+// Libre Caslon Display: a firm's name, set large as the caption of its record.
+const caslonDisplay = Libre_Caslon_Display({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-caslon-display",
   display: "swap",
 });
 
@@ -29,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${rubik.variable} ${caslon.variable}`}>
+    <html lang="en" className={`${archivo.variable} ${caslon.variable} ${caslonDisplay.variable}`}>
       <body>
         <a
           href="#main"
@@ -39,8 +49,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <Providers>
           <Rail />
-          <div className="flex min-h-screen flex-col md:pl-(--rail-width)">
-            <main id="main" className="flex min-w-0 flex-1 flex-col">
+          <div className="md:pl-(--rail-width)">
+            <main id="main" className="sheet flex min-w-0 flex-col">
               {children}
             </main>
           </div>

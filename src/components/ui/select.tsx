@@ -18,7 +18,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "inline-flex h-8 min-w-0 items-center justify-between gap-2 rounded-control border border-rule bg-sheet pr-2 pl-2.5 text-table whitespace-nowrap text-ink transition-colors hover:border-rule-strong disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate [&>span]:truncate",
+        "inline-flex h-9 min-w-0 items-center justify-between gap-2 rounded-control border border-rule-strong/70 bg-sheet pr-2.5 pl-3 text-table whitespace-nowrap text-ink transition-colors hover:border-rule-strong disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate [&>span]:truncate",
         className,
       )}
       {...props}
@@ -55,18 +55,29 @@ function SelectContent({
   );
 }
 
-function SelectItem({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+/**
+ * An option. `hint` is a line under it in the list that does not follow the
+ * choice into the trigger -- the trigger says "Strike", the list says what
+ * Strike means.
+ */
+function SelectItem({
+  className,
+  children,
+  hint,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Item> & { hint?: React.ReactNode }) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex h-8 w-full cursor-pointer items-center rounded-control pr-8 pl-2.5 text-table text-ink outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-cobalt-wash",
+        "relative flex min-h-8 w-full cursor-pointer flex-col items-start justify-center rounded-control py-1.5 pr-8 pl-2.5 text-table text-ink outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-cobalt-wash",
         className,
       )}
       {...props}
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <span className="absolute right-2 flex size-4 items-center justify-center text-cobalt">
+      {hint ? <span className="text-meta text-slate">{hint}</span> : null}
+      <span className="absolute top-2 right-2 flex size-4 items-center justify-center text-cobalt">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-3.5" aria-hidden="true" />
         </SelectPrimitive.ItemIndicator>

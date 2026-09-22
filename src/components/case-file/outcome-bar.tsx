@@ -194,9 +194,12 @@ function OptOutDialog({
 export function OutcomeBar({
   lead,
   ref,
+  layout = "row",
 }: {
   lead: LeadDetail;
   ref?: React.Ref<OutcomeBarHandle>;
+  /** `row` is the work queue's pinned footer; `stack` sits in the lead page's side. */
+  layout?: "row" | "stack";
 }) {
   const mutation = useRecordOutcome(lead.id);
   const [dialog, setDialog] = useState<"not_now" | "opt_out" | null>(null);
@@ -218,8 +221,11 @@ export function OutcomeBar({
   const pendingAction = mutation.isPending ? mutation.variables?.action : undefined;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span id={`outcome-label-${lead.id}`} className="text-meta text-slate">
+    <div className={layout === "stack" ? "grid gap-2" : "flex flex-wrap items-center gap-x-3 gap-y-2"}>
+      <span
+        id={`outcome-label-${lead.id}`}
+        className={layout === "stack" ? "text-body font-semibold text-ink" : "text-meta text-slate"}
+      >
         Record outcome
       </span>
       <div role="group" aria-labelledby={`outcome-label-${lead.id}`} className="flex flex-wrap gap-1">

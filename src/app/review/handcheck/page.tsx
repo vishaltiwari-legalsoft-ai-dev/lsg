@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Accuracy check" };
 
 export default function HandcheckPage() {
   return (
-    <Suspense fallback={<TitleBar title="Hand-check" meta="Gate G2" />}>
+    <Suspense fallback={<TitleBar title="Accuracy check" />}>
       <HandcheckScreen />
     </Suspense>
   );

@@ -21,6 +21,9 @@ import type {
   FirmsQuery,
   HandcheckDecision,
   HandcheckResponse,
+  JourneyCopyEdit,
+  JourneyDay,
+  JourneyExampleQuery,
   LeadDetail,
   LeadsQuery,
   OutcomeRequest,
@@ -40,10 +43,13 @@ export const queryKeys = {
   qualified: (query: Omit<Parameters<typeof api.qualified>[0], "offset" | "limit">) =>
     ["qualified", query] as const,
   handcheck: ["handcheck"] as const,
+  capabilities: ["capabilities"] as const,
   imports: ["imports"] as const,
   import: (id: string) => ["import", id] as const,
   job: (id: string) => ["job", id] as const,
   firmJobs: (firmId: string) => ["firm-jobs", firmId] as const,
+  journey: ["journey"] as const,
+  journeyExample: (query: JourneyExampleQuery) => ["journey-example", query] as const,
 };
 
 export const LEADS_PAGE_SIZE = 50;
@@ -110,6 +116,71 @@ export function useDrafts(id: string | null) {
   });
 }
 
+// ── The email journey ───────────────────────────────────────────────────────
+
+export function useJourney() {
+  return useQuery({ queryKey: queryKeys.journey, queryFn: ({ signal }) => api.journey(signal) });
+}
+
+/** The engine's own render of an invented firm; the last one stays up while the next loads. */
+export function useJourneyExample(query: JourneyExampleQuery, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.journeyExample(query),
+    queryFn: ({ signal }) => api.journeyExample(query, signal),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+/** Every email on every screen is rendered from the journey: an edit refreshes them all. */
+function refreshEmails(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: queryKeys.journey });
+  void qc.invalidateQueries({ queryKey: ["journey-example"] });
+  void qc.invalidateQueries({ queryKey: ["drafts"] });
+  void qc.invalidateQueries({ queryKey: queryKeys.today });
+  void qc.invalidateQueries({ queryKey: ["qualified"] });
+}
+
+/** Errors are left to the editor, which shows the engine's reason beside the words. */
+export function useSaveJourneyTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, edit }: { id: string; edit: JourneyCopyEdit }) =>
+      api.saveJourneyTemplate(id, edit),
+    onSuccess: () => refreshEmails(qc),
+  });
+}
+
+export function useRestoreJourneyTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.restoreJourneyTemplate(id),
+    onSuccess: () => refreshEmails(qc),
+  });
+}
+
+export function useSaveJourneyDays() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (days: JourneyDay[]) => api.saveJourneyDays(days),
+    onSuccess: (journey) => {
+      qc.setQueryData(queryKeys.journey, journey);
+      refreshEmails(qc);
+    },
+  });
+}
+
+export function useRestoreJourneyDays() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.restoreJourneyDays(),
+    onSuccess: (journey) => {
+      qc.setQueryData(queryKeys.journey, journey);
+      refreshEmails(qc);
+    },
+  });
+}
+
 export const outcomeMutationKey = (leadId: string) => ["outcome", leadId] as const;
 
 /**
@@ -168,6 +239,15 @@ export function useFirmSearch(q: string) {
 
 export function useFirm(id: string) {
   return useQuery({ queryKey: queryKeys.firm(id), queryFn: ({ signal }) => api.firm(id, signal) });
+}
+
+/** Rarely changes: only a key or a release moves it. */
+export function useCapabilities() {
+  return useQuery({
+    queryKey: queryKeys.capabilities,
+    queryFn: ({ signal }) => api.capabilities(signal),
+    staleTime: 60_000,
+  });
 }
 
 export function useHandcheck() {

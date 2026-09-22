@@ -247,7 +247,8 @@
       "id": "lead-atlinjurylawgroup",
       "state_display": "Contact pending — no owner or office manager found yet",
       "band": "STRIKE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-harbor": {
     "firm": {
@@ -497,6 +498,33 @@
       "id": "lead-fx-harbor",
       "state_display": "Resolved — ready to write",
       "band": "STRIKE"
+    },
+    "pain": {
+      "summary": "Harbor Street Injury Law has two paralegals for six attorneys and an open paralegal role that has been up since 26 August. The record shows the work arriving faster than the people behind it.",
+      "pains": [
+        {
+          "kind": "hiring_unfilled",
+          "headline": "The paralegal seat has been open since 26 August",
+          "quote": "Paralegal, first seen 2026-08-26 (still open).",
+          "source": "open roles",
+          "why_it_matters": "Every week it stays open is a week the case files wait."
+        },
+        {
+          "kind": "no_support_staff",
+          "headline": "Six attorneys, two paralegals behind them",
+          "quote": "staff listed: other: 2; total: 8; support: 2; attorneys: 6",
+          "source": "what the site shows",
+          "why_it_matters": "Attorneys chasing their own records are attorneys not billing."
+        }
+      ],
+      "read": [
+        "the firm",
+        "what the site lacks",
+        "what the site shows",
+        "open roles",
+        "reviews"
+      ],
+      "at": "2026-09-22T09:14:00Z"
     }
   },
   "firm-fx-calloway": {
@@ -737,7 +765,8 @@
       "id": "lead-fx-calloway",
       "state_display": "Resolved — waiting on email verification",
       "band": "STRIKE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-pineridge": {
     "firm": {
@@ -977,7 +1006,8 @@
       "id": "lead-fx-pineridge",
       "state_display": "Resolved — ready to write",
       "band": "STRIKE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-brightwater": {
     "firm": {
@@ -1217,7 +1247,8 @@
       "id": "lead-fx-brightwater",
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-delgado": {
     "firm": {
@@ -1459,7 +1490,8 @@
       "id": "lead-fx-delgado",
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-northgate": {
     "firm": {
@@ -1699,7 +1731,8 @@
       "id": "lead-fx-northgate",
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-lakeshore": {
     "firm": {
@@ -1932,7 +1965,8 @@
       "id": "lead-fx-lakeshore",
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-sunbelt": {
     "firm": {
@@ -2172,7 +2206,8 @@
       "id": "lead-fx-sunbelt",
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-oakiron": {
     "firm": {
@@ -2383,7 +2418,8 @@
       "id": "lead-fx-oakiron",
       "state_display": "Resolved — ready to write",
       "band": "NURTURE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-meridian": {
     "firm": {
@@ -2614,7 +2650,8 @@
       "id": "lead-fx-meridian",
       "state_display": "Resolved — ready to write",
       "band": "NURTURE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-riverbend": {
     "firm": {
@@ -2845,7 +2882,8 @@
       "id": "lead-fx-riverbend",
       "state_display": "Resolved — named owner, no verifiable email",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-coastal": {
     "firm": {
@@ -3056,7 +3094,8 @@
       "id": "lead-fx-coastal",
       "state_display": "Resolved — named owner, no verifiable email",
       "band": "NURTURE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-summit": {
     "firm": {
@@ -3270,7 +3309,8 @@
       "id": "lead-fx-summit",
       "state_display": "Disqualified — not a private firm",
       "band": "HOLD"
-    }
+    },
+    "pain": null
   },
   "firm-fx-granite": {
     "firm": {
@@ -3510,7 +3550,8 @@
       "id": "lead-fx-granite",
       "state_display": "Suppressed — on the customer list",
       "band": "SEQUENCE"
-    }
+    },
+    "pain": null
   },
   "firm-fx-magnolia": {
     "firm": {
@@ -3625,7 +3666,8 @@
       "id": "lead-fx-magnolia",
       "state_display": "Discovered — site not read yet",
       "band": null
-    }
+    },
+    "pain": null
   },
   "firm-fx-prairie": {
     "firm": {
@@ -3740,6 +3782,7 @@
       "id": "lead-fx-prairie",
       "state_display": "Profiling — reading the firm's site",
       "band": null
-    }
+    },
+    "pain": null
   }
 }

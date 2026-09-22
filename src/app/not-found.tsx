@@ -13,7 +13,7 @@ export default function NotFound() {
           title="There's no screen at this address."
           action={
             <Link href="/" className={buttonVariants({ variant: "secondary" })}>
-              Go to Today
+              Go to Home
             </Link>
           }
         >

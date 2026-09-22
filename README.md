@@ -2,24 +2,25 @@
 
 The web UI for Legal Soft's Lead Gen Engine. Next.js 16 (App Router, Turbopack),
 React 19, Tailwind v4, TanStack Query and Table, shadcn/ui (Radix) restyled to
-the design system in `../Lead Gen Engine/plan/ui-design-system.md` ("The Record").
+the design system in `../brain/plan/ui-design-system.md` ("Blue-back").
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `npm run dev:fixtures` | Dev server on fixture data (`src/fixtures/*.json`) — no engine needed |
-| `npm run dev` | Dev server against the live engine at `NEXT_PUBLIC_API_BASE` (default `http://127.0.0.1:8000`) |
-| `npm run api:types` | Regenerate `src/lib/api/schema.d.ts` from `../Lead Gen Engine/openapi.json` |
+| `npm run dev:fixtures` | Dev server on http://localhost:5000 with fixture data (`src/fixtures/*.json`) — no engine needed |
+| `npm run dev` | Dev server on http://localhost:5000 against the live engine; `/api/*` is proxied to `LGE_API_ORIGIN` (default `http://127.0.0.1:8100`) |
+| `npm run api:types` | Regenerate `src/lib/api/schema.d.ts` from the backend's `../openapi.json` |
 | `npm run typecheck` | Route types plus `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run test` | Vitest (jsdom) |
-| `LGE_LIVE_API=http://127.0.0.1:8000 npm run test` | Also checks the running engine against the contract |
+| `LGE_LIVE_API=http://127.0.0.1:8100 npm run test` | Also checks the running engine against the contract |
 | `npm run build` | Production build (api mode) |
 
-Start the engine with `uv run lge serve` in the backend folder. Its CORS allows
-`http://localhost:3000` and `http://127.0.0.1:3000` only, so run the live UI on
-port 3000.
+Start the engine with `.venv/Scripts/python.exe -m lge serve` in the backend
+folder (the folder above this one); it listens on `127.0.0.1:8100`. The browser
+only ever talks to this app, which proxies `/api/*` to the engine, so no CORS is
+involved. Port 3000 belongs to another project on this machine: leave it alone.
 
 ## Where things live
 

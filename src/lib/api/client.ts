@@ -3,6 +3,7 @@ import { httpTransport, type Transport } from "./transport";
 import type {
   BatchRequest,
   BatchResponse,
+  CapabilitiesResponse,
   ContactCreate,
   ContactPatch,
   ContactResponse,
@@ -20,6 +21,12 @@ import type {
   ImportDetail,
   ImportLoadResponse,
   ImportsResponse,
+  JourneyCopyEdit,
+  JourneyDay,
+  JourneyExample,
+  JourneyExampleQuery,
+  JourneyResponse,
+  JourneyTemplate,
   LeadDetail,
   LeadsQuery,
   LeadsResponse,
@@ -101,6 +108,10 @@ export function createApi(transport: Transport) {
 
     firm: (id: string, signal?: AbortSignal) =>
       transport.json<FirmDetail>({ method: "GET", path: `/api/firms/${enc(id)}`, signal }),
+
+    /** What is built, what is partly there, and what waits on a key. */
+    capabilities: (signal?: AbortSignal) =>
+      transport.json<CapabilitiesResponse>({ method: "GET", path: "/api/meta/capabilities", signal }),
 
     handcheck: (signal?: AbortSignal) =>
       transport.json<HandcheckResponse>({ method: "GET", path: "/api/handcheck", signal }),
@@ -209,6 +220,36 @@ export function createApi(transport: Transport) {
 
     batch: (body: BatchRequest) =>
       transport.json<BatchResponse>({ method: "POST", path: "/api/leads/batch", body }),
+
+    // ── The email journey: the nine emails, their wording and their days ──
+    journey: (signal?: AbortSignal) =>
+      transport.json<JourneyResponse>({ method: "GET", path: "/api/journey", signal }),
+
+    journeyExample: (query: JourneyExampleQuery, signal?: AbortSignal) =>
+      transport.json<JourneyExample>({
+        method: "GET",
+        path: "/api/journey/example",
+        query: { ...query },
+        signal,
+      }),
+
+    /** New wording for one template, for every lead. */
+    saveJourneyTemplate: (id: string, body: JourneyCopyEdit) =>
+      transport.json<JourneyTemplate>({
+        method: "PUT",
+        path: `/api/journey/templates/${enc(id)}`,
+        body,
+      }),
+
+    restoreJourneyTemplate: (id: string) =>
+      transport.json<JourneyTemplate>({ method: "DELETE", path: `/api/journey/templates/${enc(id)}` }),
+
+    /** The whole schedule: an email left out goes back to its original day. */
+    saveJourneyDays: (days: JourneyDay[]) =>
+      transport.json<JourneyResponse>({ method: "PUT", path: "/api/journey/days", body: { days } }),
+
+    restoreJourneyDays: () =>
+      transport.json<JourneyResponse>({ method: "DELETE", path: "/api/journey/days" }),
   };
 }
 

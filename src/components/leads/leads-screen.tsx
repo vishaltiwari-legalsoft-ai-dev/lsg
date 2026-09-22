@@ -1,5 +1,6 @@
 "use client";
 
+import { DownloadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isShortcutBlocked, useKeydown } from "@/hooks/use-keydown";
 import { useUrlState } from "@/hooks/use-url-state";
@@ -18,7 +20,7 @@ import { describeError } from "@/lib/api/errors";
 import { useLeads } from "@/lib/api/hooks";
 import type { Band, Contest, LeadRow, LeadView, Stage } from "@/lib/api/types";
 import { formatCount, toDateInputValue } from "@/lib/format";
-import { OTHER_STAGES, PRIORITY_HINT, PRIORITY_LABEL, QUEUE_STAGES, STAGE_EMPTY, STAGE_LABEL } from "@/lib/labels";
+import { OTHER_STAGES, QUEUE_STAGES, STAGE_EMPTY, STAGE_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { BatchBar } from "./batch-bar";
 import { resolveDocketKey, zoneOf } from "./docket-keys";
@@ -29,11 +31,11 @@ import { StageTabs } from "./stage-tabs";
 const EMPTY_ROWS: LeadRow[] = [];
 const CONTESTS: Contest[] = ["NONE", "LOW", "MED", "HIGH"];
 const PRIORITIES: Band[] = ["STRIKE", "SEQUENCE", "NURTURE", "HOLD"];
-const EXPORTS: { view: LeadView; label: string }[] = [
-  { view: "STRIKE", label: "Strike list" },
-  { view: "SEQUENCE", label: "Sequence list" },
-  { view: "NURTURE", label: "Nurture list" },
-  { view: "PHONE", label: "Phone list" },
+const EXPORTS: { view: LeadView; label: string; what: string }[] = [
+  { view: "STRIKE", label: "Strike list", what: "An open role right now; write by hand, today" },
+  { view: "SEQUENCE", label: "Sequence list", what: "Fits, with a live signal; the nine touches" },
+  { view: "NURTURE", label: "Nurture list", what: "Fits, no signal yet; a light touch" },
+  { view: "PHONE", label: "Phone list", what: "A named owner with no verifiable email" },
 ];
 
 function parseStage(value: string | null): Stage {
@@ -44,10 +46,10 @@ function parseStage(value: string | null): Stage {
 function DocketSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading leads">
-      <div className="h-9 border-b border-rule" />
+      <div className="h-10 border-b border-rule" />
       {Array.from({ length: 7 }, (_, i) => (
-        <div key={i} className="flex gap-6 border-b border-rule py-3.5 pr-8 pl-8">
-          <div className="grid w-[30%] gap-2">
+        <div key={i} className="flex gap-6 border-b border-rule py-4 pr-8 pl-8">
+          <div className="grid w-[24%] gap-2">
             <Skeleton className="h-4 w-4/5" />
             <Skeleton className="h-3 w-2/5" />
           </div>
@@ -55,6 +57,10 @@ function DocketSkeleton() {
           <div className="grid flex-1 gap-2">
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-11/12" />
+          </div>
+          <div className="grid w-[18%] gap-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/3" />
           </div>
           <Skeleton className="h-4 w-8" />
         </div>
@@ -65,7 +71,7 @@ function DocketSkeleton() {
 
 function KeyHints() {
   return (
-    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 px-8 py-4 text-meta text-slate">
+    <p className="flex flex-wrap items-center gap-x-5 gap-y-1 px-8 py-5 text-meta text-slate">
       <span className="inline-flex items-center gap-1.5">
         <Kbd>J</Kbd>
         <Kbd>K</Kbd> move
@@ -96,38 +102,53 @@ async function downloadCsv(view: LeadView, filters: LeadFilters) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** The lists the engine builds, each a CSV with the filters applied. */
 function ExportMenu({ filters }: { filters: LeadFilters }) {
-  const [exporting, setExporting] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [exporting, setExporting] = useState<LeadView | null>(null);
+
+  async function exportList(view: LeadView, label: string) {
+    setExporting(view);
+    try {
+      await downloadCsv(view, filters);
+      toast.success(`Exported the ${label} as CSV`);
+      setOpen(false);
+    } catch (error) {
+      toast.error(describeError(error));
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
-    <label className="flex items-center gap-2 text-table text-slate">
-      Export
-      <select
-        aria-label="Export a list as CSV"
-        disabled={exporting}
-        value=""
-        onChange={async (event) => {
-          const view = event.target.value as LeadView;
-          if (!view) return;
-          setExporting(true);
-          try {
-            await downloadCsv(view, filters);
-            toast.success(`Exported the ${EXPORTS.find((e) => e.view === view)?.label ?? view} as CSV`);
-          } catch (error) {
-            toast.error(describeError(error));
-          } finally {
-            setExporting(false);
-          }
-        }}
-        className="h-8 rounded-control border border-rule bg-sheet px-2 text-table text-ink"
-      >
-        <option value="">{exporting ? "Exporting…" : "Choose a list…"}</option>
-        {EXPORTS.map((e) => (
-          <option key={e.view} value={e.view}>
-            {e.label} (CSV)
-          </option>
-        ))}
-      </select>
-    </label>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="secondary" size="md" aria-expanded={open}>
+          <DownloadIcon aria-hidden="true" />
+          Export a list
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-1.5">
+        <p className="px-2.5 pt-1.5 pb-2 text-meta text-slate">A CSV, with the filters on this screen applied.</p>
+        <ul className="grid">
+          {EXPORTS.map((e) => (
+            <li key={e.view}>
+              <button
+                type="button"
+                disabled={exporting !== null}
+                onClick={() => void exportList(e.view, e.label)}
+                className="grid w-full gap-0.5 rounded-control px-2.5 py-2 text-left transition-colors hover:bg-cobalt-wash disabled:opacity-50"
+              >
+                <span className="text-body font-medium text-ink">
+                  {exporting === e.view ? "Exporting…" : e.label}
+                </span>
+                <span className="text-meta text-slate">{e.what}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -223,16 +244,22 @@ export function LeadsScreen() {
   const panelOpen = Boolean(selectedId);
 
   return (
-    <div className="flex flex-col lg:h-dvh">
+    // On a wide screen the queue fills the sheet and scrolls inside it, so the
+    // lead beside it and the tabs above it stay put.
+    <div className="flex flex-col lg:h-[calc(100dvh-2*var(--sheet-inset))]">
       <TitleBar
         title="Work queue"
-        meta={total !== undefined ? `${formatCount(total)} ${STAGE_LABEL[stage].toLowerCase()}` : undefined}
+        meta={
+          total !== undefined
+            ? `${formatCount(total)} ${total === 1 ? "lead" : "leads"} here${hasFilters ? " with these filters" : ""}`
+            : undefined
+        }
         actions={<ExportMenu filters={filters} />}
       />
 
       <div className="flex min-h-0 flex-1 max-lg:flex-col">
         <div className="flex min-w-0 flex-1 flex-col" data-docket="">
-          <div className="border-b border-rule px-8">
+          <div className="border-b border-rule px-8 max-md:px-4">
             <StageTabs
               value={stage}
               counts={stageCounts}
@@ -243,28 +270,13 @@ export function LeadsScreen() {
               }}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule px-8 py-3">
-            <label className="flex items-center gap-2 text-table text-slate">
-              Priority
-              <select
-                aria-label="Priority"
-                value={band ?? ""}
-                onChange={(e) => update({ band: e.target.value || null, lead: selectedId })}
-                title={band ? PRIORITY_HINT[band] : "Any priority"}
-                className={cn(
-                  "h-8 rounded-control border border-rule bg-sheet px-2 text-table text-ink",
-                  band && "border-cobalt",
-                )}
-              >
-                <option value="">Any</option>
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>
-                    {PRIORITY_LABEL[p]} — {PRIORITY_HINT[p]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <FilterBar filters={filters} onChange={(patch) => update({ ...patch, lead: selectedId })} />
+          <div className="border-b border-rule bg-paper/60 px-8 py-3 max-md:px-4">
+            <FilterBar
+              filters={filters}
+              band={band}
+              onChange={(patch) => update({ ...patch, lead: selectedId })}
+              onBandChange={(next) => update({ band: next ?? null, lead: selectedId })}
+            />
           </div>
           {checkedIds.length > 0 ? <BatchBar ids={checkedIds} onClear={clearChecked} /> : null}
 
@@ -304,7 +316,7 @@ export function LeadsScreen() {
                     Widen a filter, or clear them.
                   </EmptyState>
                 ) : (
-                  <EmptyState title={`Nothing here — ${STAGE_LABEL[stage].toLowerCase()}.`}>{STAGE_EMPTY[stage]}</EmptyState>
+                  <EmptyState title={`No lead is at ${STAGE_LABEL[stage].toLowerCase()}.`}>{STAGE_EMPTY[stage]}</EmptyState>
                 )}
               </div>
             ) : (
@@ -344,7 +356,7 @@ export function LeadsScreen() {
         {selectedId ? (
           <aside
             aria-label="Lead"
-            className="shrink-0 border-rule bg-sheet max-lg:border-t lg:w-[clamp(26rem,47%,40rem)] lg:overflow-y-auto lg:border-l"
+            className="shrink-0 border-rule bg-sheet max-lg:border-t lg:w-[clamp(26rem,46%,40rem)] lg:overflow-y-auto lg:rounded-br-(--radius-sheet) lg:border-l"
           >
             <CaseFile key={selectedId} id={selectedId} mode="panel" onClose={close} />
           </aside>

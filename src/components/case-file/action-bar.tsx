@@ -151,7 +151,7 @@ function OwnerField({ lead }: { lead: LeadDetail }) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Nobody yet"
-        className="h-7 w-32 text-table"
+        className="h-8 w-36 text-table"
         aria-busy={setOwner.isPending || undefined}
       />
       {value.trim() !== (lead.owner ?? "") ? (
@@ -166,8 +166,10 @@ function OwnerField({ lead }: { lead: LeadDetail }) {
 /**
  * What a person can do to a lead from its case file: research the firm now,
  * decide (qualify, disqualify, park, hand off, reopen), own it, note it.
+ * `row` sits under the case file's header in the work queue; `stack` is the
+ * lead page's working side, with the next step set large at the top.
  */
-export function ActionBar({ lead }: { lead: LeadDetail }) {
+export function ActionBar({ lead, layout = "row" }: { lead: LeadDetail; layout?: "row" | "stack" }) {
   const research = useResearch(lead.firm.id, lead.id);
   const decide = useDecide(lead.id);
   const addNote = useAddNote(lead.id);
@@ -175,20 +177,37 @@ export function ActionBar({ lead }: { lead: LeadDetail }) {
   const busy = research.isPending || decide.isPending;
   const jobRunning = lead.job?.status === "queued" || lead.job?.status === "running";
   const can = (action: DecisionAction) => CAN[action].has(lead.state);
+  const stack = layout === "stack";
+  // The one step the lead is waiting for is the blue button; the rest are secondary.
+  const primary =
+    lead.stage === "needs_contact" ? "find"
+    : lead.stage === "needs_review" ? "qualify"
+    : lead.stage === "researching" || lead.stage === "no_website" || lead.stage === "needs_refresh" ? "research"
+    : null;
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <p className="text-body">
-          <span className="font-medium text-ink">{lead.stage_display}</span>
-          <span className="text-slate"> — {lead.next_action}</span>
-        </p>
-        <OwnerField lead={lead} />
-      </div>
+    <div className={stack ? "grid gap-5" : "grid gap-3"}>
+      {stack ? (
+        <div className="grid gap-3">
+          <div className="grid gap-1">
+            <p className="text-meta font-medium text-slate">{lead.stage_display}</p>
+            <p className="text-section font-semibold text-ink">{lead.next_action}</p>
+          </div>
+          <OwnerField lead={lead} />
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <p className="text-body">
+            <span className="font-semibold text-ink">{lead.stage_display}.</span>{" "}
+            <span className="text-slate">{lead.next_action}</span>
+          </p>
+          <OwnerField lead={lead} />
+        </div>
+      )}
       <div role="group" aria-label="Actions" className="flex flex-wrap gap-1.5">
         <Button
           size="sm"
-          variant="secondary"
+          variant={primary === "research" ? "primary" : "secondary"}
           disabled={busy || jobRunning || !lead.firm.domain}
           title={lead.firm.domain ? "Crawl the site again and read everything on it" : "No website on record"}
           onClick={() => research.mutate("full")}
@@ -197,16 +216,21 @@ export function ActionBar({ lead }: { lead: LeadDetail }) {
         </Button>
         <Button
           size="sm"
-          variant="secondary"
+          variant={primary === "find" ? "primary" : "secondary"}
           disabled={busy || jobRunning}
           title="Read the team pages again, search for LinkedIn profiles and addresses"
           onClick={() => research.mutate("contacts")}
         >
           Find people &amp; emails
         </Button>
-        <span className="mx-1 w-px self-stretch bg-rule" aria-hidden="true" />
+        {stack ? <span className="basis-full" aria-hidden="true" /> : <span className="mx-1 w-px self-stretch bg-rule" aria-hidden="true" />}
         {can("qualify") ? (
-          <Button size="sm" variant="primary" disabled={busy} onClick={() => decide.mutate({ action: "qualify" })}>
+          <Button
+            size="sm"
+            variant={primary === "qualify" ? "primary" : "secondary"}
+            disabled={busy}
+            onClick={() => decide.mutate({ action: "qualify" })}
+          >
             Qualify
           </Button>
         ) : null}

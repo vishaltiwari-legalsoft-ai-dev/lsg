@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Work queue" };
 // (useSearchParams), so it renders under a Suspense boundary.
 export default function LeadsPage() {
   return (
-    <Suspense fallback={<TitleBar title="Leads" />}>
+    <Suspense fallback={<TitleBar title="Work queue" />}>
       <LeadsScreen />
     </Suspense>
   );

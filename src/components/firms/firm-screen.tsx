@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowUpRightIcon, ChevronRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowUpRightIcon, ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 import { JobProgress } from "@/components/case-file/job-progress";
-import { Field, Panel, SectionHeading } from "@/components/layout/panel";
+import { Field, SectionHeading } from "@/components/layout/panel";
+import { PainAnalysis } from "@/components/record/pain-analysis";
 import { ProofQuote } from "@/components/record/proof-quote";
 import { EmailStatusBadge } from "@/components/record/status-badge";
 import { TierMark } from "@/components/record/tier-mark";
@@ -21,7 +22,7 @@ import { PRIORITY_LABEL, ROLE_LABEL } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { AttributeTable } from "./attribute-table";
 
-const th = "h-9 font-normal text-meta text-slate text-left";
+const th = "h-10 pr-4 font-medium text-meta text-slate text-left";
 
 /* ── At a glance: the facts outreach needs, out of the claims ───────────── */
 
@@ -128,7 +129,14 @@ function ResearchBar({ data }: { data: FirmDetail }) {
 function People({ contacts }: { contacts: FirmDetail["contacts"] }) {
   return (
     <section aria-labelledby="people-heading" className="grid gap-3">
-      <SectionHeading id="people-heading" aside={contacts.length ? `${formatCount(contacts.length)} people` : undefined}>
+      <SectionHeading
+        id="people-heading"
+        aside={
+          contacts.length
+            ? `${formatCount(contacts.length)} ${contacts.length === 1 ? "person" : "people"}`
+            : undefined
+        }
+      >
         People
       </SectionHeading>
       {contacts.length === 0 ? (
@@ -136,21 +144,21 @@ function People({ contacts }: { contacts: FirmDetail["contacts"] }) {
           No one named yet. People appear when the engine reads a team page or a list names someone.
         </p>
       ) : (
-        <Panel className="overflow-x-auto">
+        <div className="overflow-x-auto border-y border-rule">
           <table className="w-full min-w-[44rem] border-collapse text-table">
             <thead>
               <tr className="border-b border-rule">
-                <th scope="col" className={cn(th, "pl-6")}>Name</th>
+                <th scope="col" className={th}>Name</th>
                 <th scope="col" className={th}>Role</th>
                 <th scope="col" className={th}>Email</th>
                 <th scope="col" className={th}>Phone</th>
-                <th scope="col" className={cn(th, "pr-6")}>Found by</th>
+                <th scope="col" className={th}>Found by</th>
               </tr>
             </thead>
             <tbody>
               {contacts.map((c) => (
                 <tr key={c.id} className="border-b border-rule align-top last:border-b-0">
-                  <td className="py-2.5 pr-4 pl-6">
+                  <td className="py-2.5 pr-4">
                     <span className="block text-body text-ink">{c.full_name}</span>
                     {c.title ? <span className="block text-meta text-slate">{c.title}</span> : null}
                     {c.linkedin_url ? (
@@ -179,12 +187,12 @@ function People({ contacts }: { contacts: FirmDetail["contacts"] }) {
                   <td className="py-2.5 pr-4 tabular-nums">
                     <ValueOrUnknown value={c.phone} unknown="No direct line" />
                   </td>
-                  <td className="py-2.5 pr-6 text-slate">{c.source_label}</td>
+                  <td className="py-2.5 text-slate">{c.source_label}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </Panel>
+        </div>
       )}
     </section>
   );
@@ -208,21 +216,21 @@ function Pages({ documents }: { documents: FirmDetail["documents"] }) {
       {!open ? null : documents.length === 0 ? (
         <p className="text-body text-slate">Nothing read yet. Pages appear here after the site is researched.</p>
       ) : (
-        <Panel className="overflow-x-auto">
+        <div className="overflow-x-auto border-y border-rule">
           <table className="w-full min-w-[40rem] border-collapse text-table">
             <thead>
               <tr className="border-b border-rule">
-                <th scope="col" className={cn(th, "pl-6")}>Page</th>
+                <th scope="col" className={th}>Page</th>
                 <th scope="col" className={th}>Status</th>
                 <th scope="col" className={cn(th, "text-right")}>Words</th>
-                <th scope="col" className={cn(th, "pl-6")}>Robots</th>
-                <th scope="col" className={cn(th, "pr-6 text-right")}>Read</th>
+                <th scope="col" className={th}>Robots</th>
+                <th scope="col" className={cn(th, "text-right")}>Read</th>
               </tr>
             </thead>
             <tbody>
               {documents.map((doc) => (
                 <tr key={doc.url} className="border-b border-rule last:border-b-0">
-                  <td className="py-2.5 pr-4 pl-6">
+                  <td className="py-2.5 pr-4">
                     <ValueOrUnknown value={doc.page_kind} unknown="Page kind not recorded" className="block text-ink" />
                     <a
                       href={doc.url}
@@ -248,12 +256,12 @@ function Pages({ documents }: { documents: FirmDetail["documents"] }) {
                   <td className="pr-4 pl-6 text-ink">
                     <ValueOrUnknown value={doc.robots_decision} unknown="Not checked" />
                   </td>
-                  <td className="pr-6 text-right text-slate tabular-nums">{formatDate(doc.fetched_at)}</td>
+                  <td className="text-right text-slate tabular-nums">{formatDate(doc.fetched_at)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </Panel>
+        </div>
       )}
     </section>
   );
@@ -275,9 +283,9 @@ function EveryClaim({ attributes }: { attributes: AttributeRow[] }) {
         </button>
       </SectionHeading>
       {open ? (
-        <Panel className="overflow-hidden">
+        <div className="overflow-hidden border-y border-rule">
           <AttributeTable attributes={attributes} />
-        </Panel>
+        </div>
       ) : null}
     </section>
   );
@@ -288,30 +296,30 @@ function Aliases({ aliases }: { aliases: FirmDetail["aliases"] }) {
   return (
     <section aria-labelledby="aliases-heading" className="grid gap-3">
       <SectionHeading id="aliases-heading">Merged records</SectionHeading>
-      <Panel className="overflow-x-auto">
+      <div className="overflow-x-auto border-y border-rule">
         <table className="w-full min-w-[40rem] border-collapse text-table">
           <thead>
             <tr className="border-b border-rule">
-              <th scope="col" className={cn(th, "pl-6")}>Name</th>
+              <th scope="col" className={th}>Name</th>
               <th scope="col" className={th}>Domain</th>
               <th scope="col" className={th}>Phone</th>
               <th scope="col" className={th}>Merged because</th>
-              <th scope="col" className={cn(th, "pr-6")}>Source</th>
+              <th scope="col" className={th}>Source</th>
             </tr>
           </thead>
           <tbody>
             {aliases.map((a, i) => (
               <tr key={i} className="border-b border-rule last:border-b-0">
-                <td className="py-2.5 pr-4 pl-6 text-ink"><ValueOrUnknown value={a.name} unknown="No name" /></td>
+                <td className="py-2.5 pr-4 text-ink"><ValueOrUnknown value={a.name} unknown="No name" /></td>
                 <td className="pr-4 text-ink"><ValueOrUnknown value={a.domain} unknown="No domain" /></td>
                 <td className="pr-4 text-ink tabular-nums"><ValueOrUnknown value={a.phone} unknown="No phone" /></td>
                 <td className="pr-4 text-ink">{a.merge_rule ?? <span className="text-slate">The original record</span>}</td>
-                <td className="pr-6 text-slate">{a.source_label}</td>
+                <td className="text-slate">{a.source_label}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </Panel>
+      </div>
     </section>
   );
 }
@@ -323,7 +331,7 @@ function FirmRecord({ data }: { data: FirmDetail }) {
       <div className="grid gap-5">
         <div className="flex items-start gap-3">
           <TierMark firm={firm} className="mt-1" />
-          <p className="max-w-[48ch] text-title leading-snug text-ink">{data.tier_reason}</p>
+          <p className="max-w-[52ch] text-subtitle leading-snug text-ink">{data.tier_reason}</p>
         </div>
         <dl className="flex flex-wrap gap-x-10 gap-y-3 pl-10">
           <Field label="Website">
@@ -371,16 +379,15 @@ function FirmRecord({ data }: { data: FirmDetail }) {
             growth headline, or a complaint in the firm&apos;s reviews.
           </p>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid divide-y divide-rule border-y border-rule">
             {data.signals.map((signal) => (
-              <Panel key={signal.signal_id} className="px-8 py-7">
-                <ProofQuote proof={signal} size="body" />
-              </Panel>
+              <ProofQuote key={signal.signal_id} proof={signal} size="title" className="py-6" />
             ))}
           </div>
         )}
       </section>
 
+      {data.pain ? <PainAnalysis pain={data.pain} id="firm-pain-heading" /> : null}
       <People contacts={data.contacts} />
       <SiteSays attributes={data.attributes} />
       <EveryClaim attributes={data.attributes} />
@@ -414,15 +421,17 @@ export function FirmScreen({ id }: { id: string }) {
   return (
     <>
       <TitleBar
+        caption={Boolean(firm.data)}
         title={title || <TitlePlaceholder />}
         meta={firm.data?.firm.domain ?? undefined}
         actions={
           <Link href="/firms" className={buttonVariants({ variant: "ghost", size: "md" })}>
+            <ArrowLeftIcon aria-hidden="true" />
             All firms
           </Link>
         }
       />
-      <div className="max-w-[72rem] px-8 pt-8 pb-16">
+      <div className="max-w-[76rem] px-8 pt-8 pb-16 max-md:px-4">
         {firm.isPending ? (
           <FirmSkeleton />
         ) : firm.isError ? (

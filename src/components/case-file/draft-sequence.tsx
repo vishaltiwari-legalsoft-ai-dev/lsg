@@ -1,12 +1,14 @@
 "use client";
 
 import { ChevronRightIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { CopyButton, emailText } from "@/components/copy-button";
 import { SectionHeading } from "@/components/layout/panel";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { DraftTouch, DraftsResponse } from "@/lib/api/types";
+import type { Band, DraftTouch, DraftsResponse } from "@/lib/api/types";
+import { dayLabel } from "@/lib/journey";
 import { cn } from "@/lib/utils";
 
 function Touch({ touch, defaultOpen }: { touch: DraftTouch; defaultOpen: boolean }) {
@@ -14,10 +16,12 @@ function Touch({ touch, defaultOpen }: { touch: DraftTouch; defaultOpen: boolean
   const bodyId = `touch-${touch.step}-body`;
 
   return (
-    <li className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 py-5 first:pt-1">
+    <li className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 py-3.5 first:pt-1">
       <div className="grid content-start justify-items-start gap-0.5 pt-0.5">
-        <span className="text-section leading-none font-medium text-ink tabular-nums">{touch.step}</span>
-        <span className="text-meta whitespace-nowrap text-slate tabular-nums">Day {touch.day}</span>
+        <span className="type-narrow text-subtitle leading-none font-semibold text-ink tabular-nums">{touch.step}</span>
+        {touch.skipped_reason ? null : (
+          <span className="text-meta whitespace-nowrap text-slate tabular-nums">{dayLabel(touch.day)}</span>
+        )}
       </div>
 
       {touch.skipped_reason ? (
@@ -47,8 +51,8 @@ function Touch({ touch, defaultOpen }: { touch: DraftTouch; defaultOpen: boolean
             <CopyButton
               text={emailText(touch.subject, touch.body)}
               label="Copy"
-              aria-label={`Copy touch ${touch.step}`}
-              toastText={`Copied touch ${touch.step}`}
+              aria-label={`Copy email ${touch.step}`}
+              toastText={`Copied email ${touch.step}`}
               variant="ghost"
               size="sm"
               className="-mt-1 shrink-0"
@@ -67,32 +71,57 @@ function Touch({ touch, defaultOpen }: { touch: DraftTouch; defaultOpen: boolean
   );
 }
 
+/** Why there are no drafts, in words -- the engine sometimes sends its code. */
+const NO_DRAFT_REASON: Record<string, string> = {
+  no_usable_contact: "No owner or office manager to write to yet.",
+  grade_not_set: "The address is not verified yet, so no sequence is drafted.",
+  band_hold: "The score is too low for a sequence yet.",
+  tier_unclassified: "The firm is not tiered yet, so no sequence is drafted.",
+  tier_not_set: "The firm is not tiered yet, so no sequence is drafted.",
+};
+
+export function noDraftWords(reason: string | null | undefined, band: Band | null | undefined): string {
+  if (band === "STRIKE") return "Strike leads are written by hand, today. The engine drafts no sequence for them.";
+  if (!reason) return "No drafts for this lead yet.";
+  if (NO_DRAFT_REASON[reason]) return NO_DRAFT_REASON[reason];
+  if (reason.startsWith("missing_")) return `A draft can't be written: the ${reason.slice(8).replace(/_/g, " ")} is missing.`;
+  if (/^[a-z0-9_]+$/.test(reason)) return reason.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) + ".";
+  return reason;
+}
+
 /**
- * The nine touches as the sequence they are: numbered, with day offsets.
- * Email copy is set in Caslon as quoted copy. Skipped touches say why.
+ * The emails as the sequence they are: numbered, with the day each goes.
+ * Email copy is set in Caslon as quoted copy. Skipped emails say why; the
+ * whole journey, and its wording, is on the Email journey screen.
  */
 export function DraftSequence({
   drafts,
   isPending,
   isError,
   expand,
+  band,
+  leadId,
 }: {
   drafts: DraftsResponse | undefined;
+  /** The lead's priority: a Strike lead is written by hand, so it has no sequence. */
+  band?: Band | null;
   isPending: boolean;
   isError: boolean;
-  /** Panel shows touch 1 open; the full page shows every touch. */
+  /** Email 1 opens; the rest show their subject lines and open on request. */
   expand: "first" | "all";
+  /** Links to this lead's journey, day by day, where the wording is changed. */
+  leadId?: string;
 }) {
   const rendered = drafts?.touches.filter((t) => !t.skipped_reason) ?? [];
-  const lastDay = drafts?.touches.at(-1)?.day;
+  const lastDay = Math.max(...rendered.map((t) => t.day));
 
   return (
     <section aria-labelledby="drafts-heading" className="grid gap-3">
       <SectionHeading
         id="drafts-heading"
         aside={
-          drafts && drafts.touches.length > 0
-            ? `${rendered.length} of ${drafts.touches.length} touches, over ${lastDay} days`
+          drafts && rendered.length > 0
+            ? `${rendered.length} of ${drafts.touches.length} emails, over ${lastDay + 1} days`
             : undefined
         }
       >
@@ -111,15 +140,22 @@ export function DraftSequence({
         </p>
       ) : !drafts || drafts.touches.length === 0 ? (
         <p className="text-body text-slate">
-          {drafts?.excluded_reason ?? "No drafts: the journey renderer returned no touches for this lead."}
+          {band !== "STRIKE" && drafts?.excluded_display
+            ? `${drafts.excluded_display.replace(/[.!?]$/, "")}.`
+            : noDraftWords(drafts?.excluded_reason, band)}
         </p>
       ) : (
-        <ol className="divide-y divide-rule" aria-label="Touches">
+        <ol className="divide-y divide-rule" aria-label="Emails">
           {drafts.touches.map((touch, i) => (
             <Touch key={touch.step} touch={touch} defaultOpen={expand === "all" || i === 0} />
           ))}
         </ol>
       )}
+      {leadId && rendered.length > 0 ? (
+        <Link href={`/journey?lead=${encodeURIComponent(leadId)}`} className="text-table text-cobalt hover:underline">
+          See this journey day by day, and change the wording
+        </Link>
+      ) : null}
     </section>
   );
 }

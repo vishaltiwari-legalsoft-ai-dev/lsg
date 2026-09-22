@@ -7,7 +7,7 @@ export function Panel({ className, ...props }: React.ComponentProps<"section">) 
   );
 }
 
-/** A section title in Rubik 500, sentence case, with an optional aside. */
+/** A section title in Archivo 600, sentence case, with an optional aside. */
 export function SectionHeading({
   id,
   children,
@@ -24,7 +24,7 @@ export function SectionHeading({
   const Tag = level === 2 ? "h2" : "h3";
   return (
     <div className={cn("flex items-baseline justify-between gap-4", className)}>
-      <Tag id={id} className="text-section font-medium text-ink">
+      <Tag id={id} className="text-section font-semibold text-ink">
         {children}
       </Tag>
       {aside ? <div className="text-table text-slate">{aside}</div> : null}

@@ -51,6 +51,7 @@ export type QualifiedCheck = S["QualifiedCheck"];
 export type QualifiedCheckKey = QualifiedCheck["key"];
 export type QualifiedRow = S["QualifiedRow"];
 export type QualifiedCounts = S["QualifiedCounts"];
+export type QualifiedWithheld = S["QualifiedWithheld"];
 export type QualifiedResponse = S["QualifiedResponse"];
 export type QualifiedOnly = "ready" | "almost" | "all";
 export interface QualifiedQuery {
@@ -82,9 +83,33 @@ export type LeadOutcome = S["LeadOutcome"];
 export type ScoreBreakdown = S["ScoreBreakdown"];
 export type TimelineEntry = S["TimelineEvent"];
 export type LeadDetail = S["LeadDetail"];
+/** What the AI read on a firm and what it proves hurts (D-058). */
+export type PainAnalysis = S["PainAnalysis"];
+export type PainPoint = S["PainPoint"];
 
 export type DraftTouch = S["Touch"];
 export type DraftsResponse = S["DraftsResponse"];
+
+// ── The email journey (D-057) ───────────────────────────────────────────────
+
+export type JourneyResponse = S["JourneyResponse"];
+export type JourneyStep = S["JourneyStep"];
+export type JourneyTemplate = S["JourneyTemplate"];
+export type JourneyTrack = S["JourneyTrack"];
+export type JourneyFillIn = S["JourneyFillIn"];
+export type JourneyOption = S["JourneyOption"];
+export type JourneyCopyEdit = S["JourneyCopyEdit"];
+export type JourneyDay = S["JourneyDay"];
+export type JourneyExample = S["JourneyExample"];
+export type JourneyTier = JourneyExample["tier"];
+export type JourneyPain = JourneyExample["pain"];
+export type JourneyTrackBand = JourneyExample["band"];
+export interface JourneyExampleQuery {
+  tier: JourneyTier;
+  pain: JourneyPain;
+  system: boolean;
+  band: JourneyTrackBand;
+}
 
 export type OutcomeRequest = S["OutcomeRequest"];
 /** `message` is the toast copy, shown verbatim. */
@@ -117,6 +142,13 @@ export type RunningJob = S["RunningJob"];
 export type LastRun = S["LastRun"];
 export type ListsSummary = S["ListsSummary"];
 export type OverviewResponse = S["OverviewResponse"];
+
+// ── What is built, and what it needs (D-059) ───────────────────────────────
+
+export type CapabilitiesResponse = S["CapabilitiesResponse"];
+export type CapabilityStep = S["CapabilityStep"];
+export type CapabilityPart = S["CapabilityPart"];
+export type OutsideService = S["OutsideService"];
 
 // ── Firms ───────────────────────────────────────────────────────────────────
 

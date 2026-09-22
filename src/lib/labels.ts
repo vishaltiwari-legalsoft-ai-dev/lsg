@@ -1,4 +1,4 @@
-import type { Band, Contest, LeadView, OutcomeAction, Role, Stage } from "@/lib/api/types";
+import type { Band, Contest, OutcomeAction, Role, Stage } from "@/lib/api/types";
 
 /*
  * The stages a person works a lead through (lge/api/stage.py). The engine's
@@ -70,51 +70,6 @@ export const SCORE_LABEL = { fit: "Fit", intent: "Urgency", contest: "Competitio
  * a facets endpoint; see the report for that proposal.
  */
 
-export const VIEWS: LeadView[] = ["STRIKE", "SEQUENCE", "NURTURE", "PHONE", "EXCLUDED", "UNSCORED"];
-
-export const VIEW_LABEL: Record<LeadView, string> = {
-  STRIKE: "Strike",
-  SEQUENCE: "Sequence",
-  NURTURE: "Nurture",
-  PHONE: "Phone list",
-  EXCLUDED: "Excluded",
-  UNSCORED: "Unscored",
-};
-
-export const VIEW_EMPTY: Record<LeadView, { title: string; body: string }> = {
-  STRIKE: {
-    title: "No STRIKE leads yet.",
-    body: "They appear once the probe's careers sweep finds an open role.",
-  },
-  SEQUENCE: {
-    title: "No leads are ready for the sequence yet.",
-    body: "They appear after the nightly score finds fit and an open signal.",
-  },
-  NURTURE: {
-    title: "No nurture leads yet.",
-    body: "Fit-only firms land here after the nightly score.",
-  },
-  PHONE: {
-    title: "No phone-list leads.",
-    body: "A lead lands here when it has a named owner but no verifiable email.",
-  },
-  EXCLUDED: {
-    title: "Nothing is excluded.",
-    body: "The hygiene filter hasn't removed any lead from the lists.",
-  },
-  UNSCORED: {
-    title: "Every lead has been scored.",
-    body: "New firms show up here until the next nightly score reaches them.",
-  },
-};
-
-export const BAND_LABEL: Record<Band, string> = {
-  STRIKE: "Strike",
-  SEQUENCE: "Sequence",
-  NURTURE: "Nurture",
-  HOLD: "Hold",
-};
-
 export const CONTEST_LABEL: Record<Contest, string> = {
   NONE: "None",
   LOW: "Low",
@@ -176,8 +131,3 @@ export const SIGNAL_OPTIONS = [
   { value: "review_unreturned_call", label: "Unreturned calls in reviews" },
   { value: "cms_implemented", label: "New case software" },
 ];
-
-export const CONTEST_OPTIONS = (["NONE", "LOW", "MED", "HIGH"] as Contest[]).map((value) => ({
-  value,
-  label: CONTEST_LABEL[value],
-}));

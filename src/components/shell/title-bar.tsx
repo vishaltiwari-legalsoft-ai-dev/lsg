@@ -24,12 +24,13 @@ function SearchTrigger() {
     <button
       type="button"
       onClick={open}
-      className="flex h-8 w-64 items-center gap-2 rounded-control border border-rule bg-sheet pr-1.5 pl-2.5 text-table text-slate transition-colors hover:border-rule-strong hover:text-ink"
+      className="flex h-9 w-60 items-center gap-2 rounded-control border border-rule bg-paper pr-1.5 pl-3 text-table text-slate transition-colors hover:border-rule-strong hover:bg-sheet hover:text-ink max-lg:w-9 max-lg:justify-center max-lg:px-0"
       aria-keyshortcuts="Control+K Meta+K"
+      aria-label="Search firms"
     >
       <SearchIcon className="size-3.5 shrink-0" aria-hidden="true" />
-      <span className="flex-1 text-left">Search firms</span>
-      <span className="flex gap-0.5" aria-hidden="true">
+      <span className="flex-1 text-left max-lg:hidden">Search firms</span>
+      <span className="flex gap-0.5 max-lg:hidden" aria-hidden="true">
         <Kbd>{mod}</Kbd>
         <Kbd>K</Kbd>
       </span>
@@ -40,32 +41,48 @@ function SearchTrigger() {
 /** A still, inline placeholder for a title whose data is on its way. */
 export function TitlePlaceholder() {
   return (
-    <span aria-hidden="true" className="inline-block h-5 w-72 rounded-control bg-rule/55 align-middle" />
+    <span aria-hidden="true" className="inline-block h-6 w-72 rounded-control bg-paper align-middle" />
   );
 }
 
-/** Each page's title bar: the page name, what it's showing, and ⌘K. */
+/**
+ * The head of each sheet: the screen's name set narrow and heavy (the
+ * wordmark's voice), what it is showing, its actions, and search. A firm's
+ * own page sets the firm's name as a caption instead -- the record's title.
+ */
 export function TitleBar({
   title,
   meta,
   actions,
+  caption = false,
   className,
 }: {
   title: React.ReactNode;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /** The title is a firm's name: set it in Caslon, as the caption of its record. */
+  caption?: boolean;
   className?: string;
 }) {
   return (
     <header
       className={cn(
-        "flex h-(--titlebar-height) shrink-0 items-center justify-between gap-6 border-b border-rule px-8",
+        "flex min-h-(--titlebar-height) shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-rule px-8 py-4 max-md:px-4",
         className,
       )}
     >
-      <div className="flex min-w-0 items-baseline gap-3">
-        <h1 className="truncate text-title font-medium text-ink">{title}</h1>
-        {meta ? <div className="truncate text-body text-slate">{meta}</div> : null}
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
+        <h1
+          className={cn(
+            "min-w-0 text-ink",
+            caption
+              ? "caption text-caption-sm max-md:text-subtitle"
+              : "type-narrow truncate text-title font-semibold tracking-[-0.01em]",
+          )}
+        >
+          {title}
+        </h1>
+        {meta ? <div className="min-w-0 truncate text-body text-slate">{meta}</div> : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {actions}

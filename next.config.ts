@@ -13,9 +13,13 @@ const nextConfig: NextConfig = {
   // another project on this machine, and the engine's CORS allows a single origin —
   // proxying makes both irrelevant. LGE_API_ORIGIN is server-side only.
   async rewrites() {
-    const engine = process.env.LGE_API_ORIGIN ?? "http://127.0.0.1:8000";
+    const engine = process.env.LGE_API_ORIGIN ?? "http://127.0.0.1:8100";
     return [{ source: "/api/:path*", destination: `${engine}/api/:path*` }];
   },
+  // The dev server answers only `localhost` by default: opened as
+  // 127.0.0.1:5000 the page loaded but never hydrated (its dev socket and
+  // assets were refused), so every screen sat on its loading skeleton.
+  allowedDevOrigins: ["127.0.0.1"],
   // A stray package-lock.json in the user profile made Turbopack infer
   // C:\Users\ACER as the workspace root. Pin it to this project.
   turbopack: {

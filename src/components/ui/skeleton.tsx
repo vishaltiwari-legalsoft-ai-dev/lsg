@@ -9,7 +9,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="skeleton"
       aria-hidden="true"
-      className={cn("rounded-control bg-rule/55", className)}
+      className={cn("rounded-control bg-rule/65", className)}
       {...props}
     />
   );

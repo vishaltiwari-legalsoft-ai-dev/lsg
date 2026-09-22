@@ -48,7 +48,7 @@ const leadRowShape = {
 export const LeadRow = z.strictObject(leadRowShape);
 const LeadNote = z.strictObject({ id: n, text: s, actor: s, at: s });
 const JobStep = z.strictObject({
-  name: s, status: z.enum(["pending", "running", "done", "failed"]), note: ns.optional(),
+  name: s, label: s, status: z.enum(["pending", "running", "done", "failed"]), note: ns.optional(),
 });
 export const ActionJob = z.strictObject({
   id: s, kind: z.enum(["research", "find_contacts"]), firm_id: s, lead_id: ns,
@@ -63,6 +63,12 @@ export const LeadsResponse = z.strictObject({
 });
 const LeadOutcome = z.strictObject({
   id: n, action: OutcomeAction, until: ns, note: ns, actor: s, at: s, transition_applied: z.boolean(),
+});
+const PainPoint = z.strictObject({
+  kind: s, headline: s, quote: s, source: s, why_it_matters: s,
+});
+export const PainAnalysis = z.strictObject({
+  summary: s, pains: z.array(PainPoint), read: z.array(s), at: s,
 });
 export const LeadDetail = z.strictObject({
   ...leadRowShape,
@@ -80,13 +86,43 @@ export const LeadDetail = z.strictObject({
   ),
   notes: z.array(LeadNote),
   job: ActionJob.nullable(),
+  pain: PainAnalysis.nullable(),
 });
 export const DraftsResponse = z.strictObject({
   band: Band.nullable(),
   excluded_reason: ns,
+  excluded_display: ns,
   touches: z.array(
-    z.strictObject({ step: n, day: n, subject: s, body: s, skipped_reason: ns }),
+    z.strictObject({ step: n, day: n, subject: s, body: s, skipped_reason: ns, templates: z.array(s) }),
   ),
+});
+const JourneyTier = z.enum(["1A", "1B", "2", "3", "4_NONBILLABLE"]);
+const JourneyPain = z.enum(["open_role", "reposted_role", "two_roles", "mass_tort", "reviews", "new_system"]);
+const JourneyOption = z.strictObject({ value: s, label: s });
+export const JourneyTemplate = z.strictObject({
+  id: s, step: n, kind: z.enum(["email", "paragraph"]), used_when: s,
+  subject: ns, body: s, original_subject: ns, original_body: s, edited_at: ns,
+  fill_ins: z.array(s), keeps: ns,
+});
+export const JourneyResponse = z.strictObject({
+  steps: z.array(
+    z.strictObject({
+      step: n, day: n, original_day: n, title: s, purpose: s, varies_by: s,
+      templates: z.array(JourneyTemplate),
+    }),
+  ),
+  tracks: z.array(z.strictObject({ band: Band, label: s, description: s, steps: z.array(n), pace: n })),
+  fill_ins: z.array(z.strictObject({ token: s, label: s, meaning: s })),
+  banned_phrases: z.array(s),
+  max_day: n,
+  signature: s,
+  sender_missing: z.array(s),
+  tiers: z.array(JourneyOption),
+  pains: z.array(JourneyOption),
+});
+export const JourneyExample = z.strictObject({
+  firm: s, person: s, tier: JourneyTier, pain: JourneyPain, system: z.boolean(),
+  band: z.enum(["SEQUENCE", "NURTURE"]), drafts: DraftsResponse,
 });
 export const TodayResponse = z.strictObject({
   top_proof: LeadRow.nullable(),
@@ -130,6 +166,7 @@ export const FirmDetail = z.strictObject({
     z.strictObject({ name: ns, domain: ns, phone: ns, merge_rule: ns, source_label: s }),
   ),
   lead: z.strictObject({ id: s, state_display: s, band: Band.nullable() }).nullable(),
+  pain: PainAnalysis.nullable(),
 });
 export const HandcheckResponse = z.strictObject({
   gate: z.strictObject({ needed: n, reviewed_firms: n, passed: z.boolean(), rule: s }),
@@ -140,6 +177,19 @@ export const HandcheckResponse = z.strictObject({
       reviews: z.record(s, z.strictObject({ correct: z.boolean(), corrected_value: ns })),
     }),
   ),
+});
+const CapabilityPart = z.strictObject({
+  label: s, what: ns, state: z.enum(["built", "partial", "planned"]),
+  state_display: s, waiting_on: ns,
+});
+export const CapabilitiesResponse = z.strictObject({
+  steps: z.array(
+    z.strictObject({ step: n, label: s, note: s, parts: z.array(CapabilityPart) }),
+  ),
+  outside: z.array(
+    z.strictObject({ id: s, label: s, key: s, what: s, cost: s, on: z.boolean(), spent_display: ns }),
+  ),
+  built: n, partial: n, planned: n, waiting: n, summary: s,
 });
 export const HealthResponse = z.strictObject({ db: z.enum(["ok", "down"]), version: s });
 const Attention = TodayResponse.shape.attention;
@@ -179,4 +229,8 @@ export const pins: [
   Equals<z.infer<typeof HandcheckResponse>, T.HandcheckResponse>,
   Equals<z.infer<typeof HealthResponse>, T.HealthResponse>,
   Equals<z.infer<typeof OverviewResponse>, T.OverviewResponse>,
-] = [true, true, true, true, true, true, true, true, true, true, true, true, true];
+  Equals<z.infer<typeof JourneyTemplate>, T.JourneyTemplate>,
+  Equals<z.infer<typeof JourneyResponse>, T.JourneyResponse>,
+  Equals<z.infer<typeof JourneyExample>, T.JourneyExample>,
+  Equals<z.infer<typeof CapabilitiesResponse>, T.CapabilitiesResponse>,
+] = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];

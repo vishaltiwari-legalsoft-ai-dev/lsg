@@ -1,0 +1,756 @@
+{
+  "steps": [
+    {
+      "step": 1,
+      "day": 0,
+      "original_day": 0,
+      "title": "The pain",
+      "purpose": "One thing the firm's own record shows it needs, and one question.",
+      "varies_by": "Chosen by the pain found. Hourly firms get their own.",
+      "templates": [
+        {
+          "id": "1-open-role",
+          "step": 1,
+          "kind": "email",
+          "used_when": "An open job post, when the firm's case system is known",
+          "subject": "Your {role} opening, and a faster way to fill it",
+          "body": "Hi {first_name},\n\nYour {role} post has been up since {posted_date}. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\n{middle_paragraph}\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.",
+          "original_subject": "Your {role} opening, and a faster way to fill it",
+          "original_body": "Hi {first_name},\n\nYour {role} post has been up since {posted_date}. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\n{middle_paragraph}\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role",
+            "posted_date"
+          ],
+          "keeps": "middle_paragraph"
+        },
+        {
+          "id": "1-open-role-no-system",
+          "step": 1,
+          "kind": "email",
+          "used_when": "An open job post, when the case system is not known",
+          "subject": "Your {role} opening, and a faster way to fill it",
+          "body": "Hi {first_name},\n\nYour {role} post has been up since {posted_date}. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\n{middle_paragraph}\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.",
+          "original_subject": "Your {role} opening, and a faster way to fill it",
+          "original_body": "Hi {first_name},\n\nYour {role} post has been up since {posted_date}. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\n{middle_paragraph}\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role",
+            "posted_date"
+          ],
+          "keeps": "middle_paragraph"
+        },
+        {
+          "id": "1-paragraph-pi",
+          "step": 1,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for personal injury firms (tier 1A), case system known",
+          "subject": null,
+          "body": "We place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working inside {cms}. Not a pooled service desk,\nand not a temp.",
+          "original_subject": null,
+          "original_body": "We place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working inside {cms}. Not a pooled service desk,\nand not a temp.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "cms"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-paragraph-pi-no-system",
+          "step": 1,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for personal injury firms (tier 1A), case system not known",
+          "subject": null,
+          "body": "We place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working in your own systems. Not a pooled service\ndesk, and not a temp.",
+          "original_subject": null,
+          "original_body": "We place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working in your own systems. Not a pooled service\ndesk, and not a temp.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-paragraph-immigration",
+          "step": 1,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for immigration firms (tier 1B)",
+          "subject": null,
+          "body": "We place bilingual legal assistants with immigration firms: form\npreparation at volume, the evidence chase, status checks, and Spanish as a\nfirst language, working inside {cms}.",
+          "original_subject": null,
+          "original_body": "We place bilingual legal assistants with immigration firms: form\npreparation at volume, the evidence chase, status checks, and Spanish as a\nfirst language, working inside {cms}.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "cms"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-paragraph-fee-shifting",
+          "step": 1,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for fee-shifting firms (tier 2)",
+          "subject": null,
+          "body": "We place trained case managers with {practice} firms: records, agency\nforms and the status chasing that never appears on an invoice, working\ninside {cms}.",
+          "original_subject": null,
+          "original_body": "We place trained case managers with {practice} firms: records, agency\nforms and the status chasing that never appears on an invoice, working\ninside {cms}.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "practice",
+            "cms"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-paragraph-flat-fee",
+          "step": 1,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for flat-fee volume firms (tier 3)",
+          "subject": null,
+          "body": "We place trained legal assistants with {practice} firms: document\nassembly, client chasing and scheduling. One person, your matters, your\nprocess.",
+          "original_subject": null,
+          "original_body": "We place trained legal assistants with {practice} firms: document\nassembly, client chasing and scheduling. One person, your matters, your\nprocess.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "practice"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-reposted-role",
+          "step": 1,
+          "kind": "email",
+          "used_when": "A job post put up again",
+          "subject": "The {role} role at your firm, posted a second time",
+          "body": "Hi {first_name},\n\nYour {role} post went back up this week, the second time since\n{repost_month} if I'm reading it right.\n\nIn my experience that pattern says the local market isn't producing the\ncandidate, rather than the need going away. Firms in that position often\nstop competing for the same short list and staff the seat remotely\ninstead.\n\nWe place trained legal staff who already know firm work. They're\npre-vetted, free to interview, and able to start in under three days.\n\nShall I send two profiles for that seat?",
+          "original_subject": "The {role} role at your firm, posted a second time",
+          "original_body": "Hi {first_name},\n\nYour {role} post went back up this week, the second time since\n{repost_month} if I'm reading it right.\n\nIn my experience that pattern says the local market isn't producing the\ncandidate, rather than the need going away. Firms in that position often\nstop competing for the same short list and staff the seat remotely\ninstead.\n\nWe place trained legal staff who already know firm work. They're\npre-vetted, free to interview, and able to start in under three days.\n\nShall I send two profiles for that seat?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role",
+            "repost_month"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-two-roles",
+          "step": 1,
+          "kind": "email",
+          "used_when": "Two roles posted at once",
+          "subject": "Two seats open at {firm_name}, which one first?",
+          "body": "Hi {first_name},\n\nYou have a {role} and a {role_2} posted at the same time. Two seats at\nonce usually means the caseload moved before payroll could.\n\nThat gap is what we fill: trained legal staff dedicated to your matters\nand working inside {cms}. One person on your files, not a shared desk, and\nnot a temp who leaves in a month.\n\nEveryone is pre-vetted, interviewing costs nothing, and someone who fits\ncan start in under three days.\n\nWhich of the two is hurting more? I'll send profiles for that seat first.",
+          "original_subject": "Two seats open at {firm_name}, which one first?",
+          "original_body": "Hi {first_name},\n\nYou have a {role} and a {role_2} posted at the same time. Two seats at\nonce usually means the caseload moved before payroll could.\n\nThat gap is what we fill: trained legal staff dedicated to your matters\nand working inside {cms}. One person on your files, not a shared desk, and\nnot a temp who leaves in a month.\n\nEveryone is pre-vetted, interviewing costs nothing, and someone who fits\ncan start in under three days.\n\nWhich of the two is hurting more? I'll send profiles for that seat first.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role",
+            "role_2",
+            "cms"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-mass-tort",
+          "step": 1,
+          "kind": "email",
+          "used_when": "A mass tort campaign",
+          "subject": "{tort} intake, and the records volume behind it",
+          "body": "Hi {first_name},\n\nI saw that you're running {tort} intake.\n\nOn a docket like that the bottleneck is rarely signing claimants. It's the\nfour to six provider requests behind every one of them, all against a\nfiling deadline. None of that time is billable, and it's usually the first\nthing to break when the volume arrives.\n\nWe staff exactly that work with document collectors who do nothing else\nand are trained before they reach you. Free to interview, and able to\nstart in under three days.\n\nWorth a short conversation before the volume lands?",
+          "original_subject": "{tort} intake, and the records volume behind it",
+          "original_body": "Hi {first_name},\n\nI saw that you're running {tort} intake.\n\nOn a docket like that the bottleneck is rarely signing claimants. It's the\nfour to six provider requests behind every one of them, all against a\nfiling deadline. None of that time is billable, and it's usually the first\nthing to break when the volume arrives.\n\nWe staff exactly that work with document collectors who do nothing else\nand are trained before they reach you. Free to interview, and able to\nstart in under three days.\n\nWorth a short conversation before the volume lands?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "tort"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-reviews",
+          "step": 1,
+          "kind": "email",
+          "used_when": "Reviews about calls not returned",
+          "subject": "Intake coverage at {firm_name}",
+          "body": "Hi {first_name},\n\nFirms doing {practice} at your volume tend to hit the same wall: calls\narriving faster than anyone can return them, and the signed case going to\nwhoever picked up first.\n\nWe put a trained intake person on the phones, with the document work\nhandled behind them, so a call doesn't wait for someone to be free.\nThey're pre-vetted, they work your hours, and one can start in under three\ndays.\n\nIs that a live problem for you at the moment, or have you got it covered?",
+          "original_subject": "Intake coverage at {firm_name}",
+          "original_body": "Hi {first_name},\n\nFirms doing {practice} at your volume tend to hit the same wall: calls\narriving faster than anyone can return them, and the signed case going to\nwhoever picked up first.\n\nWe put a trained intake person on the phones, with the document work\nhandled behind them, so a call doesn't wait for someone to be free.\nThey're pre-vetted, they work your hours, and one can start in under three\ndays.\n\nIs that a live problem for you at the moment, or have you got it covered?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "practice"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-new-system",
+          "step": 1,
+          "kind": "email",
+          "used_when": "A newly adopted case system",
+          "subject": "Now that you're on {cms}",
+          "body": "Hi {first_name},\n\nIt looks like you moved onto {cms} recently.\n\nWhat most firms find about a month in is that the workflow needed a person\nrather than a feature: someone to actually run the records requests the\nsystem is now tracking, and to keep the queue from ageing quietly.\n\nOur people already work inside {cms}, so there's no ramp on the tooling.\nThey're pre-vetted and free to interview, and one can start in under three\ndays.\n\nUseful now, or too early to talk?",
+          "original_subject": "Now that you're on {cms}",
+          "original_body": "Hi {first_name},\n\nIt looks like you moved onto {cms} recently.\n\nWhat most firms find about a month in is that the workflow needed a person\nrather than a feature: someone to actually run the records requests the\nsystem is now tracking, and to keep the queue from ageing quietly.\n\nOur people already work inside {cms}, so there's no ramp on the tooling.\nThey're pre-vetted and free to interview, and one can start in under three\ndays.\n\nUseful now, or too early to talk?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "cms"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "1-hourly",
+          "step": 1,
+          "kind": "email",
+          "used_when": "Every hourly firm (tier 4), whatever the pain",
+          "subject": "The hours nobody at your firm can bill",
+          "body": "Hi {first_name},\n\nThis is a narrower note than the one you usually get from people like me.\n\nI'm not going to suggest a paralegal. Yours are billable, and moving\nbillable work off your own books would be a poor trade for you.\n\nIt's the rest that interests me: the bookkeeping, the intake calls, the\nmarketing admin. Nobody bills for those and they still take someone's day.\nThat's the part we'd staff, with someone trained for it, pre-vetted, and\nfree to interview.\n\nWorth ten minutes to see whether the numbers work?",
+          "original_subject": "The hours nobody at your firm can bill",
+          "original_body": "Hi {first_name},\n\nThis is a narrower note than the one you usually get from people like me.\n\nI'm not going to suggest a paralegal. Yours are billable, and moving\nbillable work off your own books would be a poor trade for you.\n\nIt's the rest that interests me: the bookkeeping, the intake calls, the\nmarketing admin. Nobody bills for those and they still take someone's day.\nThat's the part we'd staff, with someone trained for it, pre-vetted, and\nfree to interview.\n\nWorth ten minutes to see whether the numbers work?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "day": 3,
+      "original_day": 3,
+      "title": "The specific work",
+      "purpose": "Names the task we would take on, not a job title.",
+      "varies_by": "Chosen by the pain found and the tier.",
+      "templates": [
+        {
+          "id": "2-job-post",
+          "step": 2,
+          "kind": "email",
+          "used_when": "A job post: open, put up again, or two roles",
+          "subject": "Re: your {role} opening, the part that's usually stuck",
+          "body": "Hi {first_name},\n\nOne thing I should have said in my last note.\n\n{specific_work_paragraph}\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?",
+          "original_subject": "Re: your {role} opening, the part that's usually stuck",
+          "original_body": "Hi {first_name},\n\nOne thing I should have said in my last note.\n\n{specific_work_paragraph}\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role"
+          ],
+          "keeps": "specific_work_paragraph"
+        },
+        {
+          "id": "2-paragraph-most",
+          "step": 2,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for every firm except immigration firms",
+          "subject": null,
+          "body": "The part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.",
+          "original_subject": null,
+          "original_body": "The part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "2-paragraph-immigration",
+          "step": 2,
+          "kind": "paragraph",
+          "used_when": "Its middle paragraph for immigration firms (tier 1B)",
+          "subject": null,
+          "body": "The part most immigration firms hand over first isn't the whole assistant\nrole. It's form preparation at volume, the I-130s, the adjustment packets\nand the evidence chase, plus the Spanish-language calls that eat an\nafternoon.",
+          "original_subject": null,
+          "original_body": "The part most immigration firms hand over first isn't the whole assistant\nrole. It's form preparation at volume, the I-130s, the adjustment packets\nand the evidence chase, plus the Spanish-language calls that eat an\nafternoon.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "2-mass-tort",
+          "step": 2,
+          "kind": "email",
+          "used_when": "A mass tort campaign",
+          "subject": "Re: {tort}, and who chases the providers",
+          "body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nOn a {tort} docket the bottleneck is rarely claimant intake. It's the\nprovider requests behind every claimant: the fourth call to the same\nrecords department, and the follow-up nobody sends before the filing date.\n\nThat's a document collector's whole day, and it's the first thing we'd\ntake off your team. Pre-vetted, free to interview, and able to start in\nunder three days.\n\nShall I send two profiles?",
+          "original_subject": "Re: {tort}, and who chases the providers",
+          "original_body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nOn a {tort} docket the bottleneck is rarely claimant intake. It's the\nprovider requests behind every claimant: the fourth call to the same\nrecords department, and the follow-up nobody sends before the filing date.\n\nThat's a document collector's whole day, and it's the first thing we'd\ntake off your team. Pre-vetted, free to interview, and able to start in\nunder three days.\n\nShall I send two profiles?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "tort"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "2-reviews",
+          "step": 2,
+          "kind": "email",
+          "used_when": "Reviews about calls not returned",
+          "subject": "Re: intake coverage, and the half you can hand over",
+          "body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nWhen calls go unreturned it's rarely because nobody cares. It's because\nthe same people answering the phone are also chasing documents and\nbuilding case files, and one of those jobs always gives way.\n\nWe take the back-office half — records, follow-ups, document collection —\nso your team is free to pick up. Pre-vetted, and free to interview.\n\nWould it help to meet two people who do exactly that?",
+          "original_subject": "Re: intake coverage, and the half you can hand over",
+          "original_body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nWhen calls go unreturned it's rarely because nobody cares. It's because\nthe same people answering the phone are also chasing documents and\nbuilding case files, and one of those jobs always gives way.\n\nWe take the back-office half — records, follow-ups, document collection —\nso your team is free to pick up. Pre-vetted, and free to interview.\n\nWould it help to meet two people who do exactly that?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "2-new-system",
+          "step": 2,
+          "kind": "email",
+          "used_when": "A newly adopted case system",
+          "subject": "Re: {cms}, and the tasks it can't do for you",
+          "body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nA new case system surfaces the same thing every time: the tasks it tracks\nstill need somebody to do them. Records requests queued, follow-ups due,\ndocuments waiting to be chased.\n\nOur people already work inside {cms}, so there's no ramp on the tooling\nand no training bill for you. They're pre-vetted and free to interview.\n\nShall I send two profiles?",
+          "original_subject": "Re: {cms}, and the tasks it can't do for you",
+          "original_body": "Hi {first_name},\n\nTo be specific about the work I have in mind.\n\nA new case system surfaces the same thing every time: the tasks it tracks\nstill need somebody to do them. Records requests queued, follow-ups due,\ndocuments waiting to be chased.\n\nOur people already work inside {cms}, so there's no ramp on the tooling\nand no training bill for you. They're pre-vetted and free to interview.\n\nShall I send two profiles?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "cms"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "day": 7,
+      "original_day": 7,
+      "title": "The arithmetic",
+      "purpose": "Why those hours cost this firm money, in the terms of how it bills.",
+      "varies_by": "Chosen by the fee model. Never a general version.",
+      "templates": [
+        {
+          "id": "3-contingency",
+          "step": 3,
+          "kind": "email",
+          "used_when": "Contingency firms",
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.",
+          "original_subject": "The unbilled hours between you and the fee",
+          "original_body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "3-fee-shifting",
+          "step": 3,
+          "kind": "email",
+          "used_when": "Fee-shifting firms",
+          "subject": "Who actually pays for those hours",
+          "body": "Hi {first_name},\n\nA different angle on the same thing.\n\nThe defendant pays the fees. Your own labour getting there's still an\nunbilled input — records, employer files, agency forms — and nobody\nreimburses the time it took to chase them.\n\nIt's the same arithmetic as contingency, and noticeably fewer people are\nhaving this conversation with you.\n\nTen minutes to go through the numbers?",
+          "original_subject": "Who actually pays for those hours",
+          "original_body": "Hi {first_name},\n\nA different angle on the same thing.\n\nThe defendant pays the fees. Your own labour getting there's still an\nunbilled input — records, employer files, agency forms — and nobody\nreimburses the time it took to chase them.\n\nIt's the same arithmetic as contingency, and noticeably fewer people are\nhaving this conversation with you.\n\nTen minutes to go through the numbers?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "3-flat-fee",
+          "step": 3,
+          "kind": "email",
+          "used_when": "Flat-fee firms, except tier 3",
+          "subject": "Margin, one matter at a time",
+          "body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter,\nwhich makes this unusually easy to measure: you'll see the effect on the\nnext twenty cases, not next year.\n\nWorth ten minutes to run those numbers together?",
+          "original_subject": "Margin, one matter at a time",
+          "original_body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter,\nwhich makes this unusually easy to measure: you'll see the effect on the\nnext twenty cases, not next year.\n\nWorth ten minutes to run those numbers together?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "3-flat-fee-volume",
+          "step": 3,
+          "kind": "email",
+          "used_when": "Flat-fee volume firms (tier 3)",
+          "subject": "Margin, one matter at a time",
+          "body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter.\n\nThin margins and a lot of matters means the support hours are the whole\ngame. Shift those and the economics move immediately, in the same quarter.\n\nWorth ten minutes to run those numbers together?",
+          "original_subject": "Margin, one matter at a time",
+          "original_body": "Hi {first_name},\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter.\n\nThin margins and a lot of matters means the support hours are the whole\ngame. Shift those and the economics move immediately, in the same quarter.\n\nWorth ten minutes to run those numbers together?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        },
+        {
+          "id": "3-hourly",
+          "step": 3,
+          "kind": "email",
+          "used_when": "Hourly firms",
+          "subject": "Only the part nobody bills",
+          "body": "Hi {first_name},\n\nA different angle on the same thing.\n\nEverything your team does that appears on an invoice should stay exactly\nwhere it is. It's the rest — reconciliation, intake, chasing your own\npaperwork — that's pure overhead in an hourly shop, and the only part\nworth moving.\n\nTen minutes to see whether that holds for your numbers?",
+          "original_subject": "Only the part nobody bills",
+          "original_body": "Hi {first_name},\n\nA different angle on the same thing.\n\nEverything your team does that appears on an invoice should stay exactly\nwhere it is. It's the rest — reconciliation, intake, chasing your own\npaperwork — that's pure overhead in an hourly shop, and the only part\nworth moving.\n\nTen minutes to see whether that holds for your numbers?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "day": 10,
+      "original_day": 10,
+      "title": "A comparable firm",
+      "purpose": "A firm of the same shape that started the same way.",
+      "varies_by": "The same for every firm.",
+      "templates": [
+        {
+          "id": "4",
+          "step": 4,
+          "kind": "email",
+          "used_when": "Every firm",
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi {first_name},\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.",
+          "original_subject": "A firm about your size, the same problem",
+          "original_body": "Hi {first_name},\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "day": 14,
+      "original_day": 14,
+      "title": "The worry, answered first",
+      "purpose": "Confidentiality and supervision, before anyone has to ask.",
+      "varies_by": "The same for every firm. Names the case system when it is known.",
+      "templates": [
+        {
+          "id": "5",
+          "step": 5,
+          "kind": "email",
+          "used_when": "Every firm",
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi {first_name},\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside {cms} under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.",
+          "original_subject": "Confidentiality, supervision, and how this actually works",
+          "original_body": "Hi {first_name},\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside {cms} under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "cms"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "day": 18,
+      "original_day": 18,
+      "title": "A second seat",
+      "purpose": "A different, smaller role, in case the first was the wrong one.",
+      "varies_by": "The same for every firm.",
+      "templates": [
+        {
+          "id": "6",
+          "step": 6,
+          "kind": "email",
+          "used_when": "Every firm",
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi {first_name},\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.",
+          "original_subject": "I may have aimed at the wrong end of this",
+          "original_body": "Hi {first_name},\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "day": 21,
+      "original_day": 21,
+      "title": "The other person",
+      "purpose": "Offers to talk to the office manager instead.",
+      "varies_by": "The same for every firm.",
+      "templates": [
+        {
+          "id": "7",
+          "step": 7,
+          "kind": "email",
+          "used_when": "Every firm",
+          "subject": "Am I writing to the right person?",
+          "body": "Hi {first_name},\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.",
+          "original_subject": "Am I writing to the right person?",
+          "original_body": "Hi {first_name},\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 8,
+      "day": 25,
+      "original_day": 25,
+      "title": "Still open?",
+      "purpose": "Asks again while the job post is still up.",
+      "varies_by": "Sent only while the job post is still up.",
+      "templates": [
+        {
+          "id": "8",
+          "step": 8,
+          "kind": "email",
+          "used_when": "While the job post is still up",
+          "subject": "The {role} seat is still open",
+          "body": "Hi {first_name},\n\nThe {role} post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen {days_open} days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?",
+          "original_subject": "The {role} seat is still open",
+          "original_body": "Hi {first_name},\n\nThe {role} post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen {days_open} days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name",
+            "role",
+            "days_open"
+          ],
+          "keeps": null
+        }
+      ]
+    },
+    {
+      "step": 9,
+      "day": 28,
+      "original_day": 28,
+      "title": "Closing the loop",
+      "purpose": "No pressure, and the door left open.",
+      "varies_by": "The same for every firm.",
+      "templates": [
+        {
+          "id": "9",
+          "step": 9,
+          "kind": "email",
+          "used_when": "Every firm",
+          "subject": "Closing the loop on this",
+          "body": "Hi {first_name},\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.",
+          "original_subject": "Closing the loop on this",
+          "original_body": "Hi {first_name},\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.",
+          "edited_at": null,
+          "fill_ins": [
+            "first_name",
+            "firm_name"
+          ],
+          "keeps": null
+        }
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "band": "SEQUENCE",
+      "label": "Sequence",
+      "description": "Up to nine emails, Day 1 to Day 29. An email with nothing true to say to a firm is left out, never padded.",
+      "steps": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "pace": 1
+    },
+    {
+      "band": "NURTURE",
+      "label": "Nurture",
+      "description": "Emails 1, 3 and 9 at half the pace: Day 1, Day 15 and Day 57. With no pain on record the first is left out.",
+      "steps": [
+        1,
+        3,
+        9
+      ],
+      "pace": 2
+    },
+    {
+      "band": "STRIKE",
+      "label": "Strike",
+      "description": "Written by hand, the same day. A need nobody else has seen is worth a person's own words, so the engine drafts nothing.",
+      "steps": [],
+      "pace": 1
+    },
+    {
+      "band": "HOLD",
+      "label": "Hold",
+      "description": "Not contacted.",
+      "steps": [],
+      "pace": 1
+    }
+  ],
+  "fill_ins": [
+    {
+      "token": "first_name",
+      "label": "First name",
+      "meaning": "The decision-maker's first name."
+    },
+    {
+      "token": "firm_name",
+      "label": "Firm name",
+      "meaning": "The firm's name as it is on file."
+    },
+    {
+      "token": "role",
+      "label": "Job title",
+      "meaning": "The role in the firm's job post."
+    },
+    {
+      "token": "role_2",
+      "label": "Second job title",
+      "meaning": "The other role, when two are posted."
+    },
+    {
+      "token": "posted_date",
+      "label": "Date first seen",
+      "meaning": "The day we first saw the post: ours, not the job board's."
+    },
+    {
+      "token": "repost_month",
+      "label": "Repost month",
+      "meaning": "The month the post first went back up."
+    },
+    {
+      "token": "days_open",
+      "label": "Days open",
+      "meaning": "Days since we first saw the post."
+    },
+    {
+      "token": "tort",
+      "label": "Mass tort",
+      "meaning": "The campaign the firm is running intake for."
+    },
+    {
+      "token": "practice",
+      "label": "Practice area",
+      "meaning": "The firm's main practice."
+    },
+    {
+      "token": "cms",
+      "label": "Case system",
+      "meaning": "The firm's case management system."
+    }
+  ],
+  "banned_phrases": [
+    "replace",
+    "cheaper than hiring",
+    "cut costs",
+    "reduce headcount",
+    "offshore",
+    "virtual assistant"
+  ],
+  "max_day": 90,
+  "signature": "Best regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+  "sender_missing": [
+    "who signs the emails",
+    "the address replies go to",
+    "a postal address, which US law requires"
+  ],
+  "tiers": [
+    {
+      "value": "1A",
+      "label": "Personal injury, on contingency (tier 1A)"
+    },
+    {
+      "value": "1B",
+      "label": "Immigration, on flat fees (tier 1B)"
+    },
+    {
+      "value": "2",
+      "label": "Employment, where the other side pays the fees (tier 2)"
+    },
+    {
+      "value": "3",
+      "label": "Bankruptcy, flat fees at volume (tier 3)"
+    },
+    {
+      "value": "4_NONBILLABLE",
+      "label": "Estate planning, billed by the hour (tier 4)"
+    }
+  ],
+  "pains": [
+    {
+      "value": "open_role",
+      "label": "An open job post"
+    },
+    {
+      "value": "reposted_role",
+      "label": "A job post put up again"
+    },
+    {
+      "value": "two_roles",
+      "label": "Two roles posted at once"
+    },
+    {
+      "value": "mass_tort",
+      "label": "A mass tort campaign"
+    },
+    {
+      "value": "reviews",
+      "label": "Reviews about calls not returned"
+    },
+    {
+      "value": "new_system",
+      "label": "A newly adopted case system"
+    }
+  ]
+}

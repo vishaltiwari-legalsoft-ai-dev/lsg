@@ -260,6 +260,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/journey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Journey */
+        get: operations["get_journey_api_journey_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journey/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Days
+         * @description The whole schedule at once: an email left out of `days` goes back to
+         *     its original day, so the screen always sends every email it shows.
+         */
+        put: operations["put_days_api_journey_days_put"];
+        post?: never;
+        /**
+         * Restore Days
+         * @description Back to the days in journey/sequences.yml.
+         */
+        delete: operations["restore_days_api_journey_days_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journey/example": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Example
+         * @description What an invented firm would be sent, rendered by build_journey with the
+         *     screen's edits -- the same path a real lead's drafts take.
+         */
+        get: operations["get_example_api_journey_example_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journey/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Template
+         * @description New wording for one template, for every lead from now on. Saving the
+         *     original wording back is the same as restoring it.
+         */
+        put: operations["put_template_api_journey_templates__template_id__put"];
+        post?: never;
+        /**
+         * Restore Template
+         * @description Back to the wording in journey/copy/.
+         */
+        delete: operations["restore_template_api_journey_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/leads": {
         parameters: {
             query?: never;
@@ -430,6 +518,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meta/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Capabilities
+         * @description The three steps, what is built in each, and the outside services the
+         *     rest waits on. The states come from config/capabilities.yml; whether a
+         *     service is switched on is asked of the engine's own seams, so a key
+         *     arriving changes this page without anyone editing anything.
+         */
+        get: operations["get_capabilities_api_meta_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meta/providers": {
         parameters: {
             query?: never;
@@ -524,7 +635,8 @@ export interface paths {
         };
         /**
          * Export Qualified Csv
-         * @description The ready leads as a sheet for the sending vendor -- never the almost-ready.
+         * @description The ready leads as a sheet for the sending vendor -- never the
+         *     almost-ready, never one the list rules hold back.
          */
         get: operations["export_qualified_csv_api_qualified_export_csv_get"];
         put?: never;
@@ -745,6 +857,50 @@ export interface components {
              */
             source_tag: string;
         };
+        /** CapabilitiesResponse */
+        CapabilitiesResponse: {
+            /** Built */
+            built: number;
+            /** Outside */
+            outside: components["schemas"]["OutsideService"][];
+            /** Partial */
+            partial: number;
+            /** Planned */
+            planned: number;
+            /** Steps */
+            steps: components["schemas"]["CapabilityStep"][];
+            /** Summary */
+            summary: string;
+            /** Waiting */
+            waiting: number;
+        };
+        /** CapabilityPart */
+        CapabilityPart: {
+            /** Label */
+            label: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "built" | "partial" | "planned";
+            /** State Display */
+            state_display: string;
+            /** Waiting On */
+            waiting_on: string | null;
+            /** What */
+            what: string | null;
+        };
+        /** CapabilityStep */
+        CapabilityStep: {
+            /** Label */
+            label: string;
+            /** Note */
+            note: string;
+            /** Parts */
+            parts: components["schemas"]["CapabilityPart"][];
+            /** Step */
+            step: number;
+        };
         /** ContactCreate */
         ContactCreate: {
             /** Email */
@@ -852,6 +1008,8 @@ export interface components {
         DraftsResponse: {
             /** Band */
             band: ("STRIKE" | "SEQUENCE" | "NURTURE" | "HOLD") | null;
+            /** Excluded Display */
+            excluded_display: string | null;
             /** Excluded Reason */
             excluded_reason: string | null;
             /** Touches */
@@ -880,6 +1038,7 @@ export interface components {
             documents: components["schemas"]["DocumentRow"][];
             firm: components["schemas"]["FirmRef"];
             lead: components["schemas"]["FirmLeadRef"] | null;
+            pain: components["schemas"]["PainAnalysis"] | null;
             /** Signals */
             signals: components["schemas"]["Proof"][];
             /** Tier Reason */
@@ -1182,6 +1341,8 @@ export interface components {
         };
         /** JobStep */
         JobStep: {
+            /** Label */
+            label: string;
             /** Name */
             name: string;
             /** Note */
@@ -1196,6 +1357,151 @@ export interface components {
         JobsResponse: {
             /** Items */
             items: components["schemas"]["ActionJob"][];
+        };
+        /** JourneyCopyEdit */
+        JourneyCopyEdit: {
+            /** Body */
+            body: string;
+            /** Subject */
+            subject?: string | null;
+        };
+        /** JourneyDay */
+        JourneyDay: {
+            /** Day */
+            day: number;
+            /** Step */
+            step: number;
+        };
+        /** JourneyDaysEdit */
+        JourneyDaysEdit: {
+            /** Days */
+            days: components["schemas"]["JourneyDay"][];
+        };
+        /**
+         * JourneyExample
+         * @description The journey for an invented firm, rendered by the engine itself.
+         */
+        JourneyExample: {
+            /**
+             * Band
+             * @enum {string}
+             */
+            band: "SEQUENCE" | "NURTURE";
+            drafts: components["schemas"]["DraftsResponse"];
+            /** Firm */
+            firm: string;
+            /**
+             * Pain
+             * @enum {string}
+             */
+            pain: "open_role" | "reposted_role" | "two_roles" | "mass_tort" | "reviews" | "new_system";
+            /** Person */
+            person: string;
+            /** System */
+            system: boolean;
+            /**
+             * Tier
+             * @enum {string}
+             */
+            tier: "1A" | "1B" | "2" | "3" | "4_NONBILLABLE";
+        };
+        /** JourneyFillIn */
+        JourneyFillIn: {
+            /** Label */
+            label: string;
+            /** Meaning */
+            meaning: string;
+            /** Token */
+            token: string;
+        };
+        /** JourneyOption */
+        JourneyOption: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+        };
+        /** JourneyResponse */
+        JourneyResponse: {
+            /** Banned Phrases */
+            banned_phrases: string[];
+            /** Fill Ins */
+            fill_ins: components["schemas"]["JourneyFillIn"][];
+            /** Max Day */
+            max_day: number;
+            /** Pains */
+            pains: components["schemas"]["JourneyOption"][];
+            /** Sender Missing */
+            sender_missing: string[];
+            /** Signature */
+            signature: string;
+            /** Steps */
+            steps: components["schemas"]["JourneyStep"][];
+            /** Tiers */
+            tiers: components["schemas"]["JourneyOption"][];
+            /** Tracks */
+            tracks: components["schemas"]["JourneyTrack"][];
+        };
+        /** JourneyStep */
+        JourneyStep: {
+            /** Day */
+            day: number;
+            /** Original Day */
+            original_day: number;
+            /** Purpose */
+            purpose: string;
+            /** Step */
+            step: number;
+            /** Templates */
+            templates: components["schemas"]["JourneyTemplate"][];
+            /** Title */
+            title: string;
+            /** Varies By */
+            varies_by: string;
+        };
+        /** JourneyTemplate */
+        JourneyTemplate: {
+            /** Body */
+            body: string;
+            /** Edited At */
+            edited_at: string | null;
+            /** Fill Ins */
+            fill_ins: string[];
+            /** Id */
+            id: string;
+            /** Keeps */
+            keeps: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "email" | "paragraph";
+            /** Original Body */
+            original_body: string;
+            /** Original Subject */
+            original_subject: string | null;
+            /** Step */
+            step: number;
+            /** Subject */
+            subject: string | null;
+            /** Used When */
+            used_when: string;
+        };
+        /** JourneyTrack */
+        JourneyTrack: {
+            /**
+             * Band
+             * @enum {string}
+             */
+            band: "STRIKE" | "SEQUENCE" | "NURTURE" | "HOLD";
+            /** Description */
+            description: string;
+            /** Label */
+            label: string;
+            /** Pace */
+            pace: number;
+            /** Steps */
+            steps: number[];
         };
         /** LastRun */
         LastRun: {
@@ -1246,6 +1552,7 @@ export interface components {
             outcomes: components["schemas"]["LeadOutcome"][];
             /** Owner */
             owner: string | null;
+            pain: components["schemas"]["PainAnalysis"] | null;
             proof: components["schemas"]["Proof"] | null;
             score: components["schemas"]["ScoreBreakdown"];
             /** Scored At */
@@ -1410,6 +1717,23 @@ export interface components {
             /** Transition Applied */
             transition_applied: boolean;
         };
+        /** OutsideService */
+        OutsideService: {
+            /** Cost */
+            cost: string;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** On */
+            on: boolean;
+            /** Spent Display */
+            spent_display: string | null;
+            /** What */
+            what: string;
+        };
         /** OverviewResponse */
         OverviewResponse: {
             attention: components["schemas"]["Attention"];
@@ -1427,6 +1751,33 @@ export interface components {
         OwnerRequest: {
             /** Owner */
             owner: string | null;
+        };
+        /** PainAnalysis */
+        PainAnalysis: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Pains */
+            pains: components["schemas"]["PainPoint"][];
+            /** Read */
+            read: string[];
+            /** Summary */
+            summary: string;
+        };
+        /** PainPoint */
+        PainPoint: {
+            /** Headline */
+            headline: string;
+            /** Kind */
+            kind: string;
+            /** Quote */
+            quote: string;
+            /** Source */
+            source: string;
+            /** Why It Matters */
+            why_it_matters: string;
         };
         /** PipelineStep */
         PipelineStep: {
@@ -1531,6 +1882,8 @@ export interface components {
             };
             /** Ready */
             ready: number;
+            /** Withheld */
+            withheld: components["schemas"]["QualifiedWithheld"][];
         };
         /** QualifiedResponse */
         QualifiedResponse: {
@@ -1584,6 +1937,13 @@ export interface components {
             state_display: string;
             /** Why Now */
             why_now: boolean;
+        };
+        /** QualifiedWithheld */
+        QualifiedWithheld: {
+            /** Count */
+            count: number;
+            /** Label */
+            label: string;
         };
         /** QueueCounts */
         QueueCounts: {
@@ -1711,6 +2071,8 @@ export interface components {
             step: number;
             /** Subject */
             subject: string;
+            /** Templates */
+            templates: string[];
         };
         /** ValidationError */
         ValidationError: {
@@ -2231,6 +2593,179 @@ export interface operations {
             };
         };
     };
+    get_journey_api_journey_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyResponse"];
+                };
+            };
+        };
+    };
+    put_days_api_journey_days_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JourneyDaysEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_days_api_journey_days_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyResponse"];
+                };
+            };
+        };
+    };
+    get_example_api_journey_example_get: {
+        parameters: {
+            query?: {
+                tier?: "1A" | "1B" | "2" | "3" | "4_NONBILLABLE";
+                pain?: "open_role" | "reposted_role" | "two_roles" | "mass_tort" | "reviews" | "new_system";
+                system?: boolean;
+                band?: "SEQUENCE" | "NURTURE";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyExample"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_template_api_journey_templates__template_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JourneyCopyEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyTemplate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_template_api_journey_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JourneyTemplate"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_leads_api_leads_get: {
         parameters: {
             query?: {
@@ -2570,6 +3105,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_capabilities_api_meta_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapabilitiesResponse"];
                 };
             };
         };

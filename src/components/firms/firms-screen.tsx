@@ -5,12 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { Panel } from "@/components/layout/panel";
 import { Unknown, ValueOrUnknown } from "@/components/record/unknown";
 import { TitleBar } from "@/components/shell/title-bar";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUrlState } from "@/hooks/use-url-state";
@@ -22,7 +21,7 @@ function FirmsSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading firms">
       {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} className="flex items-center gap-6 border-b border-rule px-6 py-3 last:border-b-0">
+        <div key={i} className="flex items-center gap-6 border-b border-rule py-3.5 last:border-b-0">
           <div className="grid w-[34%] gap-1.5">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-1/2" />
@@ -37,7 +36,7 @@ function FirmsSkeleton() {
   );
 }
 
-/** Every firm in the universe, searchable by name or domain. */
+/** Every firm on file, searchable by name or domain. */
 export function FirmsScreen() {
   const router = useRouter();
   const { params, update } = useUrlState();
@@ -59,9 +58,9 @@ export function FirmsScreen() {
     <>
       <TitleBar
         title="Firms"
-        meta={total !== undefined ? `${formatCount(total)} ${q ? "matching" : "in the universe"}` : undefined}
+        meta={total !== undefined ? `${formatCount(total)} ${q ? "matching" : "on file"}` : undefined}
       />
-      <div className="grid max-w-[76rem] gap-5 px-8 pt-6 pb-16">
+      <div className="grid max-w-[80rem] gap-5 px-8 pt-6 pb-16 max-md:px-4">
         <div className="relative w-80">
           <SearchIcon
             className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate"
@@ -77,19 +76,26 @@ export function FirmsScreen() {
           />
         </div>
 
-        <Panel className={cn("overflow-hidden transition-opacity duration-150", firms.isPlaceholderData && "opacity-60")}>
+        <section aria-label="Firms" className={cn("border-t border-rule transition-opacity duration-150", firms.isPlaceholderData && "opacity-60")}>
           {firms.isPending ? (
             <FirmsSkeleton />
           ) : firms.isError ? (
-            <div className="px-6 py-6">
+            <div className="py-6">
               <ErrorState error={firms.error} onRetry={() => void firms.refetch()} />
             </div>
           ) : items.length === 0 ? (
-            <div className="px-6">
-              <EmptyState title={q ? `No firm matches “${q}”.` : "No firms loaded yet."}>
-                {q
-                  ? "Try part of the name, or the domain without www."
-                  : "Firms appear once the purchased firm list has been loaded into the engine."}
+            <div>
+              <EmptyState
+                title={q ? `No firm matches “${q}”.` : "No firms on file yet."}
+                action={
+                  q ? null : (
+                    <Link href="/imports" className={buttonVariants({ variant: "primary" })}>
+                      Upload a sheet
+                    </Link>
+                  )
+                }
+              >
+                {q ? "Try part of the name, or the domain without www." : "Firms appear here once a sheet of them is loaded."}
               </EmptyState>
             </div>
           ) : (
@@ -98,11 +104,11 @@ export function FirmsScreen() {
                 <caption className="sr-only">Firms. Select a firm to open its record.</caption>
                 <thead>
                   <tr className="border-b border-rule text-meta text-slate">
-                    <th scope="col" className="h-9 w-[44%] pl-6 font-normal">Firm</th>
-                    <th scope="col" className="font-normal">Place</th>
-                    <th scope="col" className="font-normal">Tier</th>
-                    <th scope="col" className="font-normal">Lead</th>
-                    <th scope="col" className="pr-6 text-right font-normal">Fit</th>
+                    <th scope="col" className="h-10 w-[40%] font-medium">Firm</th>
+                    <th scope="col" className="font-medium">Place</th>
+                    <th scope="col" className="font-medium">Tier</th>
+                    <th scope="col" className="font-medium">Lead</th>
+                    <th scope="col" className="text-right font-medium">Fit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -110,13 +116,13 @@ export function FirmsScreen() {
                     <tr
                       key={firm.id}
                       onClick={() => router.push(`/firms/${firm.id}`)}
-                      className="h-10 cursor-pointer border-b border-rule text-table transition-colors duration-75 last:border-b-0 hover:bg-paper"
+                      className="cursor-pointer border-b border-rule text-table transition-colors duration-75 last:border-b-0 hover:bg-paper"
                     >
-                      <td className="max-w-0 truncate pr-4 pl-6">
-                        <Link href={`/firms/${firm.id}`} className="text-body font-medium text-ink hover:underline">
+                      <td className="max-w-0 py-3 pr-4">
+                        <Link href={`/firms/${firm.id}`} className="block truncate text-body font-semibold text-ink hover:underline">
                           {firm.name}
                         </Link>
-                        <span className="ml-2 text-meta text-slate">
+                        <span className="block truncate text-meta text-slate">
                           {firm.domain ?? <Unknown>No website on record</Unknown>}
                         </span>
                       </td>
@@ -127,8 +133,12 @@ export function FirmsScreen() {
                       <td className="pr-4 text-slate">
                         <ValueOrUnknown value={firm.state_display} unknown="No lead yet" />
                       </td>
-                      <td className="pr-6 text-right text-body text-ink tabular-nums">
-                        {firm.fit === null ? <Unknown className="text-meta">Not scored</Unknown> : firm.fit}
+                      <td className="text-right">
+                        {firm.fit === null ? (
+                          <Unknown className="text-meta">Not scored</Unknown>
+                        ) : (
+                          <span className="type-narrow text-subtitle leading-none font-semibold text-ink tabular-nums">{firm.fit}</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -136,7 +146,7 @@ export function FirmsScreen() {
               </table>
             </div>
           )}
-        </Panel>
+        </section>
 
         {firms.hasNextPage ? (
           <div className="flex items-center gap-4">

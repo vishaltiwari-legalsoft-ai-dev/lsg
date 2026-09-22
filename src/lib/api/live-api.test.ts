@@ -1,7 +1,7 @@
 /**
  * Opt-in contract check against the running engine:
  *
- *   LGE_LIVE_API=http://127.0.0.1:8000 npm run test
+ *   LGE_LIVE_API=http://127.0.0.1:8100 npm run test
  *
  * Every read endpoint the UI uses is fetched and parsed with the same strict,
  * type-pinned schemas the fixtures are held to. Skipped when the variable is
@@ -11,11 +11,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CapabilitiesResponse,
   DraftsResponse,
   FirmDetail,
   FirmsResponse,
   HandcheckResponse,
   HealthResponse,
+  JourneyExample,
+  JourneyResponse,
   LeadDetail,
   LeadsResponse,
   TodayResponse,
@@ -57,6 +60,21 @@ describe.skipIf(!base)("live engine matches the contract", () => {
 
   it("GET /api/handcheck", async () => {
     HandcheckResponse.parse(await api.handcheck());
+  });
+
+  it("GET /api/meta/capabilities", async () => {
+    const built = CapabilitiesResponse.parse(await api.capabilities());
+    expect(built.steps.map((s) => s.step)).toEqual([1, 2, 3]);
+    expect(built.outside.map((o) => o.id)).toEqual(["ai", "verification", "search"]);
+  });
+
+  it("GET /api/journey and an example firm's journey", async () => {
+    const journey = JourneyResponse.parse(await api.journey());
+    expect(journey.steps).toHaveLength(9);
+    const example = JourneyExample.parse(
+      await api.journeyExample({ tier: "1B", pain: "two_roles", system: false, band: "NURTURE" }),
+    );
+    expect(example.band).toBe("NURTURE");
   });
 
   it("answers an unknown lead with the error envelope", async () => {

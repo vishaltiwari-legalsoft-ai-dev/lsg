@@ -13,5 +13,9 @@ export const API_BASE: string = (process.env.NEXT_PUBLIC_API_BASE ?? "").replace
 export const API_MODE: ApiMode =
   process.env.NEXT_PUBLIC_API_MODE === "fixtures" ? "fixtures" : "api";
 
-/** The command that starts the engine's API, shown when it can't be reached. */
-export const ENGINE_START_COMMAND = "uv run lge serve";
+/**
+ * The command that starts the engine's API, shown when it can't be reached.
+ * Through the interpreter: Windows Application Control blocks the venv's
+ * launcher stubs on this machine, so `uv run lge serve` fails there.
+ */
+export const ENGINE_START_COMMAND = ".venv\\Scripts\\python.exe -m lge serve";

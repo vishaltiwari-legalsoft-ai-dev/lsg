@@ -10,9 +10,10 @@ Add what you did to `../brain/REPORT.md`: one entry per day, newest first, **one
 
 ## Running it
 
-- `npm run dev` — http://localhost:3100. `/api/*` is rewritten to the engine on `127.0.0.1:8000`, so the app is same-origin and needs no CORS.
+- `npm run dev` — http://localhost:5000. `/api/*` is rewritten to the engine on `127.0.0.1:8100`, so the app is same-origin and needs no CORS.
 - `npm run dev:fixtures` — sample data only, no engine needed.
-- Start the engine first: `python -m lge serve` in the backend repo, with Postgres up (`bash scripts/pg.sh start`).
+- Start the engine first: `.venv/Scripts/python.exe -m lge serve` in the backend repo, with Postgres up (`bash scripts/pg.sh start`).
+- Port 3000 belongs to another project on this machine. Never stop or reuse it.
 
 ## Rules
 
