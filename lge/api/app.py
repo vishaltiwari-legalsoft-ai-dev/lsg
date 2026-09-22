@@ -1,6 +1,6 @@
 """The FastAPI app: CORS, routers, and the one error shape every response
 uses (plan/api-contract.md: `{"error": {"code","message","fix"}}`). Bound
-to 127.0.0.1:8000 by `lge serve` / `scripts/export_openapi.py`'s uvicorn
+to 127.0.0.1:8100 by `lge serve` / `scripts/export_openapi.py`'s uvicorn
 invocation -- this module itself is transport-agnostic.
 """
 
@@ -22,6 +22,7 @@ from lge.api.routes import (
     handcheck,
     health,
     imports,
+    journey,
     leads,
     meta,
     overview,
@@ -32,7 +33,11 @@ from lge.api.routes import (
 
 logger = logging.getLogger("lge.api")
 
-_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+# Only our own screens. They reach the engine through their own server's
+# /api proxy, so they never need this; it is for a page calling the engine
+# directly. Port 3000 belongs to another project on this machine, and a page
+# there must not be able to read contacts, which are personal data.
+_ALLOWED_ORIGINS = ["http://localhost:5000", "http://127.0.0.1:5000"]
 
 _HTTP_STATUS_CODE: dict[int, str] = {
     400: "bad_request",
@@ -77,6 +82,7 @@ app.include_router(imports.router)
 app.include_router(actions.router)
 app.include_router(overview.router)
 app.include_router(qualified.router)
+app.include_router(journey.router)
 
 
 def _error_body(code: str, message: str, fix: str | None = None) -> dict:

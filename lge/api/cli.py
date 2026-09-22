@@ -15,7 +15,9 @@ from lge.cli import app
 from lge.settings import PROJECT_ROOT
 
 _HOST_OPTION = typer.Option("127.0.0.1", "--host")
-_PORT_OPTION = typer.Option(8000, "--port")
+# 8100, not 8000: the screens run on 5000 and proxy /api here (frontend
+# next.config.ts); 3000 belongs to another project on this machine.
+_PORT_OPTION = typer.Option(8100, "--port")
 _RELOAD_OPTION = typer.Option(False, "--reload")
 
 

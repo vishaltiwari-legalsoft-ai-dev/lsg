@@ -5,7 +5,10 @@
 # the runner is the only thing that walks this list, and Prefect can later
 # wrap the same callables unchanged.
 #
-# Each step is either `{component: <name>}` or `{gate: <name>}`. A gate
+# Each step is `{component: <name>}`, `{gate: <name>}` or `{flow: <name>}`.
+# A flow step is replaced by that flow's steps where it stands
+# (lge/ops/config.py:load_flows), so a recipe is written once and asked for
+# by name -- an include that loops, or names no flow, raises loudly. A gate
 # step's `passed=False` STOPS the flow -- "the gate that must not be
 # advisory" (context/40-pipeline/06-orchestration.md). A component step
 # whose RunResult.failed > 0 also stops the flow unless the step carries
@@ -38,18 +41,49 @@ flows:
       - component: coverage_report
       - gate: g7_coverage
 
-  # profile_firms -> extract_attributes -> reconcile_and_class ->
-  # resolve_contacts -> emit_leads, chained as one flow. G3 sits between
-  # classification and contact resolution because R1 is a paid enricher --
-  # a drifted classifier must not spend enrichment budget on the wrong
-  # firms (context/60-execution/03-hard-gates.md G3).
+  # The research recipe -- everything the engine does to a firm, in order,
+  # written once (D-054). `lge flow research` runs it over every firm;
+  # profile_probe below runs it and then builds the lists; the screen's
+  # Research button runs the same components for one firm
+  # (lge/api/routes/actions.py:research_steps) and skips the gate, which
+  # judges the whole universe -- one firm is not a distribution. The button
+  # once kept a list of its own and it drifted: it left out the AI reading,
+  # the address check and classify, and a lead researched from the screen
+  # never left PROFILING.
   #
-  # r_site_contacts / r3_email_pattern / r4_verify / r5_phone / r2_bar_join
-  # / r1_enrich are being built in parallel (migration 070) and are not
-  # registered components yet in this checkout -- running this flow before
-  # they land fails loudly on the first missing name, which is the correct
-  # behaviour, not a bug in the flow definition.
-  profile_probe:
+  # profile_firms -> extract_attributes -> reconcile_and_class ->
+  # resolve_contacts -> emit_leads. G3 sits between classification and
+  # contact resolution because address finding and verification are paid
+  # -- a drifted classifier must not spend that budget on the wrong firms
+  # (context/60-execution/03-hard-gates.md G3). The last reconcile folds in
+  # what search and the careers pages wrote (review count, hiring facts)
+  # before the score reads it.
+  research:
+    steps:
+      - flow: read_site
+      - gate: g3_tier_distribution
+      - flow: find_people
+      - component: classify
+      - flow: read_openings
+      - component: reconcile
+      - component: ja8_pain
+        continue_on_fail: true
+      - component: score
+
+  # People and addresses again, off pages already read -- the button's
+  # "find contacts" scope. Reconcile before classify: the team page's
+  # attorney count is a size, and a size can move the tier.
+  find_contacts:
+    steps:
+      - component: px_site_facts
+      - flow: find_people
+      - component: reconcile
+      - component: classify
+      - component: score
+
+  # The pieces the two recipes above are made of. Each runs on its own too
+  # (`lge flow find_people`).
+  read_site:
     steps:
       - component: p1_site_map
       - component: p2_fetch
@@ -64,7 +98,9 @@ flows:
       - component: reconcile
       - component: p9_escalate
       - component: reconcile
-      - gate: g3_tier_distribution
+
+  find_people:
+    steps:
       - component: r_site_contacts
       - component: r_site_emails
       - component: r_search_links
@@ -72,12 +108,18 @@ flows:
       - component: r3_email_pattern
       - component: r_email_guess
       - component: r4_verify
-      - component: classify
+
+  read_openings:
+    steps:
       - component: ja1_careers
       - component: ja6_normalise
       - component: ja6_closure
       - component: ja7_pain_signals
-      - component: score
+
+  # The whole-list build: research every firm, then write the lists.
+  profile_probe:
+    steps:
+      - flow: research
       - component: build_list
 
   # The nightly cron chain (context/40-pipeline/06-orchestration.md "Cron --
@@ -95,10 +137,7 @@ flows:
   # for whatever runs the schedule (schtasks history) to notice.
   nightly:
     steps:
-      - component: ja1_careers
-      - component: ja6_normalise
-      - component: ja6_closure
-      - component: ja7_pain_signals
+      - flow: read_openings
       - component: score
       - component: build_list
       - component: observe_snapshot

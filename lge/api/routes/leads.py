@@ -46,6 +46,7 @@ from lge.api.rendering import (
     build_contact_summary,
     build_lead_row,
     build_proof,
+    fetch_pain_analysis,
     fetch_signal_scores,
 )
 from lge.api.scoring import compute_fit_terms, signal_term_label
@@ -57,14 +58,16 @@ from lge.export.list import (
     classify_open_scored_leads,
     fetch_contacts,
     fetch_emails,
+    fetch_journey_edits,
     fetch_repost_first_seen,
     fetch_signals,
     select_contacts,
 )
 from lge.journey.build import build_journey
+from lge.journey.catalogue import BY_PATH
 from lge.journey.model import Contact as JourneyContact
 from lge.journey.model import Firm as JourneyFirm
-from lge.journey.model import JourneyLead
+from lge.journey.model import JourneyEdits, JourneyLead, JourneyResult
 from lge.journey.model import Signal as JourneySignal
 from lge.journey.select import load_config as load_journey_config
 from lge.registry import RunContext
@@ -570,6 +573,7 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
         timeline=timeline,
         notes=notes,
         job=latest_job(conn, row["firm_id"]),
+        pain=fetch_pain_analysis(conn, row["firm_id"]),
     )
 
 
@@ -599,12 +603,16 @@ def get_drafts(lead_id: str, conn: ConnDep) -> DraftsResponse:
     return drafts_for_row(conn, row, lead_id)
 
 
-def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsResponse:
+def drafts_for_row(
+    conn: psycopg.Connection, row: dict, lead_id: str, edits: JourneyEdits | None = None
+) -> DraftsResponse:
     """The journey for one lead row (band, firm columns, arming_signal) as the
-    drafts endpoint renders it -- shared with /api/qualified (D-047)."""
+    drafts endpoint renders it -- shared with /api/qualified (D-047). A caller
+    rendering many rows reads the Email journey screen's edits once and
+    passes them in."""
     band = row["band"]
     if band not in ("SEQUENCE", "NURTURE"):
-        return DraftsResponse(band=band, excluded_reason=None, touches=[])
+        return _no_drafts(band, None)
 
     at = datetime.now(UTC)
     contacts_by_firm = fetch_contacts(conn, [row["firm_id"]])
@@ -612,7 +620,7 @@ def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsR
     owner, admin = _pick_owner_and_admin(firm_contacts)
     primary = owner or admin
     if primary is None:
-        return DraftsResponse(band=band, excluded_reason="no_usable_contact", touches=[])
+        return _no_drafts(band, "no_usable_contact")
 
     signal = None
     has_signal_evidence = False
@@ -646,9 +654,18 @@ def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsR
         lead_id=lead_id, band=band, firm=firm, contact=contact, signal=signal,
         repost_first_seen=None, at=at,
     )
-    result = build_journey(journey_lead)
+    result = build_journey(journey_lead, edits if edits is not None else fetch_journey_edits(conn))
+    return drafts_from_result(band, result, has_signal_evidence)
+
+
+def drafts_from_result(
+    band: str, result: JourneyResult, has_signal_evidence: bool
+) -> DraftsResponse:
+    """A rendered journey as the API sends it: every email the band expects,
+    in order, the ones this lead does not get saying why. Shared by a lead's
+    drafts and the Email journey screen's example firm."""
     if result.excluded_reason is not None:
-        return DraftsResponse(band=band, excluded_reason=result.excluded_reason, touches=[])
+        return _no_drafts(band, result.excluded_reason)
 
     band_rules = load_journey_config()["band_rules"]
     if band == "SEQUENCE":
@@ -661,7 +678,10 @@ def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsR
     present = {t.step for t in result.touches}
 
     touches = [
-        Touch(step=t.step, day=t.day, subject=t.subject, body=t.body, skipped_reason=None)
+        Touch(
+            step=t.step, day=t.day, subject=t.subject, body=t.body, skipped_reason=None,
+            templates=[BY_PATH[path].id for path in t.templates],
+        )
         for t in result.touches
     ]
     for step in expected_steps:
@@ -671,11 +691,20 @@ def drafts_for_row(conn: psycopg.Connection, row: dict, lead_id: str) -> DraftsR
             Touch(
                 step=step, day=0, subject="", body="",
                 skipped_reason=_SKIP_REASON.get(step, "not applicable for this lead"),
+                templates=[],
             )
         )
     touches.sort(key=lambda t: t.step)
 
-    return DraftsResponse(band=band, excluded_reason=None, touches=touches)
+    return DraftsResponse(band=band, excluded_reason=None, excluded_display=None, touches=touches)
+
+
+def _no_drafts(band: str | None, code: str | None) -> DraftsResponse:
+    """No emails for this lead: the engine's code, and the same reason in words."""
+    return DraftsResponse(
+        band=band, excluded_reason=code,
+        excluded_display=reason_display(code) if code else None, touches=[],
+    )
 
 
 # ---------------------------------------------------------------------------

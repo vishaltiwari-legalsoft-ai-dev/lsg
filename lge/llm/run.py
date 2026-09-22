@@ -91,7 +91,7 @@ def _task_already_ok(ctx: RunContext, component: str, entity_id: str, ihash: str
         return cur.fetchone() is not None
 
 
-def _insert_llm_call(
+def insert_llm_call(
     ctx: RunContext,
     *,
     firm_id: str,
@@ -416,7 +416,7 @@ def run_extraction(
                     cost_usd = job["est_cost"]
 
                 if outcome.kind == "failed":
-                    _insert_llm_call(
+                    insert_llm_call(
                         ctx,
                         firm_id=firm_id,
                         component=component_name,
@@ -433,7 +433,7 @@ def run_extraction(
                     raise LLMCallError(outcome.error or "llm call failed")
 
                 if outcome.kind == "invalid":
-                    _insert_llm_call(
+                    insert_llm_call(
                         ctx,
                         firm_id=firm_id,
                         component=component_name,
@@ -457,7 +457,7 @@ def run_extraction(
                         outcome.extraction, job["user_message"]
                     )
                     status = grounding.call_status(ungrounded_fields)
-                    _insert_llm_call(
+                    insert_llm_call(
                         ctx,
                         firm_id=firm_id,
                         component=component_name,

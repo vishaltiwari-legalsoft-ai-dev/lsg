@@ -6,7 +6,8 @@ touches the database.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import date, datetime
 
 
@@ -64,6 +65,24 @@ class RenderedTouch:
     day: int
     subject: str
     body: str
+    # The copy files this email was built from (journey/copy/-relative), the
+    # email's own first -- so a screen can say which wording to change.
+    templates: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class JourneyEdits:
+    """What the Email journey screen changed (D-057): new wording for a copy
+    file, a new day for an email. `lge.export.list.fetch_journey_edits` reads
+    them from the store; the renderer takes them as given. Empty means the
+    originals -- journey/copy/ and journey/sequences.yml."""
+
+    # copy file path -> (subject, body); step -> days after email 1
+    copy: Mapping[str, tuple[str | None, str]] = field(default_factory=dict)
+    days: Mapping[int, int] = field(default_factory=dict)
+
+
+NO_EDITS = JourneyEdits()
 
 
 @dataclass(frozen=True, slots=True)

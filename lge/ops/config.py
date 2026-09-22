@@ -55,13 +55,45 @@ def load_alerts_config(path: Path = ALERTS_PATH) -> AlertsConfig:
     return AlertsConfig(raw=raw, gates_g3=g3)
 
 
+class FlowError(RuntimeError):
+    """A flow definition problem (unknown flow/component/gate, a malformed
+    step, an include that loops) -- never swallowed."""
+
+
 def load_flows(path: Path = FLOWS_PATH) -> dict[str, list[dict[str, Any]]]:
     """{flow_name: [step, ...]} -- each step is {"component": name, ...}
-    or {"gate": name}. Raises FileNotFoundError / yaml.YAMLError loudly;
-    never swallowed, per the same rule discover() follows for a bad import."""
+    or {"gate": name}. A `{flow: name}` step in the file is replaced by that
+    flow's own steps, in place, so a recipe is written once and every flow
+    that runs it asks for it by name (D-054). Raises FileNotFoundError /
+    yaml.YAMLError / FlowError loudly; never swallowed, per the same rule
+    discover() follows for a bad import."""
     raw = _read_yaml(path)
-    flows = raw.get("flows", {})
-    return {name: list((spec or {}).get("steps", [])) for name, spec in flows.items()}
+    flows = {
+        name: list((spec or {}).get("steps", [])) for name, spec in raw.get("flows", {}).items()
+    }
+    return {name: _expand(flows, name, ()) for name in flows}
+
+
+def _expand(
+    flows: dict[str, list[dict[str, Any]]], name: str, trail: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    if name in trail:
+        raise FlowError(f"flow {name!r} includes itself: {' -> '.join((*trail, name))}")
+    out: list[dict[str, Any]] = []
+    for step in flows[name]:
+        if not (isinstance(step, dict) and "flow" in step):
+            out.append(step)
+            continue
+        inner = step["flow"]
+        if len(step) > 1:
+            raise FlowError(
+                f"flow {name!r}: an include takes no options, only the flow's name: {step!r}"
+            )
+        if inner not in flows:
+            known = ", ".join(sorted(flows)) or "(none)"
+            raise FlowError(f"flow {name!r} includes unknown flow {inner!r}. Known flows: {known}")
+        out.extend(_expand(flows, inner, (*trail, name)))
+    return out
 
 
 def load_schedule(path: Path = SCHEDULE_PATH) -> list[dict[str, Any]]:

@@ -118,6 +118,20 @@ def test_the_settings_choose_serper_when_its_key_is_present():
     assert seam.engine_name(s3) == "ddg"
 
 
+def _settings(**seams) -> Settings:
+    return Settings(dsn="", admin_dsn="", object_store=".", user_agent="", anthropic_api_key="",
+                    openrouter_api_key="", live=False, **seams)
+
+
+def test_the_business_listing_is_looked_up_only_by_an_engine_that_has_one_with_its_key():
+    # What the screens' "places" light reports (D-054): Serper's /places with its key.
+    assert seam.has_listings(_settings(serper_api_key="k")) is True
+    assert seam.has_listings(_settings(brave_api_key="k")) is False  # no listings endpoint
+    assert seam.has_listings(_settings()) is False  # DuckDuckGo
+    # forced to Serper without the key: the engine could not be built, so no
+    assert seam.has_listings(_settings(search_engine="serper")) is False
+
+
 def test_duckduckgo_reads_the_status_before_the_page(monkeypatch):
     """The library folds a 202 into "No results found."; the engine reads the
     status itself (D-039) and raises SearchBlocked."""

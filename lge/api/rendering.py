@@ -24,7 +24,7 @@ from lge.api.labels import (
     state_display,
     tier_display,
 )
-from lge.api.models import ContactSummary, FirmRef, LeadRow, Proof
+from lge.api.models import ContactSummary, FirmRef, LeadRow, PainAnalysis, PainPoint, Proof
 from lge.api.stage import STAGE_DISPLAY, stage_of
 from lge.export.list import best_email
 from lge.journey.model import Signal
@@ -180,4 +180,28 @@ def build_lead_row(
         proof=proof,
         contact=contact,
         scored_at=row.get("scored_at"),
+    )
+
+
+def fetch_pain_analysis(conn: Any, firm_id: Any) -> PainAnalysis | None:
+    """The AI's reading of what hurts at this firm (ja8_pain, D-058), latest
+    first. Every pain here carried a quote from the record when it was
+    written; an ungrounded one was thrown away before the claim was made."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT value, observed_at FROM firm_attribute WHERE firm_id = %s "
+            "AND attr = 'pain_analysis' ORDER BY observed_at DESC LIMIT 1",
+            (firm_id,),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    value = row["value"] or {}
+    return PainAnalysis(
+        summary=value.get("summary") or "",
+        pains=[PainPoint(**{k: p.get(k, "") for k in
+                            ("kind", "headline", "quote", "source", "why_it_matters")})
+               for p in value.get("pains") or []],
+        read=list(value.get("read") or []),
+        at=row["observed_at"],
     )

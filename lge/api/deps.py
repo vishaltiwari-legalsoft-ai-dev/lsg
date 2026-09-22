@@ -1,19 +1,18 @@
 """FastAPI dependencies: a pooled DB connection per request, and the
 provider-configured booleans `GET /api/meta/providers` returns.
 
-Provider API keys are read directly from `os.environ` (with the same `.env`
-fallback `lge.settings.Settings` gives itself), never by extending
-`Settings` -- `lge/settings.py` is another agent's owned file, and
-`lge/planes/r/r4_verify.py` already sets this precedent for
-ZEROBOUNCE_API_KEY / NEVERBOUNCE_API_KEY. **Never expose a key's value --
-booleans only**, per plan/api-contract.md's meta/providers endpoint.
+Each boolean asks the seam that does the work (brain/plan/plan-v2.md, "the
+seams") -- the verifier the verification step would use, the listing lookup
+the search step would make -- so a light can never say one thing while the
+engine does another. The "places" light used to read a GOOGLE_PLACES_API_KEY
+nothing else reads; the listing comes from the search engine (D-045, D-054).
+**Never expose a key's value -- booleans only**, per plan/api-contract.md's
+meta/providers endpoint.
 """
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
-from functools import lru_cache
 from typing import Annotated
 
 import psycopg
@@ -21,7 +20,7 @@ from fastapi import Depends
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
-from lge.settings import PROJECT_ROOT, get_settings
+from lge.settings import get_settings
 
 _pool: ConnectionPool | None = None
 
@@ -69,43 +68,19 @@ ConnDep = Annotated[psycopg.Connection, Depends(get_conn)]
 
 
 # =============================================================================
-# Provider booleans -- config/*.env fallback, mirroring
-# lge.settings._read_dotenv's contract exactly (duplicated in miniature
-# rather than importing a private helper from another agent's owned file).
+# Provider booleans -- each one asked of the seam that does the work.
 # =============================================================================
 
 
-@lru_cache(maxsize=1)
-def _dotenv() -> dict[str, str]:
-    path = PROJECT_ROOT / ".env"
-    values: dict[str, str] = {}
-    if not path.is_file():
-        return values
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-            value = value[1:-1]
-        if key:
-            values[key] = value
-    return values
-
-
-def _env(name: str) -> str:
-    if name in os.environ:
-        return os.environ[name]
-    return _dotenv().get(name, "")
-
-
 def providers_status() -> dict[str, object]:
+    from lge.planes.r.r4_verify import configured_provider
+    from lge.search import has_listings
+
     settings = get_settings()
     return {
         "ai_extraction": bool(settings.openrouter_api_key),
-        "email_verification": bool(_env("ZEROBOUNCE_API_KEY")) or bool(_env("NEVERBOUNCE_API_KEY")),
-        "places": bool(_env("GOOGLE_PLACES_API_KEY")),
+        "email_verification": configured_provider(settings) is not None,
+        "places": has_listings(settings),
         "crawler_identity": settings.user_agent or "not configured",
     }
 
@@ -120,5 +95,5 @@ def providers_inert() -> list[str]:
     if not status["email_verification"]:
         inert.append("Email verification")
     if not status["places"]:
-        inert.append("Places")
+        inert.append("Google Business Profile lookup")
     return inert

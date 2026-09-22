@@ -1,9 +1,14 @@
-Subject: still open?
+Subject: The {role} seat is still open
 
-{first_name} — the {role} posting is still up as of this week.
+Hi {first_name},
 
-If you've filled it, congratulations, ignore me. If it's still open
-{days_open} days on, that's usually the market telling you the candidate
-isn't there locally.
+The {role} post is still up as of this week.
 
-That's the specific gap we fill.
+If you've filled it, congratulations, and please ignore me. If it's still
+open {days_open} days on, that's usually the market telling you the
+candidate isn't there locally, and another month of the same search tends
+to confirm it.
+
+That's the specific gap we fill, and interviewing costs nothing.
+
+Would two profiles be useful?

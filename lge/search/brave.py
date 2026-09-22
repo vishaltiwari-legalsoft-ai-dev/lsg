@@ -12,6 +12,7 @@ SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 class BraveEngine:
     name = "brave"
+    has_listings = False
 
     def __init__(self, api_key: str, *, timeout_s: float = 15.0) -> None:
         if not api_key:

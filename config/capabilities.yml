@@ -1,0 +1,140 @@
+# What the engine does today, in the three steps of the brief, and what each
+# part still needs (D-059). The Home screen reads this through
+# GET /api/meta/capabilities, so what a visitor is told and what the engine
+# actually does have one source. Keep it honest: a part is `built` only when a
+# person can use it from the screen today.
+#
+#   built    -- done, and reachable from the screen
+#   partial  -- there, but not to the letter of the brief (the note says how)
+#   planned  -- not built yet
+#
+# `needs` names an outside service below. Whether that service is switched on
+# is never written here: it is read live from the engine's own seams, so a key
+# arriving flips every part that waits on it without anyone editing this file.
+
+outside:
+  - id: ai
+    label: The AI reader
+    key: OPENROUTER_API_KEY
+    what: >-
+      Reads each firm's site for its fee model, practice, people and gaps, reads
+      an uploaded sheet's columns, and writes the pain analysis.
+    cost: Paid per firm read. Measured here at well under a penny a firm.
+    provider: ai_extraction
+  - id: verification
+    label: Address checking
+    key: NEVERBOUNCE_API_KEY
+    what: >-
+      Checks every address before a lead can be handed over, and lets the engine
+      work out the addresses it could not find on a site.
+    cost: Paid per address checked.
+    provider: email_verification
+  - id: search
+    label: Search and business listings
+    key: SERPER_API_KEY
+    what: >-
+      Google search at volume, the Google Business Profile (phone, address,
+      category, rating, review count), and reviews. Without it the engine falls
+      back to DuckDuckGo, which stops us after a few hundred queries.
+    cost: Paid per search.
+    provider: places
+
+steps:
+  - step: 1
+    label: Raw leads
+    note: A sheet of firms comes in and becomes records the engine can work.
+    parts:
+      - label: A sheet in any layout is read
+        state: built
+        what: The AI reads the header and a sample; a person can correct any column.
+        needs: ai
+      - label: Every website on the sheet is checked
+        state: built
+        what: Each site is visited, and the firm's own pages are found from it.
+      - label: A firm is searched for when its website is wrong
+        state: partial
+        what: The finder is built and careful, but it runs only from the command line.
+        needs: search
+      - label: Rows sorted into Batch 1 and Batch 2
+        state: planned
+        what: >-
+          All five fields means Batch 1, a name with gaps means Batch 2, and a row
+          with no firm name is discarded instead of becoming "Unknown Firm".
+      - label: What was discarded, shown and downloadable
+        state: planned
+        what: Every rejected row with its number and the reason.
+
+  - step: 2
+    label: Enrichment
+    note: Everything the engine can learn about a firm, from its own pages and the open web.
+    parts:
+      - label: The firm's own site read end to end
+        state: partial
+        what: Twelve pages today where the brief asks for five, with the phone and address from the listing instead.
+      - label: Fee model, practice, size and tier read from the site
+        state: built
+        what: Read by patterns and by the AI, and never guessed when the site does not say.
+        needs: ai
+      - label: The people, with their titles and roles
+        state: built
+        what: Owners, office managers and attorneys, from the pages and the AI's reading.
+      - label: Addresses found on the site and in search
+        state: built
+      - label: An address worked out from a name and the firm's domain
+        state: built
+        what: Eleven patterns, the firm's own pattern learned from addresses already found.
+        needs: verification
+      - label: Every address checked before it is used
+        state: built
+        needs: verification
+      - label: LinkedIn profiles for the firm and its people
+        state: built
+        what: From search results only. LinkedIn itself is never opened.
+        needs: search
+      - label: The Google Business Profile read
+        state: partial
+        what: Only the link, rating and count are kept; the phone, address and category are thrown away.
+        needs: search
+      - label: Reviews read for what they say
+        state: planned
+        what: Counts and links today. No review site is ever scraped.
+        needs: search
+      - label: The firm's phone number
+        state: partial
+        what: The main line only; nobody's direct line yet.
+      - label: The AI names what hurts, quoting the record
+        state: built
+        what: Every pain must quote one line of the firm's record; anything it cannot quote is thrown away.
+        needs: ai
+      - label: An enrichment report for each lead
+        state: planned
+        what: The firm, the people, the reviews, the listing and the pain analysis as one document.
+      - label: Firms enriched in batches of 250, Batch 1 first, starting by itself
+        state: planned
+        what: Today a person selects leads and presses Research.
+
+  - step: 3
+    label: Handover
+    note: The engine drafts and keeps the record. Sending stays with you or the vendor.
+    parts:
+      - label: Seven checks decide whether a lead is ready
+        state: built
+        what: Site read, fits the profile, a named decision-maker, an address, a checked address, a profile, emails drafted.
+      - label: The email journey, day by day
+        state: built
+        what: Nine emails over four weeks, each written from the lead's own proof; the words and the days can be changed for every lead.
+      - label: Every email is signed, and says how to stop
+        state: built
+        what: >-
+          The engine appends who it is from and an opt-out line to every draft.
+          The name, reply address and postal address US law requires come from
+          config/sender.yml, and the Email journey screen says what is still blank.
+      - label: What a firm's answer means, on record
+        state: built
+        what: Replied, meeting, not now, opted out, won, lost — each moves the lead and is kept in its history.
+      - label: Actual leads kept as a pool, each journey saved as it lands
+        state: planned
+        what: Today the panel works the checks out afresh on every visit.
+      - label: A vendor chosen, a handover document written, leads marked as given
+        state: planned
+        what: No vendor, no handover record and no note of who received which lead exists yet.

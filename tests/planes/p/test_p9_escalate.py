@@ -202,11 +202,41 @@ def test_limit_option_caps_the_trigger_query(db):
     assert len(_select_firm_ids(_ctx(db), {"limit": 2})) == 2
 
 
-def test_firm_ids_file_overrides_the_trigger_query(tmp_path, db):
-    firm_id = _seed_firm(db)  # no trigger fires for this firm
+def _confident_p8(db, firm_id) -> None:
+    _write_p8_claim(db, firm_id, "fee_model", "contingency", 0.9)
+    _write_p8_claim(db, firm_id, "attorney_count", 3, 0.9)
+    _write_p8_claim(db, firm_id, "primary_practice", "personal_injury", 0.9)
+
+
+def test_firm_ids_file_narrows_the_trigger_query_never_bypasses_it(tmp_path, db):
+    # A research job for one firm hands p9 that firm's id. Escalating it
+    # regardless would send every firm researched from the screen to the
+    # expensive model (D-054): only a firm a trigger fires for is selected.
+    quiet = _seed_firm(db)
+    _confident_p8(db, quiet)
+    unsure = _seed_firm(db)
+    _write_p8_claim(db, unsure, "fee_model", "contingency", 0.4)
+    unlisted = _seed_firm(db, tier="1A")  # a trigger fires, but it is not on the list
     path = tmp_path / "firms.txt"
-    path.write_text(f"{firm_id}\n", encoding="utf-8")
-    assert _select_firm_ids(_ctx(db), {"firm_ids_file": str(path)}) == [str(firm_id)]
+    path.write_text(f"{quiet}\n{unsure}\n", encoding="utf-8")
+
+    assert _select_firm_ids(_ctx(db), {"firm_ids_file": str(path)}) == [str(unsure)]
+    assert str(unlisted) in _select_firm_ids(_ctx(db), {})
+
+
+def test_force_escalates_every_listed_firm(tmp_path, db):
+    quiet = _seed_firm(db)
+    _confident_p8(db, quiet)
+    path = tmp_path / "firms.txt"
+    path.write_text(f"{quiet}\n", encoding="utf-8")
+    assert _select_firm_ids(_ctx(db), {"firm_ids_file": str(path), "force": "1"}) == [str(quiet)]
+
+
+def test_an_empty_firm_list_selects_nothing(tmp_path, db):
+    _seed_firm(db, tier="1A")
+    path = tmp_path / "firms.txt"
+    path.write_text("\n", encoding="utf-8")
+    assert _select_firm_ids(_ctx(db), {"firm_ids_file": str(path)}) == []
 
 
 # =============================================================================

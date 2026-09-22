@@ -138,15 +138,108 @@ _REASON_DISPLAY: dict[str, str] = {
 }
 
 
+# Why a lead's journey cannot be written -- lge.journey.build's codes, some
+# carrying the missing detail after a colon.
+_JOURNEY_REASON_DISPLAY: dict[str, str] = {
+    "sequence_missing_signal_evidence": "No proof of a need on record, so no emails",
+    "no_touches_rendered": "No email fits this firm",
+}
+_FILL_IN_WORDS: dict[str, str] = {
+    "first_name": "the person's first name",
+    "firm_name": "the firm's name",
+    "role": "the job title",
+    "role_2": "the second job title",
+    "posted_date": "the date the post was first seen",
+    "repost_month": "the month the post went back up",
+    "days_open": "how long the post has been open",
+    "tort": "the mass tort's name",
+    "practice": "the practice area",
+    "cms": "the case system",
+}
+
+
 def reason_display(code: str | None) -> str:
     if not code:
         return "Unknown reason"
     if code in _REASON_DISPLAY:
         return _REASON_DISPLAY[code]
+    if code in _JOURNEY_REASON_DISPLAY:
+        return _JOURNEY_REASON_DISPLAY[code]
+    kind, _, detail = code.partition(":")
+    if kind == "unresolved_token":
+        return f"An email needs {_FILL_IN_WORDS.get(detail, 'a detail')}, and it is not known"
+    if kind == "fee_model_unresolved":
+        return "Fee model unknown, so the third email can't be written"
+    if kind == "no_touch1_variant":
+        if detail == "none":
+            return "No pain found, so there is no first email"
+        return "No first email fits this pain"
     if code.startswith("missing_"):
         what = code.removeprefix("missing_").replace("_", " ")
         return f"Draft cannot be written — missing {what}"
     return code.replace("_", " ").strip().capitalize()
+
+
+# The list-hygiene rules that hold a lead back from every list and sheet
+# (lge.export.list.HYGIENE_RULES), in words for the Qualified panel's
+# "held back" line. The two suppression scopes are one thing to a person.
+_WITHHELD_DISPLAY: dict[str, str] = {
+    "cooldown": "Parked",
+    "firm_track_portal": "Existing portal customer",
+    "firm_track_displacement": "Competitor's customer",
+    "suppressed_firm": "Do not contact",
+    "suppressed_domain": "Do not contact",
+}
+
+
+def withheld_display(code: str) -> str:
+    return _WITHHELD_DISPLAY.get(code) or reason_display(code)
+
+
+# =============================================================================
+# Research steps -- the components a research job runs (config/flows.yml's
+# `research` and `find_contacts`), in words a person follows on the job's
+# progress list. tests/test_registry_steps.py holds every step of both flows
+# to having one here, so a component added to the recipe never shows up as
+# its bare name.
+# =============================================================================
+
+_STEP_LABELS: dict[str, str] = {
+    "p1_site_map": "Map the site",
+    "p2_fetch": "Read the pages",
+    "p3_render": "Render JavaScript pages",
+    "p4_text": "Extract the text",
+    "p5_jsonld": "Read structured data",
+    "p6_fee": "Read the fee model",
+    "p7_tech": "Fingerprint the software",
+    "px_site_rules": "Practice areas and rules",
+    "px_site_facts": "People, offices, testimonials, gaps",
+    "p8_llm": "Read the site with the AI",
+    "p9_escalate": "A second AI reading, where the first was unsure",
+    "reconcile": "Reconcile the record",
+    "r_site_contacts": "People into contacts",
+    "r_site_emails": "Addresses printed on the site",
+    "r_search_links": "Search for LinkedIn profiles and reviews",
+    "r_search_emails": "Search for addresses",
+    "r3_email_pattern": "Learn the address pattern, mint the rest",
+    "r_email_guess": "Predict addresses from names and check them",
+    "r4_verify": "Verify the addresses",
+    "classify": "Move the lead forward",
+    "ja1_careers": "Read the careers page",
+    "ja6_normalise": "Normalise the postings",
+    "ja6_closure": "Close filled postings",
+    "ja7_pain_signals": "Pain into intent",
+    "ja8_pain": "Read the record and name what hurts",
+    "score": "Score",
+}
+
+
+def step_label(name: str) -> str:
+    return _STEP_LABELS.get(name) or name.replace("_", " ").capitalize()
+
+
+def has_step_label(name: str) -> bool:
+    return name in _STEP_LABELS
 
 
 # =============================================================================

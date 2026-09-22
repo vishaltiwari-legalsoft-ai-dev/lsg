@@ -1,6 +1,7 @@
 """GET /api/qualified: only a lead with every step done is ready; one or two
 steps short is almost, with what is missing named; disqualified firms never
-appear; the CSV carries the ready ones only."""
+appear; the CSV carries the ready ones only -- and nothing the list rules
+hold back (D-054)."""
 
 from __future__ import annotations
 
@@ -10,7 +11,13 @@ import pytest
 
 from tests.conftest import make_firm
 
-from .conftest import make_contact, make_contact_email, make_lead, sequence_ready_firm
+from .conftest import (
+    make_contact,
+    make_contact_email,
+    make_lead,
+    make_suppression,
+    sequence_ready_firm,
+)
 
 pytestmark = pytest.mark.db
 
@@ -58,7 +65,8 @@ def test_a_lead_with_every_step_done_is_ready(client, db):
     assert body["counts"] == {"ready": 1, "almost": 0, "checked": 1,
                               "missing_by_check": {k: 0 for k in (
                                   "site_read", "fit", "person", "email", "email_verified",
-                                  "linkedin", "journey")}}
+                                  "linkedin", "journey")},
+                              "withheld": []}
     assert [i["id"] for i in body["items"]] == [str(lead_id)]
     row = body["items"][0]
     assert row["ready"] is True and row["missing"] == [] and row["why_now"] is True
@@ -110,7 +118,8 @@ def test_search_narrows_and_a_journey_that_cannot_render_is_not_ready(client, db
     assert body["counts"] == {"ready": 0, "almost": 1, "checked": 1,
                               "missing_by_check": {"site_read": 0, "fit": 0, "person": 0,
                                                    "email": 0, "email_verified": 0,
-                                                   "linkedin": 0, "journey": 1}}
+                                                   "linkedin": 0, "journey": 1},
+                              "withheld": []}
     row = body["items"][0]
     assert row["missing"] == ["Journey drafted"]
     assert row["checks"][-1]["detail"] == "Not on the email list yet (Hold)"
@@ -129,3 +138,94 @@ def test_the_csv_carries_the_ready_leads_only(client, db):
     assert lines[1].startswith("Ready Law Firm,") and "John Smith" in lines[1]
     assert "Verified" in lines[1] and "linkedin.com/in/john-smith" in lines[1]
     assert "Nearly Law" not in resp.text
+
+
+def test_a_decision_maker_with_no_address_at_all_is_almost_not_gone(client, db):
+    # Site read, fit, a named owner, a LinkedIn profile -- four of six -- and no
+    # address on file. The address check was NULL rather than false, the sum
+    # of the checks NULL, and the lead dropped out of the panel entirely.
+    firm_id = make_firm(db, canonical_name="No Address Law", domain="noaddr.example",
+                        tier="1A", fee_model="contingency", primary_practice="personal_injury")
+    _page_read(db, firm_id)
+    contact_id = make_contact(db, firm_id, full_name="Ned Noaddr", title="Owner", role="owner")
+    _linkedin(db, contact_id, "https://www.linkedin.com/in/ned-noaddr")
+    lead_id = make_lead(db, firm_id, state="CONTACT_PENDING", grade=None)
+
+    body = client.get("/api/qualified", params={"only": "almost"}).json()
+    assert [i["id"] for i in body["items"]] == [str(lead_id)]
+    assert body["items"][0]["missing"] == [
+        "Address on file", "Address verified", "Journey drafted",
+    ]
+    assert body["counts"]["missing_by_check"]["email"] == 1
+
+
+def _hold_back(db, firm_id, lead_id, rule):
+    with db.cursor() as cur:
+        if rule == "domain":
+            cur.execute("SELECT domain FROM firm WHERE id = %s", (firm_id,))
+            make_suppression(db, "domain", cur.fetchone()["domain"], reason="customer")
+        elif rule == "firm_id":
+            make_suppression(db, "firm_id", str(firm_id), reason="dq")
+        elif rule == "cooldown":
+            cur.execute(
+                "UPDATE lead SET cooldown_until = now() + interval '30 days' WHERE id = %s",
+                (lead_id,),
+            )
+        else:
+            cur.execute(
+                "INSERT INTO firm_track (firm_id, track, set_at) VALUES (%s, %s, now())",
+                (firm_id, rule),
+            )
+
+
+@pytest.mark.parametrize(
+    "rule,label",
+    [
+        ("domain", "Do not contact"),  # a paying customer's domain
+        ("firm_id", "Do not contact"),
+        ("cooldown", "Parked"),
+        ("portal", "Existing portal customer"),
+        ("displacement", "Competitor's customer"),
+    ],
+)
+def test_the_list_rules_hold_a_ready_lead_off_the_panel_and_the_vendor_sheet(
+    client, db, rule, label
+):
+    # Every step done -- and still not ready: the rule every list applies holds
+    # it back, and the vendor sheet reads the same query (it once read none).
+    firm_id, _contact_id, lead_id = _ready_lead(db)
+    _hold_back(db, firm_id, lead_id, rule)
+
+    body = client.get("/api/qualified", params={"only": "all"}).json()
+    assert body["items"] == []
+    assert (body["counts"]["ready"], body["counts"]["almost"]) == (0, 0)
+    assert body["counts"]["withheld"] == [{"label": label, "count": 1}]
+    assert client.get("/api/qualified/export.csv").text.strip().splitlines()[1:] == []
+
+
+def test_held_back_counts_group_by_rule_most_first(client, db):
+    for rule in ("domain", "firm_id", "cooldown"):
+        firm_id, _contact_id, lead_id = _ready_lead(db)
+        _hold_back(db, firm_id, lead_id, rule)
+    _ready_lead(db)  # one lead no rule touches
+
+    counts = client.get("/api/qualified").json()["counts"]
+    assert counts["ready"] == 1
+    assert counts["withheld"] == [
+        {"label": "Do not contact", "count": 2}, {"label": "Parked", "count": 1},
+    ]
+
+
+def test_an_address_on_the_do_not_contact_list_is_not_an_address_on_file(client, db):
+    _firm_id, contact_id, _lead_id = _ready_lead(db)
+    with db.cursor() as cur:
+        cur.execute("SELECT email FROM contact_email WHERE contact_id = %s", (contact_id,))
+        bounced = cur.fetchone()["email"]
+    make_suppression(db, "email", bounced, reason="bounce")
+
+    body = client.get("/api/qualified", params={"only": "all"}).json()
+    row = body["items"][0]
+    assert row["ready"] is False
+    assert row["missing"] == ["Address on file", "Address verified", "Journey drafted"]
+    assert body["counts"]["withheld"] == []  # the firm is fine; that address is not
+    assert bounced not in client.get("/api/qualified/export.csv").text

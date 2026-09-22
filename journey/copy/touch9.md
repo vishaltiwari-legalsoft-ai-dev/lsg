@@ -1,10 +1,11 @@
-Subject: closing the loop
+Subject: Closing the loop on this
 
-{first_name} —
+Hi {first_name},
 
-I'll stop here.
+I'll stop here, as I don't want to be the reason your inbox is full.
 
-If the records backlog becomes a bigger problem later, we're easy to
-find. No hard feelings either way.
+If the records backlog becomes a bigger problem later, or a seat opens
+that you'd rather not advertise, we're easy to find and the interviews are
+always free.
 
-Good luck with the hire.
+No hard feelings either way, and good luck with the hire.

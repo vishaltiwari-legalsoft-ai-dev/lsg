@@ -360,3 +360,45 @@ def test_export_csv_never_includes_grade_b(client, db):
 
     resp = client.get("/api/leads/export.csv", params={"view": "SEQUENCE"})
     assert "Ready Law Firm" not in resp.text
+
+
+def test_the_pain_analysis_reaches_the_lead_and_the_firm(client, db):
+    firm_id, contact_id, signal_id = sequence_ready_firm(db, make_firm)
+    lead_id = make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id,
+                        band="SEQUENCE")
+    from psycopg.types.json import Jsonb
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO firm_attribute (firm_id, attr, value, source, confidence, evidence, "
+            "observed_at) VALUES (%s, 'pain_analysis', %s, 'llm:ja8:v1', 0.8, NULL, now())",
+            (firm_id, Jsonb({
+                "summary": "Nine attorneys, no support staff named.",
+                "nothing_found": False,
+                "read": ["the firm", "what the site lacks"],
+                "pains": [{
+                    "kind": "no_support_staff",
+                    "headline": "Nine attorneys and nobody named to support them",
+                    "quote": "The team page lists nine attorneys and no paralegals.",
+                    "source": "what the site lacks",
+                    "why_it_matters": "Attorneys chasing records are attorneys not billing.",
+                    "confidence": 0.8,
+                }],
+            })),
+        )
+
+    lead = client.get(f"/api/leads/{lead_id}").json()
+    assert lead["pain"]["summary"].startswith("Nine attorneys")
+    assert lead["pain"]["pains"][0]["source"] == "what the site lacks"
+    assert lead["pain"]["read"] == ["the firm", "what the site lacks"]
+
+    firm = client.get(f"/api/firms/{firm_id}").json()
+    assert firm["pain"]["pains"][0]["kind"] == "no_support_staff"
+    # and never as a wall of JSON in the claims table
+    assert all(a["attr"] != "pain_analysis" for a in firm["attributes"])
+
+
+def test_a_firm_with_no_analysis_says_none(client, db):
+    firm_id = make_firm(db, canonical_name="Unread Firm")
+    lead_id = make_lead(db, firm_id, band=None, grade=None, state="DISCOVERED")
+    assert client.get(f"/api/leads/{lead_id}").json()["pain"] is None
+    assert client.get(f"/api/firms/{firm_id}").json()["pain"] is None

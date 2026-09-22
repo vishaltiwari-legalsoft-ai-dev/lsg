@@ -35,7 +35,8 @@ from lge.settings import Settings, get_settings
 
 __all__ = [
     "FAILURE_PREFIX", "Place", "Result", "SearchBlocked", "SearchEngine", "SearchFn",
-    "engine_name", "failure", "get_engine", "is_failure", "places", "reset", "search", "source",
+    "engine_name", "failure", "get_engine", "has_listings", "is_failure", "places", "reset",
+    "search", "source",
 ]
 
 SearchFn = Callable[..., list[Result]]  # (query, max_results, *, page=1)
@@ -60,21 +61,45 @@ def source(settings: Settings | None = None) -> str:
     return f"search:{engine_name(settings)}"
 
 
-def _build(name: str, settings: Settings) -> SearchEngine:
-    timeout_s = float((load_search_config().get("request") or {}).get("timeout_s", 15.0))
+def _engine_class(name: str) -> type:
     if name == "serper":
         from lge.search.serper import SerperEngine
 
-        return SerperEngine(settings.serper_api_key, timeout_s=timeout_s)
+        return SerperEngine
     if name == "brave":
         from lge.search.brave import BraveEngine
 
-        return BraveEngine(settings.brave_api_key, timeout_s=timeout_s)
+        return BraveEngine
     if name == "ddg":
         from lge.search.ddg import DDGEngine
 
-        return DDGEngine()
+        return DDGEngine
     raise ValueError(f"unknown search engine {name!r}")
+
+
+def _key(name: str, settings: Settings) -> str | None:
+    """The engine's key; None for an engine that needs none."""
+    return {"serper": settings.serper_api_key, "brave": settings.brave_api_key}.get(name)
+
+
+def _build(name: str, settings: Settings) -> SearchEngine:
+    timeout_s = float((load_search_config().get("request") or {}).get("timeout_s", 15.0))
+    cls = _engine_class(name)
+    key = _key(name, settings)
+    return cls() if key is None else cls(key, timeout_s=timeout_s)
+
+
+def has_listings(settings: Settings | None = None) -> bool:
+    """Whether the Google Business Profile is looked up directly right now:
+    the engine answering has a listings endpoint (Serper's /places) and its
+    key is set. Otherwise r_search_links reads what it can off snippets.
+    Asked of the engine's class, so no client is built to answer."""
+    s = settings or get_settings()
+    name = s.search_engine_name()
+    if not getattr(_engine_class(name), "has_listings", False):
+        return False
+    key = _key(name, s)
+    return key is None or bool(key)
 
 
 def get_engine(settings: Settings | None = None) -> SearchEngine:

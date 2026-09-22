@@ -303,3 +303,21 @@ def test_the_verifier_follows_the_settings_when_config_says_auto(db):
     assert _email_status(db, c1, e1) == "valid"
     # the test suite's own settings name no verifier: inert, as before
     assert r4_verify.provider_for({"provider": "auto"}, get_settings()) == "none"
+
+
+def test_the_screens_light_asks_the_run_s_own_question(monkeypatch):
+    # configured_provider is what GET /api/meta/providers reports: the verifier
+    # a run would use, or None when the run would be inert (D-054).
+    from lge.settings import Settings
+
+    for name in ("HUNTER_API_KEY", "NEVERBOUNCE_API_KEY", "ZEROBOUNCE_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+
+    def settings(**seams):
+        return Settings(dsn="", admin_dsn="", object_store=".", user_agent="",
+                        anthropic_api_key="", openrouter_api_key="", live=False, **seams)
+
+    assert r4_verify.configured_provider(settings(neverbounce_api_key="k")) == "neverbounce"
+    assert r4_verify.configured_provider(settings()) is None
+    # a verifier forced without its key would run inert -- so the light is off
+    assert r4_verify.configured_provider(settings(email_verifier="zerobounce")) is None

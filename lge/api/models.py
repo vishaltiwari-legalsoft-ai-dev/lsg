@@ -217,12 +217,20 @@ class QualifiedRow(LeadRow):
     why_now: bool  # an open pain signal on the firm -- shown, not required
 
 
+class QualifiedWithheld(BaseModel):
+    label: str  # the list rule in plain words: "Do not contact", "Parked", ...
+    count: int
+
+
 class QualifiedCounts(BaseModel):
     ready: int
     almost: int  # every step but one or two
     checked: int  # open leads at firms that are not disqualified
     # Among the almost-ready, how many fail each check -- what is holding them back.
     missing_by_check: dict[str, int]
+    # Leads that would be ready or almost but a list rule holds back (D-054),
+    # grouped by rule, most first; empty when none is.
+    withheld: list[QualifiedWithheld]
 
 
 class QualifiedResponse(BaseModel):
@@ -341,6 +349,7 @@ class LeadNote(BaseModel):
 
 class JobStep(BaseModel):
     name: str
+    label: str  # the step in plain words -- lge.api.labels.step_label
     status: Literal["pending", "running", "done", "failed"]
     note: str | None = None
 
@@ -358,6 +367,26 @@ class ActionJob(BaseModel):
     finished_at: datetime | None
 
 
+# =============================================================================
+# The pain analysis (D-058): what the AI read on a firm, and what it proves
+# =============================================================================
+
+
+class PainPoint(BaseModel):
+    kind: str
+    headline: str  # plain words, what hurts
+    quote: str  # the sentence from the record that proves it
+    source: str  # which part of the record the sentence came from
+    why_it_matters: str
+
+
+class PainAnalysis(BaseModel):
+    summary: str  # two or three sentences before a call
+    pains: list[PainPoint]  # empty when the record proves nothing
+    read: list[str]  # the parts of the record the AI was shown
+    at: datetime
+
+
 class LeadDetail(LeadRow):
     contacts: list[ContactSummary]
     missing_roles: list[Literal["owner", "admin"]]
@@ -367,6 +396,7 @@ class LeadDetail(LeadRow):
     timeline: list[TimelineEvent]
     notes: list[LeadNote]
     job: ActionJob | None
+    pain: PainAnalysis | None
 
 
 # =============================================================================
@@ -461,16 +491,115 @@ class BatchResponse(BaseModel):
 
 class Touch(BaseModel):
     step: int
-    day: int
+    day: int  # days after email 1; the screens show it as "Day {day + 1}"
     subject: str
     body: str
     skipped_reason: str | None
+    # The Email journey templates this email was built from (its own wording
+    # first, then any paragraph set into it); empty for a skipped email.
+    templates: list[str]
 
 
 class DraftsResponse(BaseModel):
     band: Band | None
     excluded_reason: str | None
+    excluded_display: str | None  # the reason in words, for the screen
     touches: list[Touch]
+
+
+# =============================================================================
+# The email journey (D-057): GET /api/journey, its edits, and an example firm
+# =============================================================================
+
+JourneyTier = Literal["1A", "1B", "2", "3", "4_NONBILLABLE"]
+JourneyPain = Literal[
+    "open_role", "reposted_role", "two_roles", "mass_tort", "reviews", "new_system"
+]
+JourneyTrackBand = Literal["SEQUENCE", "NURTURE"]
+
+
+class JourneyFillIn(BaseModel):
+    token: str  # written in an email as {token}
+    label: str
+    meaning: str
+
+
+class JourneyTemplate(BaseModel):
+    id: str
+    step: int
+    kind: Literal["email", "paragraph"]
+    used_when: str
+    subject: str | None  # None for a paragraph
+    body: str
+    original_subject: str | None
+    original_body: str
+    edited_at: datetime | None  # None: the original wording
+    fill_ins: list[str]  # the fill-ins an edit of this template may use
+    keeps: str | None  # the paragraph slot an email must keep, e.g. "middle_paragraph"
+
+
+class JourneyStep(BaseModel):
+    step: int
+    day: int  # days after email 1, edits applied
+    original_day: int
+    title: str
+    purpose: str
+    varies_by: str
+    templates: list[JourneyTemplate]
+
+
+class JourneyTrack(BaseModel):
+    band: Band
+    label: str
+    description: str
+    steps: list[int]  # the emails this track sends; empty for one that sends none
+    pace: int  # each email's day is multiplied by this: 1 for the sequence, 2 for nurture
+
+
+class JourneyOption(BaseModel):
+    value: str
+    label: str
+
+
+class JourneyResponse(BaseModel):
+    steps: list[JourneyStep]
+    tracks: list[JourneyTrack]
+    fill_ins: list[JourneyFillIn]
+    banned_phrases: list[str]
+    max_day: int  # the latest an email can go, in days after email 1
+    # The block appended to every email, and what is still blank in it. An
+    # unsigned email reads as a circular; a commercial one owes the reader a
+    # postal address and a way to stop (D-060).
+    signature: str
+    sender_missing: list[str]
+    tiers: list[JourneyOption]  # for the example firm
+    pains: list[JourneyOption]
+
+
+class JourneyCopyEdit(BaseModel):
+    subject: str | None = None
+    body: str
+
+
+class JourneyDay(BaseModel):
+    step: int
+    day: int  # days after email 1
+
+
+class JourneyDaysEdit(BaseModel):
+    days: list[JourneyDay]
+
+
+class JourneyExample(BaseModel):
+    """The journey for an invented firm, rendered by the engine itself."""
+
+    firm: str  # "An invented personal injury firm in Atlanta, on Filevine"
+    person: str  # "Dana Whitfield, managing partner"
+    tier: JourneyTier
+    pain: JourneyPain
+    system: bool
+    band: JourneyTrackBand
+    drafts: DraftsResponse
 
 
 # =============================================================================
@@ -571,6 +700,7 @@ class FirmDetail(BaseModel):
     contacts: list[ContactSummary]
     aliases: list[AliasRow]
     lead: FirmLeadRef | None
+    pain: PainAnalysis | None
 
 
 # =============================================================================
@@ -621,10 +751,47 @@ class HandcheckDecisionRequest(BaseModel):
 # =============================================================================
 
 
+class CapabilityPart(BaseModel):
+    label: str
+    what: str | None
+    state: Literal["built", "partial", "planned"]
+    state_display: str  # "Built", "Partly built", "Not built yet"
+    # The outside service this part waits on, when that service is switched
+    # off; None when it needs none, or its key is in place.
+    waiting_on: str | None
+
+
+class CapabilityStep(BaseModel):
+    step: int
+    label: str
+    note: str
+    parts: list[CapabilityPart]
+
+
+class OutsideService(BaseModel):
+    id: str
+    label: str
+    key: str  # the name of the setting, never a value
+    what: str
+    cost: str
+    on: bool
+    spent_display: str | None  # what it has cost here so far, when measured
+
+
+class CapabilitiesResponse(BaseModel):
+    steps: list[CapabilityStep]
+    outside: list[OutsideService]
+    built: int
+    partial: int
+    planned: int
+    waiting: int  # built parts held back by a key that is not set
+    summary: str  # the whole of it in one sentence
+
+
 class ProvidersResponse(BaseModel):
     ai_extraction: bool
-    email_verification: bool
-    places: bool
+    email_verification: bool  # a verifier is chosen and its key is set (r4_verify)
+    places: bool  # the Google Business Profile is looked up directly (the search engine's)
     crawler_identity: str
 
 

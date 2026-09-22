@@ -1,0 +1,26 @@
+# Who these emails come from, and the lines a commercial email must carry in
+# the United States (CAN-SPAM): a real postal address, and a plain way to say
+# stop. The engine appends this to every email it drafts. It never invents an
+# address -- what is blank here is reported as missing on the Email journey
+# screen, and until it is filled in these drafts are not fit to send.
+#
+# `reply_to` is only shown in the signature; nothing here sends anything.
+
+from:
+  # How every email signs off, above the name.
+  sign_off: Best regards,
+  # The person a firm hears from. A cold email from a company nobody can name
+  # reads as a circular, however good the words are.
+  name: ""
+  title: ""
+  company: Legal Soft
+  website: legalsoft.com
+  reply_to: ""
+
+footer:
+  # Required by CAN-SPAM: a valid physical postal address for the sender.
+  postal_address: ""
+  # Required: a clear, working way to opt out, honoured within ten business
+  # days. "Reply stop" only works if somebody reads and acts on the replies --
+  # the engine suppresses a firm's whole domain when you record an opt-out.
+  opt_out: Reply with the word stop and I won't write to you again.

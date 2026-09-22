@@ -22,6 +22,7 @@ Docstrings in `lge/` cite `plan/api-contract.md` and `context/...`. Those paths 
 
 ## Rules
 
+- When a part of the brief ships, move it in `config/capabilities.yml` in the same session. Home tells visitors what is built from that file; a stale line there is a lie on the screen.
 - The store mediates everything; no component reads another's output.
 - `reconcile()` is the only writer of firm columns; everything else writes claims into `firm_attribute` with a source tag.
 - A logic change re-derives from stored HTML. Never re-crawl to fix a rule.

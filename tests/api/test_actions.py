@@ -208,8 +208,14 @@ def test_research_creates_a_job_with_the_flow_steps(client, db, monkeypatch):
     assert resp.status_code == 202, resp.text
     job = resp.json()["job"]
     assert job["status"] == "queued" and job["kind"] == "research"
+    # the flow's recipe, not a list of the button's own (D-054)
+    assert [s["name"] for s in job["steps"]] == list(actions.research_steps("full"))
     assert [s["name"] for s in job["steps"]][:3] == ["p1_site_map", "p2_fetch", "p3_render"]
+    assert {"p8_llm", "r4_verify", "classify"} <= {s["name"] for s in job["steps"]}
     assert all(s["status"] == "pending" for s in job["steps"])
+    labels = {s["name"]: s["label"] for s in job["steps"]}
+    assert labels["classify"] == "Move the lead forward"
+    assert all(label != name for name, label in labels.items())
     assert started == [job["id"]]
 
     # asking again while it is queued returns the same job
@@ -225,6 +231,7 @@ def test_research_creates_a_job_with_the_flow_steps(client, db, monkeypatch):
     ).json()["job"]
     assert contacts_only["kind"] == "find_contacts"
     assert contacts_only["steps"][0]["name"] == "px_site_facts"
+    assert [s["name"] for s in contacts_only["steps"]] == list(actions.research_steps("contacts"))
 
 
 def test_research_refuses_a_firm_without_a_website(client, db):
@@ -325,10 +332,11 @@ def test_launch_jobs_commits_first_then_runs_each_on_its_own_thread(monkeypatch)
 
 def test_sweep_fails_jobs_left_queued_or_running_by_a_dead_process(db):
     firm_id = make_firm(db, canonical_name="Orphan Firm", domain="orphan.example")
-    queued = actions._create_job(db, firm_id, None, "research", actions.FULL_STEPS)
-    running = actions._create_job(db, firm_id, None, "find_contacts", actions.CONTACT_STEPS)
+    full, contacts = actions.research_steps("full"), actions.research_steps("contacts")
+    queued = actions._create_job(db, firm_id, None, "research", full)
+    running = actions._create_job(db, firm_id, None, "find_contacts", contacts)
     actions._set_job(running.id, {"status": "running"}, db)
-    done = actions._create_job(db, firm_id, None, "find_contacts", actions.CONTACT_STEPS)
+    done = actions._create_job(db, firm_id, None, "find_contacts", contacts)
     actions._set_job(done.id, {"status": "done"}, db)
 
     assert actions.sweep_orphaned_jobs(db) == 2

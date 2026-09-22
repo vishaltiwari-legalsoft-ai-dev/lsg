@@ -16,6 +16,17 @@ from lge.journey.select import scan_banned
 _AT = datetime(2026, 9, 11, tzinfo=UTC)
 
 
+def _email(touch) -> str:
+    """The email itself. Every rendered email carries the signature block
+    (D-060); test_every_email_is_signed owns that part."""
+    from lge.journey.render import signature
+
+    block = signature()
+    if block and block in touch.body:
+        return touch.body[: touch.body.index(block)].rstrip("\n")
+    return touch.body
+
+
 def _firm(**kw) -> Firm:
     defaults = dict(
         id="f1",
@@ -80,15 +91,24 @@ def test_rendered_1a_matches_plan_email_drafts_exactly():
     assert result.excluded_reason is None
     touch1 = result.touches[0]
 
-    assert touch1.subject == "your demand writer opening"
-    assert touch1.body == (
-        "John — the demand writer role on your careers page has been up since\n"
-        "14 August. Still looking?\n"
+    assert touch1.subject == "Your demand writer opening, and a faster way to fill it"
+    assert _email(touch1) == (
+        "Hi John,\n"
         "\n"
-        "We place dedicated remote legal staff with PI firms. One person, your\n"
-        "cases, working inside Filevine — not a pooled service desk.\n"
+        "Your demand writer post has been up since 14 August. When a seat stays open\n"
+        "that long it's usually the local market rather than the offer, and another\n"
+        "month of the same search rarely changes it.\n"
         "\n"
-        "Worth a short call, or should I put it in writing first?"
+        "We place trained legal staff with personal injury firms: one person,\n"
+        "dedicated to your cases, working inside Filevine. Not a pooled service desk,\n"
+        "and not a temp.\n"
+        "\n"
+        "Every candidate is pre-vetted and trained on firm work before you meet\n"
+        "them. Interviewing costs nothing, and someone who fits can start in under\n"
+        "three days.\n"
+        "\n"
+        "If it would help, I'll send two profiles matched to that seat. No\n"
+        "obligation either way."
     )
 
 
@@ -101,14 +121,23 @@ def test_rendered_1a_no_cms_matches_plan_email_drafts_exactly():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.body == (
-        "John — the demand writer role on your careers page has been up since\n"
-        "14 August. Still looking?\n"
+    assert _email(touch1) == (
+        "Hi John,\n"
         "\n"
-        "We place dedicated remote legal staff with PI firms. One person, assigned\n"
-        "to your cases, working in your systems — not a pooled service desk.\n"
+        "Your demand writer post has been up since 14 August. When a seat stays open\n"
+        "that long it's usually the local market rather than the offer, and another\n"
+        "month of the same search rarely changes it.\n"
         "\n"
-        "Worth a short call, or should I put it in writing first?"
+        "We place trained legal staff with personal injury firms: one person,\n"
+        "dedicated to your cases, working in your own systems. Not a pooled service\n"
+        "desk, and not a temp.\n"
+        "\n"
+        "Every candidate is pre-vetted and trained on firm work before you meet\n"
+        "them. Interviewing costs nothing, and someone who fits can start in under\n"
+        "three days.\n"
+        "\n"
+        "If it would help, I'll send two profiles matched to that seat. No\n"
+        "obligation either way."
     )
 
 
@@ -135,7 +164,7 @@ def test_smith_john_comma_format_resolves():
     lead = _lead(contact=_contact(full_name="Smith, John"))
     result = build_journey(lead)
     assert result.excluded_reason is None
-    assert result.touches[0].body.startswith("John —")
+    assert result.touches[0].body.startswith("Hi John,")
 
 
 def test_sequence_without_signal_evidence_is_excluded():
@@ -173,8 +202,8 @@ def test_repost_selects_1b_and_resolves_repost_month():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "the paralegal role, second time"
-    assert "Second time\nsince May" in touch1.body
+    assert touch1.subject == "The paralegal role at your firm, posted a second time"
+    assert "the second time since May" in " ".join(touch1.body.split())
 
 
 def test_repost_without_repost_first_seen_excludes_lead():
@@ -203,8 +232,8 @@ def test_multi_opening_selects_1c_with_both_roles():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "both roles still open?"
-    assert "legal assistant and paralegal both posted" in touch1.body
+    assert touch1.subject == "Two seats open at Acme Law, which one first?"
+    assert "a legal assistant and a paralegal posted at the same time" in touch1.body
 
 
 def test_multi_opening_missing_second_role_excludes_lead():
@@ -225,8 +254,8 @@ def test_mass_tort_selects_1d_with_tort_token():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "Camp Lejeune — records volume"
-    assert "running Camp Lejeune intake" in touch1.body
+    assert touch1.subject == "Camp Lejeune intake, and the records volume behind it"
+    assert "you're running Camp Lejeune intake" in touch1.body
     # touch 2 and touch 8 are both specifically about a job-posting pain
     # ("re: your {role} opening" / "the {role} posting is still up") --
     # mass-tort evidence carries no {role}, so both are skipped rather than
@@ -234,7 +263,7 @@ def test_mass_tort_selects_1d_with_tort_token():
     assert [t.step for t in result.touches] == [1, 2, 3, 4, 5, 6, 7, 9]
     # touch 2 is the pain-specific follow-up, not the job-posting one
     touch2 = result.touches[1]
-    assert touch2.subject == "re: Camp Lejeune — records volume"
+    assert touch2.subject == "Re: Camp Lejeune, and who chases the providers"
     assert "opening" not in touch2.body
 
 
@@ -249,8 +278,8 @@ def test_review_signal_selects_1e_and_never_quotes_the_review():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "intake coverage"
-    assert "personal injury" in touch1.body
+    assert touch1.subject == "Intake coverage at Acme Law"
+    assert "personal injury" in " ".join(touch1.body.split())
     full_text = touch1.subject + touch1.body
     assert "terrible" not in full_text.lower()
     assert "nobody ever called me back" not in full_text
@@ -259,8 +288,8 @@ def test_review_signal_selects_1e_and_never_quotes_the_review():
     # touch 2 offers the back-office half (rule 3: open on a role that touches
     # no client) and stays practice-neutral (the review signal also runs for 1B)
     touch2 = result.touches[1]
-    assert touch2.subject == "re: intake coverage"
-    assert "back-office half" in touch2.body
+    assert touch2.subject == "Re: intake coverage, and the half you can hand over"
+    assert "back-office half" in " ".join(touch2.body.split())
     assert "demand" not in touch2.body.lower()
     assert "nobody ever called me back" not in touch2.body
 
@@ -273,7 +302,7 @@ def test_cms_implemented_selects_1f_requires_cms():
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "you moved to MyCase"
+    assert touch1.subject == "Now that you're on MyCase"
 
 
 def test_cms_implemented_without_cms_excludes_lead():
@@ -300,7 +329,7 @@ def test_no_cms_falls_back_to_your_systems_outside_1a_and_1f():
     )
     result = build_journey(lead)
     assert result.excluded_reason is None
-    assert "your systems" in result.touches[0].body
+    assert "working inside your systems" in " ".join(result.touches[0].body.split())
 
 
 # ---------------------------------------------------------------------------
@@ -311,8 +340,8 @@ def test_no_cms_falls_back_to_your_systems_outside_1a_and_1f():
 def test_touch3_contingency():
     result = build_journey(_lead(firm=_firm(tier="1A", fee_model="contingency")))
     touch3 = next(t for t in result.touches if t.step == 3)
-    assert touch3.subject == "the unbilled hours"
-    assert "A demand writer isn't a cost saving" in touch3.body
+    assert touch3.subject == "The unbilled hours between you and the fee"
+    assert "A demand writer isn't a saving" in " ".join(touch3.body.split())
 
 
 def test_touch3_fee_shifting():
@@ -327,8 +356,8 @@ def test_touch3_fee_shifting():
     )
     result = build_journey(lead)
     touch3 = next(t for t in result.touches if t.step == 3)
-    assert touch3.subject == "who actually pays for the hours"
-    assert "The defendant pays the fees" in touch3.body
+    assert touch3.subject == "Who actually pays for those hours"
+    assert "The defendant pays the fees" in " ".join(touch3.body.split())
 
 
 def test_touch3_flat_tier_1b():
@@ -338,7 +367,7 @@ def test_touch3_flat_tier_1b():
     )
     result = build_journey(lead)
     touch3 = next(t for t in result.touches if t.step == 3)
-    assert "you'll see the effect on the\nnext twenty cases" in touch3.body
+    assert "you'll see the effect on the next twenty" in " ".join(touch3.body.split())
 
 
 def test_touch3_flat_tier_3_has_swapped_closing():
@@ -348,8 +377,8 @@ def test_touch3_flat_tier_3_has_swapped_closing():
     )
     result = build_journey(lead)
     touch3 = next(t for t in result.touches if t.step == 3)
-    assert touch3.subject == "margin, per matter"
-    assert "Thin margins per matter" in touch3.body
+    assert touch3.subject == "Margin, one matter at a time"
+    assert "Thin margins and a lot of matters" in " ".join(touch3.body.split())
     assert "next twenty cases" not in touch3.body
 
 
@@ -357,7 +386,7 @@ def test_touch3_hourly():
     lead = _lead(firm=_firm(tier="4_NONBILLABLE", fee_model="hourly", primary_practice="business"))
     result = build_journey(lead)
     touch3 = next(t for t in result.touches if t.step == 3)
-    assert touch3.subject == "only the part nobody bills"
+    assert touch3.subject == "Only the part nobody bills"
 
 
 @pytest.mark.parametrize("fee_model", [None, "mixed", "unknown"])
@@ -383,7 +412,7 @@ def test_tier_1b_middle_paragraph_swap():
     )
     result = build_journey(lead)
     touch1 = result.touches[0]
-    assert "bilingual legal assistants with immigration firms" in touch1.body
+    assert "bilingual legal assistants with immigration firms" in " ".join(touch1.body.split())
     assert "PI firms" not in touch1.body
 
 
@@ -396,7 +425,7 @@ def test_tier_2_middle_paragraph_swap_uses_practice_token():
     )
     result = build_journey(lead)
     touch1 = result.touches[0]
-    assert "case managers with employment firms" in touch1.body
+    assert "case managers with employment firms" in " ".join(touch1.body.split())
 
 
 def test_tier_2_touch2_uses_base_tier1a_paragraph_known_gap():
@@ -408,7 +437,7 @@ def test_tier_2_touch2_uses_base_tier1a_paragraph_known_gap():
     )
     result = build_journey(lead)
     touch2 = next(t for t in result.touches if t.step == 2)
-    assert "records chase" in touch2.body
+    assert "records chase" in " ".join(touch2.body.split())
 
 
 def test_tier_1b_touch2_swap():
@@ -420,7 +449,7 @@ def test_tier_1b_touch2_swap():
     )
     result = build_journey(lead)
     touch2 = next(t for t in result.touches if t.step == 2)
-    assert "form prep at volume" in touch2.body
+    assert "form preparation at volume" in touch2.body
 
 
 # ---------------------------------------------------------------------------
@@ -454,8 +483,8 @@ def test_tier4_never_selects_role_variant(kind, evidence):
     result = build_journey(lead)
     assert result.excluded_reason is None
     touch1 = result.touches[0]
-    assert touch1.subject == "the unbillable hours"
-    assert "narrower note than usual" in touch1.body
+    assert touch1.subject == "The hours nobody at your firm can bill"
+    assert "narrower note than the one you usually get" in touch1.body
     # touches 2, 4 and 8 all carry PI/paralegal-specific copy shared with
     # tier 1A (no tier-4 alternative exists) -- they are skipped for this
     # tier rather than pitching a paralegal indirectly. See build_journey's
@@ -474,7 +503,7 @@ def test_tier4_touch1_names_paralegal_only_to_decline_it():
     lead = _lead(firm=_firm(tier="4_NONBILLABLE", fee_model="hourly", primary_practice="business"))
     result = build_journey(lead)
     touch1 = result.touches[0]
-    assert "not going to suggest a paralegal" in touch1.body
+    assert "not going to suggest a paralegal" in " ".join(touch1.body.split())
 
 
 # ---------------------------------------------------------------------------
@@ -541,3 +570,19 @@ def test_no_banned_phrase_in_rendered_sequence():
     for touch in result.touches:
         assert scan_banned(touch.subject) == []
         assert scan_banned(touch.body) == []
+
+
+
+def test_every_email_is_signed_and_says_how_to_stop():
+    """An unsigned cold email reads as a circular, and a commercial one owes
+    the reader a way to stop (D-060). The postal address is configured, never
+    invented: `sender_missing` is what tells a person it is still blank."""
+    from lge.journey.render import sender_missing, signature
+
+    result = build_journey(_lead())
+    assert result.excluded_reason is None
+    for touch in result.touches:
+        assert touch.body.endswith(signature()), touch.step
+        assert "Legal Soft" in touch.body
+        assert "stop" in touch.body.lower()
+    assert "a postal address, which US law requires" in sender_missing()

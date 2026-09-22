@@ -202,6 +202,36 @@ def test_firm_id_suppressed_firm_excluded(db, tmp_path):
     assert _read_csv(tmp_path / "leads_ranked.csv") == []
 
 
+def _only_email(conn, contact_id):
+    with conn.cursor() as cur:
+        cur.execute("SELECT email FROM contact_email WHERE contact_id = %s", (contact_id,))
+        return cur.fetchone()["email"]
+
+
+def test_an_address_on_the_do_not_contact_list_never_reaches_a_list(db, tmp_path):
+    # A bounce on the address itself (scope 'email'): the firm is otherwise
+    # ready, but the owner has no other way in -- no row, no draft (D-054).
+    firm_id, contact_id, signal_id = _sequence_ready_firm(db)
+    make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id, band="SEQUENCE")
+    make_suppression(db, "email", _only_email(db, contact_id), reason="bounce")
+
+    _run(db, tmp_path)
+
+    assert _read_csv(tmp_path / "leads_ranked.csv") == []
+    assert list((tmp_path / "drafts").glob("*.md")) == []
+
+
+def test_a_suppressed_address_gives_way_to_the_contacts_other_one(db, tmp_path):
+    firm_id, contact_id, signal_id = _sequence_ready_firm(db)
+    make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id, band="SEQUENCE")
+    make_suppression(db, "email", _only_email(db, contact_id), reason="bounce")
+    other = make_contact_email(db, contact_id, email="john.smith@ready.example.com")
+
+    _run(db, tmp_path)
+
+    assert [r["email"] for r in _read_csv(tmp_path / "leads_ranked.csv")] == [other]
+
+
 def test_portal_track_firm_excluded(db, tmp_path):
     firm_id, contact_id, signal_id = _sequence_ready_firm(db)
     make_lead(db, firm_id, contact_id=contact_id, arming_signal=signal_id, band="SEQUENCE")

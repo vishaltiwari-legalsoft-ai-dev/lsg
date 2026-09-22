@@ -1,8 +1,13 @@
-Subject: re: your {role} opening
+Subject: Re: your {role} opening, the part that's usually stuck
 
-{first_name} — following up on the above.
+Hi {first_name},
+
+One thing I should have said in my last note.
 
 {specific_work_paragraph}
 
-That's the work sitting between a case and the demand going out. Want to
-see what it looks like as a dedicated person?
+If that's the part that's actually stuck, I can introduce two people who
+do exactly that work all day. Interviewing costs nothing, and you keep the
+profiles whether or not you hire.
+
+Would that be useful?

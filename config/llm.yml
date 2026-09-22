@@ -37,6 +37,24 @@ p9:
   price_per_mtok_input: 5.00
   price_per_mtok_output: 25.00
 
+# The Pain Point Analyzer (D-058, plan-v3 phase 4): one call per firm over
+# everything the store holds on it, naming what hurts with the sentence that
+# proves it. Cheap tier -- the record is short and the answer is a handful of
+# short strings. lge/llm/pain.py holds the schema and the prompt.
+ja8:
+  model: anthropic/claude-haiku-4.5
+  model_batch: anthropic/claude-haiku-4.5:batch
+  use_batch: false
+  # v2 (after the AI-engineering review): the kinds are named in the prompt, a
+  # quote must be ONE line of the record, at most five pains, and the record is
+  # marked as collected text rather than instructions.
+  prompt_rev: v2
+  # Its own cap, not p8's: five short pains and a summary fit in 1200, and a
+  # p8 tuning change must not silently retune this one.
+  max_output_tokens: 1200
+  price_per_mtok_input: 1.00
+  price_per_mtok_output: 5.00
+
 request:
   # Total character budget for the page-text blocks in the user message.
   # Trimmed to this before the call; attorneys/team pages are never trimmed

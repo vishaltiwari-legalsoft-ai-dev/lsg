@@ -30,6 +30,7 @@ from lge.api.rendering import (
     build_contact_summary,
     build_firm_ref,
     build_proof,
+    fetch_pain_analysis,
     fetch_signal_scores,
 )
 from lge.export.list import fetch_contacts, fetch_emails, fetch_repost_first_seen
@@ -208,5 +209,6 @@ def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
         signals=signals,
         contacts=contacts,
         aliases=aliases,
+        pain=fetch_pain_analysis(conn, firm_id),
         lead=lead_ref,
     )

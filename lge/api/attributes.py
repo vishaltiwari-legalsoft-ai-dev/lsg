@@ -135,8 +135,11 @@ def build_attributes_for_firm(
     firm_id = firm["id"]
     with conn.cursor() as cur:
         cur.execute(
+            # pain_analysis is shown as its own section (D-058), not as a
+            # row of raw JSON in the claims table.
             "SELECT source, attr, value, confidence, evidence, observed_at "
-            "FROM firm_attribute WHERE firm_id = %s ORDER BY observed_at DESC",
+            "FROM firm_attribute WHERE firm_id = %s AND attr <> 'pain_analysis' "
+            "ORDER BY observed_at DESC",
             (firm_id,),
         )
         all_attr_rows = cur.fetchall()

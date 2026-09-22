@@ -16,8 +16,8 @@ nothing else in this module knows about evidence layout.
 
 from __future__ import annotations
 
-from lge.journey.model import JourneyLead, JourneyResult, RenderedTouch
-from lge.journey.render import load_template, substitute
+from lge.journey.model import NO_EDITS, JourneyEdits, JourneyLead, JourneyResult, RenderedTouch
+from lge.journey.render import load_template, signature, substitute
 from lge.journey.select import load_config, select_touch1_variant, select_touch3_variant
 from lge.journey.tokens import (
     days_open,
@@ -32,13 +32,30 @@ from lge.journey.tokens import (
 
 _CMS_FALLBACK = {"cms": "your systems"}
 
-_STATIC_TOUCHES: dict[int, tuple[str, int]] = {
-    4: ("touch4.md", 10),
-    5: ("touch5.md", 14),
-    6: ("touch6.md", 18),
-    7: ("touch7.md", 21),
-    9: ("touch9.md", 28),
+_STATIC_TOUCHES: dict[int, str] = {
+    4: "touch4.md",
+    5: "touch5.md",
+    6: "touch6.md",
+    7: "touch7.md",
+    9: "touch9.md",
 }
+
+
+def _template(rel_path: str, edits: JourneyEdits) -> tuple[str | None, str]:
+    """A copy file's (subject, body): the Email journey screen's wording when
+    it has been changed there (D-057), else the file's own."""
+    edited = edits.copy.get(rel_path)
+    return edited if edited is not None else load_template(rel_path)
+
+
+def _day(step: int, edits: JourneyEdits) -> int:
+    """Days after email 1: the screen's edit, else journey/sequences.yml.
+    The days used to be written here a second time, so a change to the
+    config file -- which says a day offset "never needs a code change" --
+    changed nothing."""
+    if step in edits.days:
+        return edits.days[step]
+    return next(int(t["day"]) for t in load_config()["touches"] if int(t["step"]) == step)
 
 _TOUCH1_FILES = {
     "1B": "touch1/1b.md",
@@ -105,28 +122,34 @@ def _build_tokens(lead: JourneyLead) -> dict[str, str | None]:
 
 def _finish(
     step: int,
-    day: int,
+    files: tuple[str, ...],
     subject_t: str | None,
     body_t: str,
     tokens: dict[str, str | None],
     fallbacks: dict[str, str],
+    edits: JourneyEdits,
 ) -> tuple[RenderedTouch | None, str | None]:
     subject, miss1 = substitute(subject_t or "", tokens, fallbacks)
     body, miss2 = substitute(body_t, tokens, fallbacks)
     missing = miss1 + miss2
     if missing:
         return None, f"unresolved_token:{missing[0]}"
-    return RenderedTouch(step, day, subject, body), None
+    # Every email is signed. An unsigned cold email reads as a circular, and a
+    # commercial one owes the reader a postal address and a way to stop
+    # (D-060). What is not configured is left out, never invented.
+    signature_block = signature()
+    signed = f"{body}\n\n{signature_block}" if signature_block.strip("-\n ") else body
+    return RenderedTouch(step, _day(step, edits), subject, signed, files), None
 
 
 def _render_touch1(
-    lead: JourneyLead, tokens: dict[str, str | None]
+    lead: JourneyLead, tokens: dict[str, str | None], edits: JourneyEdits = NO_EDITS
 ) -> tuple[RenderedTouch | None, str | None]:
     tier = lead.firm.tier
 
     if tier == "4_NONBILLABLE":
-        subject_t, body_t = load_template("touch1/tier4.md")
-        return _finish(1, 0, subject_t, body_t, tokens, {})
+        subject_t, body_t = _template("touch1/tier4.md", edits)
+        return _finish(1, ("touch1/tier4.md",), subject_t, body_t, tokens, {}, edits)
 
     variant = select_touch1_variant(lead.signal)
     if variant is None:
@@ -139,19 +162,21 @@ def _render_touch1(
         default_middle = "touch1/_middle_1a.md" if cms_present else "touch1/_middle_1a_no_cms.md"
         middle_file = _MIDDLE_FILE_FOR_TIER.get(tier, default_middle)
 
-        _, middle_body_t = load_template(middle_file)
+        _, middle_body_t = _template(middle_file, edits)
         middle_rendered, middle_missing = substitute(middle_body_t, tokens, _CMS_FALLBACK)
         if middle_missing:
             return None, f"unresolved_token:{middle_missing[0]}"
 
-        subject_t, body_t = load_template(base_file)
+        subject_t, body_t = _template(base_file, edits)
         tokens_with_middle = dict(tokens)
         tokens_with_middle["middle_paragraph"] = middle_rendered
-        return _finish(1, 0, subject_t, body_t, tokens_with_middle, _CMS_FALLBACK)
+        return _finish(
+            1, (base_file, middle_file), subject_t, body_t, tokens_with_middle, _CMS_FALLBACK, edits
+        )
 
     fallbacks = {} if variant == "1F" else _CMS_FALLBACK
-    subject_t, body_t = load_template(_TOUCH1_FILES[variant])
-    return _finish(1, 0, subject_t, body_t, tokens, fallbacks)
+    subject_t, body_t = _template(_TOUCH1_FILES[variant], edits)
+    return _finish(1, (_TOUCH1_FILES[variant],), subject_t, body_t, tokens, fallbacks, edits)
 
 
 _TOUCH2_BY_PAIN = {
@@ -162,7 +187,7 @@ _TOUCH2_BY_PAIN = {
 
 
 def _render_touch2(
-    lead: JourneyLead, tokens: dict[str, str | None]
+    lead: JourneyLead, tokens: dict[str, str | None], edits: JourneyEdits = NO_EDITS
 ) -> tuple[RenderedTouch | None, str | None]:
     """touch2/base.md's subject ("re: your {role} opening") and touch8.md
     are both, as drafted, specifically about a job-posting pain -- neither
@@ -183,8 +208,8 @@ def _render_touch2(
     if pain_file is not None and lead.firm.tier == "4_NONBILLABLE":
         return None, None
     if pain_file is not None:
-        subject_t, body_t = load_template(pain_file)
-        return _finish(2, 3, subject_t, body_t, tokens, {})
+        subject_t, body_t = _template(pain_file, edits)
+        return _finish(2, (pain_file,), subject_t, body_t, tokens, {}, edits)
 
     if tokens.get("role") is None:
         return None, None
@@ -194,29 +219,30 @@ def _render_touch2(
         if lead.firm.tier == "1B"
         else "touch2/_specific_work_1a.md"
     )
-    _, specific_t = load_template(specific_file)
+    _, specific_t = _template(specific_file, edits)
     specific_rendered, specific_missing = substitute(specific_t, tokens, {})
     if specific_missing:
         return None, f"unresolved_token:{specific_missing[0]}"
 
-    subject_t, body_t = load_template("touch2/base.md")
+    subject_t, body_t = _template("touch2/base.md", edits)
     tokens2 = dict(tokens)
     tokens2["specific_work_paragraph"] = specific_rendered
-    return _finish(2, 3, subject_t, body_t, tokens2, {})
+    return _finish(2, ("touch2/base.md", specific_file), subject_t, body_t, tokens2, {}, edits)
 
 
 def _render_touch3(
-    lead: JourneyLead, tokens: dict[str, str | None]
+    lead: JourneyLead, tokens: dict[str, str | None], edits: JourneyEdits = NO_EDITS
 ) -> tuple[RenderedTouch | None, str | None]:
     variant = select_touch3_variant(lead.firm.fee_model, lead.firm.tier)
     if variant is None:
         return None, f"fee_model_unresolved:{lead.firm.fee_model}"
-    subject_t, body_t = load_template(f"touch3/{variant}.md")
-    return _finish(3, 7, subject_t, body_t, tokens, {})
+    file_name = f"touch3/{variant}.md"
+    subject_t, body_t = _template(file_name, edits)
+    return _finish(3, (file_name,), subject_t, body_t, tokens, {}, edits)
 
 
 def _render_touch8(
-    lead: JourneyLead, tokens: dict[str, str | None]
+    lead: JourneyLead, tokens: dict[str, str | None], edits: JourneyEdits = NO_EDITS
 ) -> tuple[RenderedTouch | None, str | None]:
     """Touch 8 only fires while the arming signal is still open, and only
     when there is a {role}/{days_open} job-posting pain to ask about again
@@ -228,25 +254,27 @@ def _render_touch8(
         return None, None
     if tokens.get("role") is None:
         return None, None
-    subject_t, body_t = load_template("touch8.md")
-    return _finish(8, 25, subject_t, body_t, tokens, {})
+    subject_t, body_t = _template("touch8.md", edits)
+    return _finish(8, ("touch8.md",), subject_t, body_t, tokens, {}, edits)
 
 
 def _render_static(
-    step: int, tokens: dict[str, str | None]
+    step: int, tokens: dict[str, str | None], edits: JourneyEdits = NO_EDITS
 ) -> tuple[RenderedTouch | None, str | None]:
-    file_name, day = _STATIC_TOUCHES[step]
-    subject_t, body_t = load_template(file_name)
+    file_name = _STATIC_TOUCHES[step]
+    subject_t, body_t = _template(file_name, edits)
     fallbacks = _CMS_FALLBACK if step == 5 else {}
-    return _finish(step, day, subject_t, body_t, tokens, fallbacks)
+    return _finish(step, (file_name,), subject_t, body_t, tokens, fallbacks, edits)
 
 
-def build_journey(lead: JourneyLead) -> JourneyResult:
+def build_journey(lead: JourneyLead, edits: JourneyEdits = NO_EDITS) -> JourneyResult:
     """Render every touch for `lead`'s band, or return an exclusion reason.
 
     `lead.band` must already be 'SEQUENCE' or 'NURTURE' -- STRIKE (human,
     same day, never rendered) and HOLD (never contacted) are the caller's
-    responsibility to filter out before reaching here.
+    responsibility to filter out before reaching here. `edits` is what the
+    Email journey screen changed (D-057); without it, the copy files and
+    journey/sequences.yml as they are.
     """
     if lead.band not in ("SEQUENCE", "NURTURE"):
         raise ValueError(f"build_journey: band must be SEQUENCE or NURTURE, got {lead.band!r}")
@@ -277,7 +305,9 @@ def build_journey(lead: JourneyLead) -> JourneyResult:
     touches: list[RenderedTouch] = []
     for step in steps:
         renderer = renderers.get(step)
-        touch, reason = renderer(lead, tokens) if renderer else _render_static(step, tokens)
+        touch, reason = (
+            renderer(lead, tokens, edits) if renderer else _render_static(step, tokens, edits)
+        )
 
         if reason is not None:
             return JourneyResult([], reason)
@@ -297,7 +327,9 @@ def build_journey(lead: JourneyLead) -> JourneyResult:
             # guarantees "tier 4 never receives paralegal copy" end to end.
             continue
         if day_multiplier != 1:
-            touch = RenderedTouch(touch.step, touch.day * day_multiplier, touch.subject, touch.body)
+            touch = RenderedTouch(
+                touch.step, touch.day * day_multiplier, touch.subject, touch.body, touch.templates
+            )
         touches.append(touch)
 
     if not touches:

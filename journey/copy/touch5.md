@@ -1,11 +1,14 @@
-Subject: the part people ask about
+Subject: Confidentiality, supervision, and how this actually works
 
-{first_name} —
+Hi {first_name},
 
-The question I usually get around now is about client information.
+The question I'm usually asked around now is about client information, so
+let me answer it before you have to ask.
 
-Straight answer: your person works inside {cms} under permissions you set,
-same as an in-house hire. NDA and confidentiality agreement signed before
-day one. You supervise the work the way you'd supervise anyone's.
+Your person works inside {cms} under permissions you set, exactly as an
+in-house hire would. They're HIPAA-trained, and the NDA and
+confidentiality agreement are signed before day one. You supervise the
+work the way you'd supervise anyone's, and you can end the arrangement at
+any point.
 
-Happy to send the agreement over to read before we ever speak.
+I'm happy to send the agreement over to read before we ever speak.

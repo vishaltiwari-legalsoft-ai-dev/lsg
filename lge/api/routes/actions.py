@@ -13,10 +13,11 @@ a lead, note it, own it, and do the same to many at once.
   PUT  /api/leads/{lead_id}/owner           -> who works it
   POST /api/leads/batch                     -> the same for a list of leads
 
-A research job runs the engine's own components for one firm, in the
-order the flow runs them, under live=1, and records each step's outcome on
-the job row as it goes (a short autocommit connection, so the screen sees
-progress while the job's own transaction is open). A decision moves the
+A research job runs, for one firm and under live=1, the components of the
+flow its scope names in config/flows.yml -- `research` or `find_contacts`,
+the same recipe `lge flow` runs, gates left out -- and records each step's
+outcome on the job row as it goes (a short autocommit connection, so the
+screen sees progress while the job's own transaction is open). A decision moves the
 lead only through a transition the whitelist allows (I5) and always leaves
 a note; the state event carries actor 'ui'.
 """
@@ -37,6 +38,7 @@ from psycopg.types.json import Jsonb
 from lge import db as lge_db
 from lge.api.deps import ConnDep
 from lge.api.errors import api_error, not_found
+from lge.api.labels import step_label
 from lge.api.models import (
     ActionJob,
     BatchRequest,
@@ -60,6 +62,7 @@ from lge.api.models import (
 from lge.api.rendering import build_contact_summary
 from lge.export.list import fetch_emails
 from lge.norm import norm_phone
+from lge.ops.config import load_flows
 from lge.registry import RunContext, discover, registered_components
 from lge.settings import get_settings
 
@@ -69,18 +72,19 @@ router = APIRouter(prefix="/api", tags=["actions"])
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 JOB_DIR = _PROJECT_ROOT / ".local" / "jobs"
 
-FULL_STEPS = (
-    "p1_site_map", "p2_fetch", "p3_render", "p4_text", "p5_jsonld", "p6_fee", "p7_tech",
-    "px_site_rules", "px_site_facts", "reconcile", "r_site_contacts", "r_site_emails",
-    "r_search_links", "r_search_emails", "r3_email_pattern", "r_email_guess", "ja1_careers",
-    "ja6_normalise",
-    "ja6_closure", "ja7_pain_signals", "reconcile", "score",
-)
-CONTACT_STEPS = (
-    "px_site_facts", "r_site_contacts", "r_site_emails", "r_search_links", "r_search_emails",
-    "r3_email_pattern", "r_email_guess", "reconcile", "score",
-)
+# The recipe is config/flows.yml's, never a list kept here (D-054): this list
+# once drifted from the flow -- it left out the AI reading, the address check
+# and classify, so a lead researched from the screen never left PROFILING.
+RESEARCH_FLOWS: dict[str, str] = {"full": "research", "contacts": "find_contacts"}
 _MAX_BATCH = 100
+
+
+def research_steps(scope: str) -> tuple[str, ...]:
+    """The components a research job of this scope runs, in the flow's
+    order. The flow's gates are left out: a gate judges the whole universe,
+    and one firm is not a distribution."""
+    steps = load_flows()[RESEARCH_FLOWS[scope]]
+    return tuple(step["component"] for step in steps if "component" in step)
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +96,8 @@ def _job_from_row(row: dict) -> ActionJob:
     return ActionJob(
         id=str(row["id"]), kind=row["kind"], firm_id=str(row["firm_id"]),
         lead_id=str(row["lead_id"]) if row["lead_id"] else None, status=row["status"],
-        steps=[JobStep(**s) for s in (row["steps"] or [])], error=row["error"],
+        steps=[JobStep(**{**s, "label": step_label(s["name"])}) for s in (row["steps"] or [])],
+        error=row["error"],
         created_at=row["created_at"], started_at=row["started_at"],
         finished_at=row["finished_at"],
     )
@@ -296,8 +301,7 @@ def _start_research(
     if running and running.status in ("queued", "running"):
         return running
     kind = "research" if scope == "full" else "find_contacts"
-    steps = FULL_STEPS if scope == "full" else CONTACT_STEPS
-    job = _create_job(conn, firm["id"], lead["id"] if lead else None, kind, steps)
+    job = _create_job(conn, firm["id"], lead["id"] if lead else None, kind, research_steps(scope))
     launches.append(job.id)
     return job
 

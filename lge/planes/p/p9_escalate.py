@@ -16,9 +16,13 @@ extraction-contract.md).
 (firm_id, attr) with `source LIKE 'llm:p8:%'` — any prompt_rev counts, so a
 prompt bump does not silently stop firms from being escalatable.
 
-`--opt firm_ids_file=<path>` overrides the trigger query with an explicit
-firm-id list (same escalation semantics still apply once selected -- this is
-for targeted re-runs, not a bypass). `--opt limit=N` caps the trigger query.
+`--opt firm_ids_file=<path>` narrows the trigger query to the listed firms:
+a listed firm is escalated only when a trigger above fires for it. That is
+how a research job for one firm runs this step (D-054) -- the file used to
+replace the trigger query, so every firm researched from the screen would
+have gone to the expensive model. `--opt force=1` escalates every listed
+firm regardless, for a deliberate re-run. `--opt limit=N` caps the trigger
+query.
 """
 
 from __future__ import annotations
@@ -43,12 +47,16 @@ def _reconcile_conflict_exists(ctx: RunContext) -> bool:
 
 
 def _select_firm_ids(ctx: RunContext, opts: dict[str, Any]) -> list[str]:
+    listed: list[str] | None = None
     firm_ids_file = opts.get("firm_ids_file")
     if firm_ids_file:
         text = Path(firm_ids_file).read_text(encoding="utf-8")
-        return [line.strip() for line in text.splitlines() if line.strip()]
+        listed = [line.strip() for line in text.splitlines() if line.strip()]
+        if str(opts.get("force", "")).lower() in ("1", "true") or not listed:
+            return listed
 
-    limit = int(opts.get("limit", _DEFAULT_LIMIT))
+    limit = int(opts.get("limit", _DEFAULT_LIMIT)) if listed is None else len(listed)
+    only_listed = "AND f.id::text = ANY(%s)" if listed is not None else ""
 
     # reconcile_conflict is created by another agent's migration (060). Guard
     # with to_regclass() rather than referencing the table unconditionally --
@@ -75,18 +83,20 @@ def _select_firm_ids(ctx: RunContext, opts: dict[str, Any]) -> list[str]:
         LEFT JOIN latest ac ON ac.firm_id = f.id AND ac.attr = 'attorney_count'
         LEFT JOIN latest pp ON pp.firm_id = f.id AND pp.attr = 'primary_practice'
         {conflict_join}
-        WHERE (fm.confidence IS NOT NULL AND fm.confidence < 0.60)
+        WHERE ((fm.confidence IS NOT NULL AND fm.confidence < 0.60)
            OR (ac.confidence IS NOT NULL AND ac.confidence < 0.60)
            OR (pp.confidence IS NOT NULL AND pp.confidence < 0.70)
            OR (fm.value IS NOT NULL AND (fm.value #>> '{{}}') IN ('mixed', 'unknown'))
            OR f.tier = '1A'
-           {conflict_clause}
+           {conflict_clause})
+          {only_listed}
         ORDER BY f.id
         LIMIT %s
-    """  # noqa: S608 -- conflict_join/conflict_clause are fixed literals, never opts-derived
+    """  # noqa: S608 -- the interpolated fragments are fixed literals, never opts-derived
 
+    params: list[Any] = [listed] if listed is not None else []
     with ctx.conn.cursor() as cur:
-        cur.execute(query, (limit,))
+        cur.execute(query, [*params, limit])
         # str(...): see the matching note in p8_llm._select_firm_ids -- keeps
         # task_run.entity_id (text) comparisons well-typed downstream.
         return [str(row["id"]) for row in cur.fetchall()]

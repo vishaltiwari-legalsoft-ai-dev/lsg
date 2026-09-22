@@ -241,6 +241,20 @@ def api_key_for(provider: str, settings: Any) -> str:
     return os.environ.get(env_key, "") or str(getattr(settings, f"{provider}_api_key", "") or "")
 
 
+def _usable(provider: str, settings: Any) -> bool:
+    if provider == "none" or provider not in _ADAPTERS:
+        return False
+    return not _ENV_KEYS.get(provider) or bool(api_key_for(provider, settings))
+
+
+def configured_provider(settings: Any) -> str | None:
+    """The verifier a run would use with no `--opt provider`, or None when the
+    component would be inert -- what the screens' "email verification" light
+    reports, so the light and the run cannot disagree."""
+    provider = provider_for(_config(), settings)
+    return provider if _usable(provider, settings) else None
+
+
 def _select_candidates(conn, opts: dict[str, Any]) -> list[dict]:
     """(contact_id, email, firm_id) for every unverified email on an
     owner/admin contact at a tier-gated (non-DQ_*, tier assigned) firm."""
@@ -299,10 +313,9 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
 
     candidates = _select_candidates(conn, opts)
 
-    env_key = _ENV_KEYS.get(provider)
     api_key = api_key_for(provider, ctx.settings)
 
-    if provider == "none" or provider not in _ADAPTERS or (env_key and not api_key):
+    if not _usable(provider, ctx.settings):
         return RunResult(
             skipped=len(candidates), notes=["inert: no verification provider configured"]
         )

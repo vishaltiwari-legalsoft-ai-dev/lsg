@@ -24,6 +24,10 @@ class SearchBlocked(Exception):
 
 class SearchEngine(Protocol):
     name: str
+    # Whether `places` answers at all -- read off the class, so the screens can
+    # say whether the Google Business Profile is looked up without a client
+    # being built (lge.search.has_listings).
+    has_listings: bool
 
     def search(self, query: str, max_results: int, page: int) -> list[Result]:
         """One request. Raises SearchBlocked on a bot check / rate limit and

@@ -601,6 +601,138 @@
         "title": "Body_upload_import_api_imports_post",
         "type": "object"
       },
+      "CapabilitiesResponse": {
+        "properties": {
+          "built": {
+            "title": "Built",
+            "type": "integer"
+          },
+          "outside": {
+            "items": {
+              "$ref": "#/components/schemas/OutsideService"
+            },
+            "title": "Outside",
+            "type": "array"
+          },
+          "partial": {
+            "title": "Partial",
+            "type": "integer"
+          },
+          "planned": {
+            "title": "Planned",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "waiting": {
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "steps",
+          "outside",
+          "built",
+          "partial",
+          "planned",
+          "waiting",
+          "summary"
+        ],
+        "title": "CapabilitiesResponse",
+        "type": "object"
+      },
+      "CapabilityPart": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "built",
+              "partial",
+              "planned"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "state_display": {
+            "title": "State Display",
+            "type": "string"
+          },
+          "waiting_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waiting On"
+          },
+          "what": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "What"
+          }
+        },
+        "required": [
+          "label",
+          "what",
+          "state",
+          "state_display",
+          "waiting_on"
+        ],
+        "title": "CapabilityPart",
+        "type": "object"
+      },
+      "CapabilityStep": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityPart"
+            },
+            "title": "Parts",
+            "type": "array"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step",
+          "label",
+          "note",
+          "parts"
+        ],
+        "title": "CapabilityStep",
+        "type": "object"
+      },
       "ContactCreate": {
         "properties": {
           "email": {
@@ -1051,6 +1183,17 @@
             ],
             "title": "Band"
           },
+          "excluded_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Display"
+          },
           "excluded_reason": {
             "anyOf": [
               {
@@ -1073,6 +1216,7 @@
         "required": [
           "band",
           "excluded_reason",
+          "excluded_display",
           "touches"
         ],
         "title": "DraftsResponse",
@@ -1156,6 +1300,16 @@
               }
             ]
           },
+          "pain": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PainAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "signals": {
             "items": {
               "$ref": "#/components/schemas/Proof"
@@ -1176,7 +1330,8 @@
           "signals",
           "contacts",
           "aliases",
-          "lead"
+          "lead",
+          "pain"
         ],
         "title": "FirmDetail",
         "type": "object"
@@ -2142,6 +2297,10 @@
       },
       "JobStep": {
         "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -2170,6 +2329,7 @@
         },
         "required": [
           "name",
+          "label",
           "status"
         ],
         "title": "JobStep",
@@ -2189,6 +2349,428 @@
           "items"
         ],
         "title": "JobsResponse",
+        "type": "object"
+      },
+      "JourneyCopyEdit": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "JourneyCopyEdit",
+        "type": "object"
+      },
+      "JourneyDay": {
+        "properties": {
+          "day": {
+            "title": "Day",
+            "type": "integer"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "step",
+          "day"
+        ],
+        "title": "JourneyDay",
+        "type": "object"
+      },
+      "JourneyDaysEdit": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyDay"
+            },
+            "title": "Days",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "title": "JourneyDaysEdit",
+        "type": "object"
+      },
+      "JourneyExample": {
+        "description": "The journey for an invented firm, rendered by the engine itself.",
+        "properties": {
+          "band": {
+            "enum": [
+              "SEQUENCE",
+              "NURTURE"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "drafts": {
+            "$ref": "#/components/schemas/DraftsResponse"
+          },
+          "firm": {
+            "title": "Firm",
+            "type": "string"
+          },
+          "pain": {
+            "enum": [
+              "open_role",
+              "reposted_role",
+              "two_roles",
+              "mass_tort",
+              "reviews",
+              "new_system"
+            ],
+            "title": "Pain",
+            "type": "string"
+          },
+          "person": {
+            "title": "Person",
+            "type": "string"
+          },
+          "system": {
+            "title": "System",
+            "type": "boolean"
+          },
+          "tier": {
+            "enum": [
+              "1A",
+              "1B",
+              "2",
+              "3",
+              "4_NONBILLABLE"
+            ],
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "firm",
+          "person",
+          "tier",
+          "pain",
+          "system",
+          "band",
+          "drafts"
+        ],
+        "title": "JourneyExample",
+        "type": "object"
+      },
+      "JourneyFillIn": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "meaning": {
+            "title": "Meaning",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "label",
+          "meaning"
+        ],
+        "title": "JourneyFillIn",
+        "type": "object"
+      },
+      "JourneyOption": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "JourneyOption",
+        "type": "object"
+      },
+      "JourneyResponse": {
+        "properties": {
+          "banned_phrases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Banned Phrases",
+            "type": "array"
+          },
+          "fill_ins": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyFillIn"
+            },
+            "title": "Fill Ins",
+            "type": "array"
+          },
+          "max_day": {
+            "title": "Max Day",
+            "type": "integer"
+          },
+          "pains": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyOption"
+            },
+            "title": "Pains",
+            "type": "array"
+          },
+          "sender_missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sender Missing",
+            "type": "array"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyOption"
+            },
+            "title": "Tiers",
+            "type": "array"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyTrack"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps",
+          "tracks",
+          "fill_ins",
+          "banned_phrases",
+          "max_day",
+          "signature",
+          "sender_missing",
+          "tiers",
+          "pains"
+        ],
+        "title": "JourneyResponse",
+        "type": "object"
+      },
+      "JourneyStep": {
+        "properties": {
+          "day": {
+            "title": "Day",
+            "type": "integer"
+          },
+          "original_day": {
+            "title": "Original Day",
+            "type": "integer"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/JourneyTemplate"
+            },
+            "title": "Templates",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "varies_by": {
+            "title": "Varies By",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "day",
+          "original_day",
+          "title",
+          "purpose",
+          "varies_by",
+          "templates"
+        ],
+        "title": "JourneyStep",
+        "type": "object"
+      },
+      "JourneyTemplate": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "fill_ins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fill Ins",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "keeps": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeps"
+          },
+          "kind": {
+            "enum": [
+              "email",
+              "paragraph"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "original_body": {
+            "title": "Original Body",
+            "type": "string"
+          },
+          "original_subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Subject"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "used_when": {
+            "title": "Used When",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "step",
+          "kind",
+          "used_when",
+          "subject",
+          "body",
+          "original_subject",
+          "original_body",
+          "edited_at",
+          "fill_ins",
+          "keeps"
+        ],
+        "title": "JourneyTemplate",
+        "type": "object"
+      },
+      "JourneyTrack": {
+        "properties": {
+          "band": {
+            "enum": [
+              "STRIKE",
+              "SEQUENCE",
+              "NURTURE",
+              "HOLD"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pace": {
+            "title": "Pace",
+            "type": "integer"
+          },
+          "steps": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "band",
+          "label",
+          "description",
+          "steps",
+          "pace"
+        ],
+        "title": "JourneyTrack",
         "type": "object"
       },
       "LastRun": {
@@ -2386,6 +2968,16 @@
             ],
             "title": "Owner"
           },
+          "pain": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PainAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "proof": {
             "anyOf": [
               {
@@ -2476,7 +3068,8 @@
           "outcomes",
           "timeline",
           "notes",
-          "job"
+          "job",
+          "pain"
         ],
         "title": "LeadDetail",
         "type": "object"
@@ -3003,6 +3596,56 @@
         "title": "OutcomeResponse",
         "type": "object"
       },
+      "OutsideService": {
+        "properties": {
+          "cost": {
+            "title": "Cost",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          },
+          "spent_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spent Display"
+          },
+          "what": {
+            "title": "What",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "key",
+          "what",
+          "cost",
+          "on",
+          "spent_display"
+        ],
+        "title": "OutsideService",
+        "type": "object"
+      },
       "OverviewResponse": {
         "properties": {
           "attention": {
@@ -3069,6 +3712,74 @@
           "owner"
         ],
         "title": "OwnerRequest",
+        "type": "object"
+      },
+      "PainAnalysis": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "pains": {
+            "items": {
+              "$ref": "#/components/schemas/PainPoint"
+            },
+            "title": "Pains",
+            "type": "array"
+          },
+          "read": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Read",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "pains",
+          "read",
+          "at"
+        ],
+        "title": "PainAnalysis",
+        "type": "object"
+      },
+      "PainPoint": {
+        "properties": {
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "why_it_matters": {
+            "title": "Why It Matters",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "headline",
+          "quote",
+          "source",
+          "why_it_matters"
+        ],
+        "title": "PainPoint",
         "type": "object"
       },
       "PipelineStep": {
@@ -3361,13 +4072,21 @@
           "ready": {
             "title": "Ready",
             "type": "integer"
+          },
+          "withheld": {
+            "items": {
+              "$ref": "#/components/schemas/QualifiedWithheld"
+            },
+            "title": "Withheld",
+            "type": "array"
           }
         },
         "required": [
           "ready",
           "almost",
           "checked",
-          "missing_by_check"
+          "missing_by_check",
+          "withheld"
         ],
         "title": "QualifiedCounts",
         "type": "object"
@@ -3617,6 +4336,24 @@
           "why_now"
         ],
         "title": "QualifiedRow",
+        "type": "object"
+      },
+      "QualifiedWithheld": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "count"
+        ],
+        "title": "QualifiedWithheld",
         "type": "object"
       },
       "QueueCounts": {
@@ -3968,6 +4705,13 @@
           "subject": {
             "title": "Subject",
             "type": "string"
+          },
+          "templates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Templates",
+            "type": "array"
           }
         },
         "required": [
@@ -3975,7 +4719,8 @@
           "day",
           "subject",
           "body",
-          "skipped_reason"
+          "skipped_reason",
+          "templates"
         ],
         "title": "Touch",
         "type": "object"
@@ -4784,6 +5529,276 @@
         ]
       }
     },
+    "/api/journey": {
+      "get": {
+        "operationId": "get_journey_api_journey_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Journey",
+        "tags": [
+          "journey"
+        ]
+      }
+    },
+    "/api/journey/days": {
+      "delete": {
+        "description": "Back to the days in journey/sequences.yml.",
+        "operationId": "restore_days_api_journey_days_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Restore Days",
+        "tags": [
+          "journey"
+        ]
+      },
+      "put": {
+        "description": "The whole schedule at once: an email left out of `days` goes back to\nits original day, so the screen always sends every email it shows.",
+        "operationId": "put_days_api_journey_days_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyDaysEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Days",
+        "tags": [
+          "journey"
+        ]
+      }
+    },
+    "/api/journey/example": {
+      "get": {
+        "description": "What an invented firm would be sent, rendered by build_journey with the\nscreen's edits -- the same path a real lead's drafts take.",
+        "operationId": "get_example_api_journey_example_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tier",
+            "required": false,
+            "schema": {
+              "default": "1A",
+              "enum": [
+                "1A",
+                "1B",
+                "2",
+                "3",
+                "4_NONBILLABLE"
+              ],
+              "title": "Tier",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pain",
+            "required": false,
+            "schema": {
+              "default": "open_role",
+              "enum": [
+                "open_role",
+                "reposted_role",
+                "two_roles",
+                "mass_tort",
+                "reviews",
+                "new_system"
+              ],
+              "title": "Pain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "system",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "System",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "band",
+            "required": false,
+            "schema": {
+              "default": "SEQUENCE",
+              "enum": [
+                "SEQUENCE",
+                "NURTURE"
+              ],
+              "title": "Band",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyExample"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Example",
+        "tags": [
+          "journey"
+        ]
+      }
+    },
+    "/api/journey/templates/{template_id}": {
+      "delete": {
+        "description": "Back to the wording in journey/copy/.",
+        "operationId": "restore_template_api_journey_templates__template_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyTemplate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Template",
+        "tags": [
+          "journey"
+        ]
+      },
+      "put": {
+        "description": "New wording for one template, for every lead from now on. Saving the\noriginal wording back is the same as restoring it.",
+        "operationId": "put_template_api_journey_templates__template_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JourneyCopyEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JourneyTemplate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Template",
+        "tags": [
+          "journey"
+        ]
+      }
+    },
     "/api/leads": {
       "get": {
         "operationId": "list_leads_api_leads_get",
@@ -5429,6 +6444,28 @@
         ]
       }
     },
+    "/api/meta/capabilities": {
+      "get": {
+        "description": "The three steps, what is built in each, and the outside services the\nrest waits on. The states come from config/capabilities.yml; whether a\nservice is switched on is asked of the engine's own seams, so a key\narriving changes this page without anyone editing anything.",
+        "operationId": "get_capabilities_api_meta_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Capabilities",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
     "/api/meta/providers": {
       "get": {
         "operationId": "get_providers_api_meta_providers_get",
@@ -5599,7 +6636,7 @@
     },
     "/api/qualified/export.csv": {
       "get": {
-        "description": "The ready leads as a sheet for the sending vendor -- never the almost-ready.",
+        "description": "The ready leads as a sheet for the sending vendor -- never the\nalmost-ready, never one the list rules hold back.",
         "operationId": "export_qualified_csv_api_qualified_export_csv_get",
         "responses": {
           "200": {

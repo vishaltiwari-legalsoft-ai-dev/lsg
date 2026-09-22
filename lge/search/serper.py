@@ -17,6 +17,7 @@ PLACES_URL = "https://google.serper.dev/places"
 
 class SerperEngine:
     name = "serper"
+    has_listings = True
 
     def __init__(self, api_key: str, *, timeout_s: float = 15.0) -> None:
         if not api_key:

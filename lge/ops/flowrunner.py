@@ -19,6 +19,9 @@ Stopping rules:
   * a step naming a component or gate that is not registered raises
     FlowError immediately, naming the flow, the step index, and the name --
     never silently skipped.
+
+A `{flow: name}` step is expanded by `load_flows` before this walker sees
+the list, so step numbers (and `--from-step`) count the expanded steps.
 """
 
 from __future__ import annotations
@@ -28,13 +31,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from lge.ops.config import FLOWS_PATH, load_flows
+from lge.ops.config import FLOWS_PATH, FlowError, load_flows
 from lge.registry import RunContext, RunResult, discover, registered_components, registered_gates
 
-
-class FlowError(RuntimeError):
-    """A flow definition problem (unknown flow/component/gate, or a
-    malformed step) -- never swallowed."""
+__all__ = ["FlowError", "FlowOutcome", "StepOutcome", "run_flow"]
 
 
 @dataclass

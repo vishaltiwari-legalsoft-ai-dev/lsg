@@ -37,11 +37,11 @@ from lge.api.rendering import (
     build_proof,
     fetch_signal_scores,
 )
-from lge.export.list import ClassifiedLead, classify_open_scored_leads
+from lge.export.list import ClassifiedLead, classify_open_scored_leads, fetch_journey_edits
 from lge.journey.build import _build_tokens, _render_touch1  # touch-1-only render, see docstring
 from lge.journey.model import Contact as JourneyContact
 from lge.journey.model import Firm as JourneyFirm
-from lge.journey.model import JourneyLead
+from lge.journey.model import JourneyEdits, JourneyLead
 from lge.ops.alerts import evaluate_all
 from lge.registry import RunContext
 from lge.settings import get_settings
@@ -79,7 +79,7 @@ def _rank(cl: ClassifiedLead) -> tuple[int, int, int, str]:
     )
 
 
-def _render_first_draft(cl: ClassifiedLead, at: datetime) -> FirstDraft | None:
+def _render_first_draft(cl: ClassifiedLead, at: datetime, edits: JourneyEdits) -> FirstDraft | None:
     if cl.primary_contact is None:
         return None
     row = cl.row
@@ -97,7 +97,7 @@ def _render_first_draft(cl: ClassifiedLead, at: datetime) -> FirstDraft | None:
         repost_first_seen=cl.repost_first_seen, at=at,
     )
     tokens = _build_tokens(journey_lead)
-    touch, _reason = _render_touch1(journey_lead, tokens)
+    touch, _reason = _render_touch1(journey_lead, tokens, edits)
     if touch is None:
         return None
     return FirstDraft(subject=touch.subject, body=touch.body)
@@ -131,7 +131,7 @@ def get_today(conn: ConnDep) -> TodayResponse:
         return build_lead_row(cl.row, proof, contact)
 
     top_proof = _row(top_cl) if top_cl else None
-    first_draft = _render_first_draft(top_cl, at) if top_cl else None
+    first_draft = _render_first_draft(top_cl, at, fetch_journey_edits(conn)) if top_cl else None
     strike = [_row(cl) for cl in rest_strike_cls]
 
     return TodayResponse(

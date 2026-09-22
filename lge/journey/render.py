@@ -72,3 +72,77 @@ def substitute(
 
     rendered = _TOKEN_RE.sub(repl, text)
     return rendered, missing
+
+
+# ---------------------------------------------------------------------------
+# Who signs, and the lines the law asks for (D-060)
+# ---------------------------------------------------------------------------
+
+SENDER_CONFIG = _PROJECT_ROOT / "config" / "sender.yml"
+
+
+@functools.cache
+def load_sender(path: Path = SENDER_CONFIG) -> dict:
+    import yaml
+
+    with path.open("r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh) or {}
+
+
+def sender_missing(cfg: dict | None = None) -> list[str]:
+    """What a person still has to fill in before any of this can be sent, in
+    plain words. An email with nobody's name on it reads as a circular, and US
+    law wants a postal address and a way to stop."""
+    cfg = cfg if cfg is not None else load_sender()
+    who = cfg.get("from") or {}
+    footer = cfg.get("footer") or {}
+    missing = []
+    if not (who.get("name") or "").strip():
+        missing.append("who signs the emails")
+    if not (who.get("reply_to") or "").strip():
+        missing.append("the address replies go to")
+    if not (footer.get("postal_address") or "").strip():
+        missing.append("a postal address, which US law requires")
+    if not (footer.get("opt_out") or "").strip():
+        missing.append("a line telling people how to stop")
+    return missing
+
+
+def signature(cfg: dict | None = None) -> str:
+    """The block appended to every drafted email: who wrote it, for whom, and
+    how to make it stop. Whatever is not configured is left out rather than
+    invented -- a blank where a postal address should be is visible, and
+    `sender_missing` names it."""
+    cfg = cfg if cfg is not None else load_sender()
+    who = cfg.get("from") or {}
+    footer = cfg.get("footer") or {}
+
+    name = (who.get("name") or "").strip()
+    title = (who.get("title") or "").strip()
+    company = (who.get("company") or "").strip()
+    website = (who.get("website") or "").strip()
+    reply_to = (who.get("reply_to") or "").strip()
+
+    sign_off = (who.get("sign_off") or "").strip()
+
+    lines: list[str] = []
+    if sign_off:
+        lines.append(sign_off)
+    if name:
+        lines.append(f"{name}, {title}" if title else name)
+    if company:
+        lines.append(f"{company} — {website}" if website else company)
+    elif website:
+        lines.append(website)
+    if reply_to:
+        lines.append(reply_to)
+
+    tail = [part for part in (
+        (footer.get("postal_address") or "").strip(),
+        (footer.get("opt_out") or "").strip(),
+    ) if part]
+    if tail:
+        # The legal footer sits under a rule, the way a business email carries it.
+        lines.extend(["", "--"])
+        lines.extend(tail)
+    return "\n".join(lines)

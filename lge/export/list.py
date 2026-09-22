@@ -26,7 +26,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from lge.journey.build import build_journey
-from lge.journey.model import Contact, Firm, JourneyLead, JourneyResult, Signal
+from lge.journey.model import Contact, Firm, JourneyEdits, JourneyLead, JourneyResult, Signal
 from lge.registry import RunContext, RunResult, component
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -85,28 +85,57 @@ def _parse_now(raw: str | None) -> datetime:
 # ---------------------------------------------------------------------------
 
 
-# Every AND condition below is one hygiene rule from PLAN.md's list-hygiene
-# bullets, re-expressed as a per-row reason instead of a WHERE filter --
-# `classify_open_scored_leads` (below) is what both `build_list` and the API's
-# STRIKE/SEQUENCE/NURTURE/PHONE/EXCLUDED views are built from, so the two
-# surfaces can never silently disagree about which leads are emailable.
-# Evaluated in the same priority order the original WHERE clause implied
-# (first failing condition is the reported reason).
-_STRUCTURAL_EXCLUSION_SQL = """
-  CASE
-    WHEN l.band = 'HOLD' THEN 'band_hold'
-    WHEN l.cooldown_until IS NOT NULL AND l.cooldown_until >= %(at)s THEN 'cooldown'
-    WHEN f.tier IS NULL THEN 'tier_not_set'
-    WHEN f.tier LIKE 'DQ%%' THEN 'tier_disqualified'
-    WHEN f.tier = 'UNCLASSIFIED' THEN 'tier_unclassified'
+# The list-hygiene rules (PLAN.md "the one list hygiene rule that stays"):
+# a parked lead, a portal or competitor's customer, a suppressed firm or
+# domain. Each is one WHEN over a lead `l`, its firm `f` and the firm's track
+# `ft`, bound to %(at)s. Every list and every sheet holds a lead back by the
+# same text -- build_list below, and the Qualified panel and its vendor sheet
+# (lge/api/routes/qualified.py) through HYGIENE_EXCLUSION_SQL -- so no sheet
+# can carry a lead another would hold back (D-054). The vendor sheet once
+# applied none of them.
+_COOLDOWN_WHEN = (
+    "WHEN l.cooldown_until IS NOT NULL AND l.cooldown_until >= %(at)s THEN 'cooldown'"
+)
+_TRACK_WHEN = """
     WHEN COALESCE(ft.track, 'cold') IN ('portal', 'displacement')
       THEN 'firm_track_' || COALESCE(ft.track, 'cold')
+"""
+_SUPPRESSED_WHEN = """
     WHEN EXISTS (
       SELECT 1 FROM suppression s WHERE s.scope = 'firm_id' AND s.value = f.id::text
     ) THEN 'suppressed_firm'
     WHEN f.domain IS NOT NULL AND EXISTS (
       SELECT 1 FROM suppression s WHERE s.scope = 'domain' AND s.value = f.domain
     ) THEN 'suppressed_domain'
+"""
+
+HYGIENE_EXCLUSION_SQL = f"CASE {_COOLDOWN_WHEN} {_TRACK_WHEN} {_SUPPRESSED_WHEN} ELSE NULL END"
+
+# An address on the do-not-contact list (scope 'email': a bounce, an opt-out)
+# is not an address any list may carry; `{e}` is the contact_email alias. The
+# send-time guard (I2, sql/001_schema.sql) checks the same scope, but nothing
+# here sends -- the sheet is the last gate.
+EMAIL_NOT_SUPPRESSED_SQL = (
+    "NOT EXISTS (SELECT 1 FROM suppression s WHERE s.scope = 'email' AND s.value = {e}.email)"
+)
+
+# Every WHEN below is one rule, re-expressed as a per-row reason instead of a
+# WHERE filter -- `classify_open_scored_leads` (below) is what both
+# `build_list` and the API's STRIKE/SEQUENCE/NURTURE/PHONE/EXCLUDED views are
+# built from, so the two surfaces can never silently disagree about which
+# leads are emailable. Evaluated in the same priority order the original WHERE
+# clause implied (first failing condition is the reported reason); the
+# hygiene rules above sit where they always did, between the score and the
+# tier checks.
+_STRUCTURAL_EXCLUSION_SQL = f"""
+  CASE
+    WHEN l.band = 'HOLD' THEN 'band_hold'
+    {_COOLDOWN_WHEN}
+    WHEN f.tier IS NULL THEN 'tier_not_set'
+    WHEN f.tier LIKE 'DQ%%' THEN 'tier_disqualified'
+    WHEN f.tier = 'UNCLASSIFIED' THEN 'tier_unclassified'
+    {_TRACK_WHEN}
+    {_SUPPRESSED_WHEN}
     ELSE NULL
   END
 """
@@ -187,6 +216,19 @@ def fetch_repost_first_seen(conn, signal_rows: list[dict]) -> dict[int, date | N
         return {row["signal_id"]: row["repost_date"] for row in cur.fetchall()}
 
 
+def fetch_journey_edits(conn) -> JourneyEdits:
+    """What the Email journey screen changed (D-057): new wording per copy
+    file, a new day per email. Every renderer reads them through here -- a
+    lead's drafts, the work queue's check, the vendor sheet and build_list's
+    drafts -- so none of them can send words the others do not show."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT template, subject, body FROM journey_copy_edit")
+        copy = {row["template"]: (row["subject"], row["body"]) for row in cur.fetchall()}
+        cur.execute("SELECT step, day FROM journey_day_edit")
+        days = {int(row["step"]): int(row["day"]) for row in cur.fetchall()}
+    return JourneyEdits(copy=copy, days=days)
+
+
 def fetch_contacts(conn, firm_ids: list[str]) -> dict[str, list[dict]]:
     if not firm_ids:
         return {}
@@ -203,13 +245,20 @@ def fetch_contacts(conn, firm_ids: list[str]) -> dict[str, list[dict]]:
         return by_firm
 
 
-def fetch_emails(conn, contact_ids: list[str]) -> dict[str, list[dict]]:
+def fetch_emails(
+    conn, contact_ids: list[str], *, usable_only: bool = False
+) -> dict[str, list[dict]]:
+    """Every address on file per contact. `usable_only` leaves out an address
+    on the do-not-contact list -- what a list reads; a screen shows them all."""
     if not contact_ids:
         return {}
+    where = "e.contact_id = ANY(%s)"
+    if usable_only:
+        where += " AND " + EMAIL_NOT_SUPPRESSED_SQL.format(e="e")
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT contact_id, email, status, vendor_status "
-            "FROM contact_email WHERE contact_id = ANY(%s)",
+            "SELECT e.contact_id, e.email, e.status, e.vendor_status "
+            f"FROM contact_email e WHERE {where}",  # noqa: S608 -- fixed fragments only
             (contact_ids,),
         )
         by_contact: dict[str, list[dict]] = {}
@@ -324,7 +373,8 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
     repost_by_signal_id = fetch_repost_first_seen(conn, list(signals_by_id.values()))
     contacts_by_firm = fetch_contacts(conn, firm_ids)
     all_contact_ids = [c["id"] for contacts in contacts_by_firm.values() for c in contacts]
-    emails_by_contact = fetch_emails(conn, all_contact_ids)
+    emails_by_contact = fetch_emails(conn, all_contact_ids, usable_only=True)
+    journey_edits = fetch_journey_edits(conn)
 
     out: list[ClassifiedLead] = []
     for lead in leads:
@@ -435,7 +485,7 @@ def classify_open_scored_leads(conn, at: datetime | None = None) -> LeadClassifi
             lead_id=lead_id, band=lead["band"], firm=firm, contact=contact, signal=signal,
             repost_first_seen=repost_first_seen, at=at,
         )
-        result = build_journey(journey_lead)
+        result = build_journey(journey_lead, journey_edits)
         if result.excluded_reason is not None:
             out.append(
                 ClassifiedLead(

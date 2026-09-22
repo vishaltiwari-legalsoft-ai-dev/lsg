@@ -1,11 +1,15 @@
-Subject: the unbillable hours
+Subject: The hours nobody at your firm can bill
 
-{first_name} — a narrower note than usual.
+Hi {first_name},
 
-I'm not going to suggest a paralegal — yours are billable and that would
-be a bad trade for you.
+This is a narrower note than the one you usually get from people like me.
 
-But the bookkeeping, the intake calls, the marketing admin? Nobody bills
-for those. That's the part we'd take.
+I'm not going to suggest a paralegal. Yours are billable, and moving
+billable work off your own books would be a poor trade for you.
 
-Worth ten minutes?
+It's the rest that interests me: the bookkeeping, the intake calls, the
+marketing admin. Nobody bills for those and they still take someone's day.
+That's the part we'd staff, with someone trained for it, pre-vetted, and
+free to interview.
+
+Worth ten minutes to see whether the numbers work?

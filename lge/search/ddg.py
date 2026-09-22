@@ -21,6 +21,7 @@ def _engine() -> Any:
 
 class DDGEngine:
     name = "ddg"
+    has_listings = False
 
     def search(self, query: str, max_results: int, page: int = 1) -> list[Result]:
         engine = _engine()
