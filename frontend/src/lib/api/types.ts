@@ -1,0 +1,219 @@
+/**
+ * The API contract, as types.
+ *
+ * These alias the schemas generated from the backend's openapi.json
+ * (`npm run api:types` → schema.d.ts), so the UI compiles against what the
+ * engine actually serves; re-run the script whenever the backend changes.
+ * `Lead Gen Engine/plan/api-contract.md` is the spec: where the generated
+ * schema and the doc disagree, the backend is fixed — see the drift list in
+ * the report — and the UI stays safe for both shapes meanwhile.
+ *
+ * Display strings (`*_display`, `label`, `headline`, `source_label`,
+ * `message`, `note`) come from the backend. The frontend renders them
+ * verbatim and never humanises a slug, recomputes a tier or filters a list.
+ */
+import type { components } from "./schema";
+
+type S = components["schemas"];
+
+// ── Shared types ────────────────────────────────────────────────────────────
+
+export type Band = NonNullable<S["LeadRow"]["band"]>;
+export type Contest = S["Proof"]["contest"];
+export type EmailStatus = NonNullable<S["ContactSummary"]["email_status"]>;
+export type Role = S["ContactSummary"]["role"];
+
+export type FirmRef = S["FirmRef"];
+/** The evidence the engine read on the firm's own site. `first_seen` is OURS. */
+export type Proof = S["Proof"];
+export type ContactSummary = S["ContactSummary"];
+export type LeadRow = S["LeadRow"];
+
+// ── Health and Today ────────────────────────────────────────────────────────
+
+export type HealthResponse = S["HealthResponse"];
+export type AlertState = S["AlertSummary"]["state"];
+export type TodayAlert = S["AlertSummary"];
+export type ReviewQueueCounts = S["QueueCounts"];
+export type BenchStatus = S["BenchStatus"];
+export type FirstDraft = S["FirstDraft"];
+export type TodayResponse = S["TodayResponse"];
+
+// ── Leads ───────────────────────────────────────────────────────────────────
+
+export type LeadCounts = S["LeadViewCounts"];
+export type LeadView = keyof LeadCounts;
+export type LeadsResponse = S["LeadsResponse"];
+
+// ── Qualified leads ─────────────────────────────────────────────────────────
+
+export type QualifiedCheck = S["QualifiedCheck"];
+export type QualifiedCheckKey = QualifiedCheck["key"];
+export type QualifiedRow = S["QualifiedRow"];
+export type QualifiedCounts = S["QualifiedCounts"];
+export type QualifiedWithheld = S["QualifiedWithheld"];
+export type QualifiedResponse = S["QualifiedResponse"];
+export type QualifiedOnly = "ready" | "almost" | "all";
+export interface QualifiedQuery {
+  only?: QualifiedOnly;
+  q?: string;
+  offset?: number;
+  limit?: number;
+}
+
+/** Narrower than the generated query (which types view/contest as string). */
+export interface LeadsQuery {
+  view?: LeadView;
+  /** The work queue: one stage, whatever the band. Takes precedence over `view`. */
+  stage?: Stage;
+  band?: Band;
+  owner?: string;
+  tier?: string;
+  city?: string;
+  signal?: string;
+  contest?: Contest;
+  verified?: boolean;
+  q?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export type OutcomeAction = S["OutcomeRequest"]["action"];
+export type LeadOutcome = S["LeadOutcome"];
+export type ScoreBreakdown = S["ScoreBreakdown"];
+export type TimelineEntry = S["TimelineEvent"];
+export type LeadDetail = S["LeadDetail"];
+/** What the AI read on a firm and what it proves hurts (D-058). */
+export type PainAnalysis = S["PainAnalysis"];
+export type PainPoint = S["PainPoint"];
+// The Google Business Profile and its reviews (D-062)
+export type ListingSummary = S["ListingSummary"];
+export type ReviewRow = S["ReviewRow"];
+
+export type DraftTouch = S["Touch"];
+export type DraftsResponse = S["DraftsResponse"];
+
+// ── The email journey (D-057) ───────────────────────────────────────────────
+
+export type JourneyResponse = S["JourneyResponse"];
+export type JourneyStep = S["JourneyStep"];
+export type JourneyTemplate = S["JourneyTemplate"];
+export type JourneyTrack = S["JourneyTrack"];
+export type JourneyFillIn = S["JourneyFillIn"];
+export type JourneyOption = S["JourneyOption"];
+export type JourneyCopyEdit = S["JourneyCopyEdit"];
+export type JourneyDay = S["JourneyDay"];
+export type JourneyExample = S["JourneyExample"];
+export type JourneyTier = JourneyExample["tier"];
+export type JourneyPain = JourneyExample["pain"];
+export type JourneyTrackBand = JourneyExample["band"];
+export interface JourneyExampleQuery {
+  tier: JourneyTier;
+  pain: JourneyPain;
+  system: boolean;
+  band: JourneyTrackBand;
+}
+
+export type OutcomeRequest = S["OutcomeRequest"];
+/** `message` is the toast copy, shown verbatim. */
+export type OutcomeResponse = S["OutcomeResponse"];
+
+// ── Actions: research, contacts, decisions, notes, owner, batch ─────────────
+
+export type Stage = S["LeadRow"]["stage"];
+export type LeadNote = S["LeadNote"];
+export type JobStep = S["JobStep"];
+export type ActionJob = S["ActionJob"];
+export type JobResponse = S["JobResponse"];
+export type JobsResponse = S["JobsResponse"];
+export type ResearchRequest = S["ResearchRequest"];
+export type ContactCreate = S["ContactCreate"];
+export type ContactPatch = S["ContactPatch"];
+export type ContactResponse = S["ContactResponse"];
+export type DecisionAction = S["DecisionRequest"]["action"];
+export type DecisionRequest = S["DecisionRequest"];
+export type DecisionResponse = S["DecisionResponse"];
+export type BatchAction = S["BatchRequest"]["action"];
+export type BatchRequest = S["BatchRequest"];
+export type BatchResponse = S["BatchResponse"];
+
+// ── Overview: the home page ─────────────────────────────────────────────────
+
+export type PipelineStep = S["PipelineStep"];
+export type StageCount = S["StageCount"];
+export type RunningJob = S["RunningJob"];
+export type LastRun = S["LastRun"];
+export type ListsSummary = S["ListsSummary"];
+export type OverviewResponse = S["OverviewResponse"];
+
+// ── What is built, and what it needs (D-059) ───────────────────────────────
+
+export type CapabilitiesResponse = S["CapabilitiesResponse"];
+export type CapabilityStep = S["CapabilityStep"];
+export type CapabilityPart = S["CapabilityPart"];
+export type OutsideService = S["OutsideService"];
+
+// ── Firms ───────────────────────────────────────────────────────────────────
+
+export interface FirmsQuery {
+  q?: string;
+  tier?: string;
+  city?: string;
+  lead_state?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export type FirmListItem = S["FirmListItem"];
+export type FirmsResponse = S["FirmsResponse"];
+
+export type AttributeState = S["AttributeRow"]["state"];
+export type AttributeClaim = S["AttributeClaim"];
+export type AttributeRow = S["AttributeRow"];
+export type FirmDocument = S["DocumentRow"];
+export type FirmAlias = S["AliasRow"];
+export type FirmDetail = S["FirmDetail"];
+
+// ── Hand-check — gate G2 ────────────────────────────────────────────────────
+
+export type HandcheckReview = S["HandcheckReview"];
+export type HandcheckSampleFirm = S["HandcheckSampleFirm"];
+export type HandcheckResponse = S["HandcheckResponse"];
+export type HandcheckDecision = S["HandcheckDecisionRequest"];
+
+// ── Imports ─────────────────────────────────────────────────────────────────
+
+export type ImportColumn = S["ImportColumn"];
+export type ImportFieldOption = S["FieldOption"];
+export type ImportBatch = S["ImportBatch"];
+export type ImportSummary = S["ImportSummary"];
+export type ImportDetail = S["ImportDetail"];
+export type ImportsResponse = S["ImportsResponse"];
+export type MappingRequest = S["MappingRequest"];
+export type ImportLoadResponse = S["ImportLoadResponse"];
+
+// ── Sign-in, accounts and access (D-067) ────────────────────────────────────
+
+/** Who is asking and what they may do: the one call the shell makes. */
+export type AuthStatus = S["AuthStatus"];
+export type AuthStanding = AuthStatus["standing"];
+export type AuthUser = S["AuthUser"];
+export type AccessLevel = AuthUser["access"];
+export type UserStanding = AuthUser["standing"];
+export type OnboardingField = S["OnboardingField"];
+export type OnboardingRequest = S["OnboardingRequest"];
+/** The levels an admin may set; `pending` is only ever the state before a decision. */
+export type AssignableAccess = S["UserAccessRequest"]["access"];
+export type UserAccessRequest = S["UserAccessRequest"];
+export type UserOption = S["UserOption"];
+export type UserEvent = S["UserEvent"];
+export type UsersResponse = S["UsersResponse"];
+export type UserDetail = S["UserDetail"];
+
+// ── Errors ──────────────────────────────────────────────────────────────────
+// The error envelope is written by the backend's exception handler, so it is
+// not in openapi.json. `fix` is omitted when there is nothing to suggest.
+
+export interface ApiErrorBody {
+  error: { code: string; message: string; fix?: string };
+}

@@ -1,0 +1,290 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Blue-back — design tokens.
+ * Spec: ../brain/plan/ui-design-system.md. Court papers are bound in a blue
+ * back; this app is a binder of them. The desk and the rail are the blue
+ * back, every screen is one white sheet on it, the rail's tabs are the three
+ * steps of the brief, and the only loud colour is the highlighter on proof.
+ * Tailwind's default palette is reset, so a one-off `text-gray-500` produces
+ * nothing: extend this layer instead.
+ */
+@theme {
+  --color-*: initial;
+
+  --color-desk: #dde5f2; /* the blue back: app ground and rail */
+  --color-desk-deep: #c7d3e7; /* rules on the desk, the sheet's edge */
+  --color-sheet: #ffffff; /* the document every screen is set on */
+  --color-paper: #f4f7fc; /* a faint tint on the sheet: hover, table heads, asides */
+  --color-ink: #0d1b3a; /* text: the navy of the Legal Soft wordmark, darkened */
+  --color-slate: #56637b; /* secondary text, citations, quiet states */
+  --color-rule: #e0e6ef; /* rules on the sheet */
+  --color-cobalt: #1d4ab5; /* act: buttons, links, focus, "you are here" */
+  --color-cobalt-wash: #e7eefb; /* selected row, pressed toggle */
+  --color-highlighter: #ffe14d; /* proof: the evidence mark and nothing else */
+  --color-ledger: #15744a; /* confirmed */
+  --color-redline: #c0342c; /* problem */
+  --color-white: #ffffff;
+
+  /* Derived states: mixed from the tokens above, never new hues. */
+  --color-cobalt-deep: color-mix(in oklab, var(--color-cobalt) 82%, var(--color-ink));
+  --color-rule-strong: color-mix(in oklab, var(--color-rule) 62%, var(--color-slate));
+  --color-redline-wash: color-mix(in oklab, var(--color-redline) 7%, var(--color-sheet));
+  --color-ledger-wash: color-mix(in oklab, var(--color-ledger) 8%, var(--color-sheet));
+  --color-highlighter-wash: color-mix(in oklab, var(--color-highlighter) 38%, var(--color-sheet));
+
+  /*
+   * Type: Archivo for the interface -- a grotesque whose narrow cuts carry
+   * the condensed voice of the Legal Soft wordmark into titles and figures;
+   * Libre Caslon for the record -- Display for a firm's name set as a
+   * caption, Text for the sentences the engine read and the emails it drafts.
+   */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-record: var(--font-caslon), Georgia, "Times New Roman", serif;
+  --font-caption: var(--font-caslon-display), var(--font-caslon), Georgia, serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Scale: 12, 13, 14, 17, 22, 28, 32, 36, 46; body at 1.5. */
+  --text-meta: 12px;
+  --text-meta--line-height: 1.4;
+  --text-table: 13px;
+  --text-table--line-height: 1.45;
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
+  --text-section: 17px;
+  --text-section--line-height: 1.3;
+  --text-subtitle: 22px;
+  --text-subtitle--line-height: 1.2;
+  --text-title: 28px;
+  --text-title--line-height: 1.1;
+  --text-headline: 32px;
+  --text-headline--line-height: 1.12;
+  --text-display: 46px;
+  --text-display--line-height: 1.02;
+  --text-figure: 36px; /* a live number, set narrow */
+  --text-figure--line-height: 1;
+
+  /* Caslon runs a step larger so the two faces read at one size. */
+  --text-quote-table: 14px;
+  --text-quote-table--line-height: 1.5;
+  --text-quote: 15.5px;
+  --text-quote--line-height: 1.6;
+  --text-quote-title: 21px;
+  --text-quote-title--line-height: 1.55;
+  --text-quote-proof: 31px;
+  --text-quote-proof--line-height: 1.38;
+  --text-caption: 38px; /* a firm's name, set as a case caption */
+  --text-caption--line-height: 1.08;
+  --text-caption-sm: 27px;
+  --text-caption-sm--line-height: 1.12;
+
+  /* Radius encodes hierarchy: a control, a panel, the sheet itself. */
+  --radius-control: 7px;
+  --radius-panel: 12px;
+  --radius-sheet: 18px;
+
+  /* The single shadow, for floating layers only. */
+  --shadow-float: 0 1px 2px rgb(13 27 58 / 0.07), 0 14px 36px -6px rgb(13 27 58 / 0.2);
+
+  --animate-highlight-sweep: highlight-sweep 520ms cubic-bezier(0.45, 0, 0.25, 1) both;
+
+  @keyframes highlight-sweep {
+    from {
+      background-size: 0% 100%;
+    }
+    to {
+      background-size: 100% 100%;
+    }
+  }
+}
+
+:root {
+  --rail-width: 236px;
+  --sheet-inset: 10px;
+  --titlebar-height: 76px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    background-color: var(--color-desk);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern", "liga";
+  }
+
+  body {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-rule);
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-cobalt) 18%, var(--color-sheet));
+    color: var(--color-ink);
+  }
+
+  /* Visible keyboard focus: cobalt, 2px, everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-rule-strong) transparent;
+  }
+}
+
+@layer utilities {
+  /* Archivo's narrow cut: titles and live figures, the wordmark's voice. */
+  .type-narrow {
+    font-variation-settings: "wdth" 78;
+  }
+  .type-semi-narrow {
+    font-variation-settings: "wdth" 88;
+  }
+}
+
+@layer components {
+  /*
+   * The sheet: every screen is one white document on the blue-back desk.
+   * On a phone the desk goes and the sheet is the screen.
+   */
+  .sheet {
+    background-color: var(--color-sheet);
+    min-height: 100vh;
+  }
+  @media (min-width: 768px) {
+    .sheet {
+      min-height: calc(100vh - 2 * var(--sheet-inset));
+      margin: var(--sheet-inset) var(--sheet-inset) var(--sheet-inset) 0;
+      border-radius: var(--radius-sheet);
+      /* clip, not hidden: the corners stay round without making the sheet a
+         scroll container, so sticky parts of a page still follow the window */
+      overflow: clip;
+    }
+  }
+
+  /*
+   * The binder's tab: the screen you are on is a white tab joined to the
+   * sheet, with concave corners where it meets the sheet's edge -- the one
+   * piece of the frame that says "you are here" by shape, not only colour.
+   * White on the blue back needs no outline; the edge is the paper's own.
+   */
+  @media (min-width: 768px) {
+    .binder-tab[aria-current="page"] {
+      position: relative;
+      border-radius: 10px 0 0 10px;
+      background-color: var(--color-sheet);
+    }
+    .binder-tab[aria-current="page"]::before,
+    .binder-tab[aria-current="page"]::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+    }
+    .binder-tab[aria-current="page"]::before {
+      top: -10px;
+      background: radial-gradient(circle at 0 0, transparent 9.5px, var(--color-sheet) 10px);
+    }
+    .binder-tab[aria-current="page"]::after {
+      bottom: -10px;
+      background: radial-gradient(circle at 0 100%, transparent 9.5px, var(--color-sheet) 10px);
+    }
+  }
+
+  /*
+   * The highlighter. Marks only what the engine read on a firm's own site.
+   * box-decoration-break: slice lays the background out as one continuous
+   * strip across line breaks, so growing background-size draws the mark
+   * across the sentence in reading order -- line one, then line two.
+   */
+  .proof-mark {
+    color: inherit;
+    background-color: transparent;
+    background-image: linear-gradient(
+      to bottom,
+      transparent 10%,
+      var(--color-highlighter) 10%,
+      var(--color-highlighter) 92%,
+      transparent 92%
+    );
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: 100% 100%;
+    -webkit-box-decoration-break: slice;
+    box-decoration-break: slice;
+    padding-inline: 0.1em;
+    margin-inline: -0.1em;
+    border-radius: 2px;
+  }
+
+  .proof-mark[data-motion="sweep"] {
+    animation: var(--animate-highlight-sweep);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .proof-mark[data-motion="sweep"] {
+      animation: none;
+      background-size: 100% 100%;
+    }
+  }
+
+  /* Record typography: hanging punctuation for opening quotes. */
+  .quotation {
+    font-family: var(--font-record);
+    hanging-punctuation: first;
+    max-width: 66ch;
+    text-wrap: pretty;
+  }
+
+  /* A firm's name, set as the caption of its record. */
+  .caption {
+    font-family: var(--font-caption);
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+}
+
+/* Nothing else moves unless a person asked it to. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

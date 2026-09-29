@@ -1,0 +1,1173 @@
+{
+  "1A|open_role|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "open_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Your paralegal opening, and a faster way to fill it",
+          "body": "Hi Dana,\n\nYour paralegal post has been up since 28 August. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\nWe place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working inside Filevine. Not a pooled service desk,\nand not a temp.\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-open-role",
+            "1-paragraph-pi"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your paralegal opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The paralegal seat is still open",
+          "body": "Hi Dana,\n\nThe paralegal post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|open_role|false": {
+    "firm": "An invented personal injury firm in Atlanta, its case system not known",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "open_role",
+    "system": false,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Your paralegal opening, and a faster way to fill it",
+          "body": "Hi Dana,\n\nYour paralegal post has been up since 28 August. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\nWe place trained legal staff with personal injury firms: one person,\ndedicated to your cases, working in your own systems. Not a pooled service\ndesk, and not a temp.\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-open-role-no-system",
+            "1-paragraph-pi-no-system"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your paralegal opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside your systems under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The paralegal seat is still open",
+          "body": "Hi Dana,\n\nThe paralegal post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|reposted_role|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "reposted_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "The paralegal role at your firm, posted a second time",
+          "body": "Hi Dana,\n\nYour paralegal post went back up this week, the second time since\nAugust if I'm reading it right.\n\nIn my experience that pattern says the local market isn't producing the\ncandidate, rather than the need going away. Firms in that position often\nstop competing for the same short list and staff the seat remotely\ninstead.\n\nWe place trained legal staff who already know firm work. They're\npre-vetted, free to interview, and able to start in under three days.\n\nShall I send two profiles for that seat?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-reposted-role"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your paralegal opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The paralegal seat is still open",
+          "body": "Hi Dana,\n\nThe paralegal post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 70 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|two_roles|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "two_roles",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Two seats open at Harbor & Vale Law, which one first?",
+          "body": "Hi Dana,\n\nYou have a paralegal and a intake specialist posted at the same time. Two seats at\nonce usually means the caseload moved before payroll could.\n\nThat gap is what we fill: trained legal staff dedicated to your matters\nand working inside Filevine. One person on your files, not a shared desk, and\nnot a temp who leaves in a month.\n\nEveryone is pre-vetted, interviewing costs nothing, and someone who fits\ncan start in under three days.\n\nWhich of the two is hurting more? I'll send profiles for that seat first.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-two-roles"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your paralegal opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The paralegal seat is still open",
+          "body": "Hi Dana,\n\nThe paralegal post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|mass_tort|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "mass_tort",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Camp Lejeune intake, and the records volume behind it",
+          "body": "Hi Dana,\n\nI saw that you're running Camp Lejeune intake.\n\nOn a docket like that the bottleneck is rarely signing claimants. It's the\nfour to six provider requests behind every one of them, all against a\nfiling deadline. None of that time is billable, and it's usually the first\nthing to break when the volume arrives.\n\nWe staff exactly that work with document collectors who do nothing else\nand are trained before they reach you. Free to interview, and able to\nstart in under three days.\n\nWorth a short conversation before the volume lands?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-mass-tort"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: Camp Lejeune, and who chases the providers",
+          "body": "Hi Dana,\n\nTo be specific about the work I have in mind.\n\nOn a Camp Lejeune docket the bottleneck is rarely claimant intake. It's the\nprovider requests behind every claimant: the fourth call to the same\nrecords department, and the follow-up nobody sends before the filing date.\n\nThat's a document collector's whole day, and it's the first thing we'd\ntake off your team. Pre-vetted, free to interview, and able to start in\nunder three days.\n\nShall I send two profiles?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-mass-tort"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 0,
+          "subject": "",
+          "body": "",
+          "skipped_reason": "the posting closed, or there is no role to reference",
+          "templates": []
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|reviews|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "reviews",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Intake coverage at Harbor & Vale Law",
+          "body": "Hi Dana,\n\nFirms doing personal injury at your volume tend to hit the same wall: calls\narriving faster than anyone can return them, and the signed case going to\nwhoever picked up first.\n\nWe put a trained intake person on the phones, with the document work\nhandled behind them, so a call doesn't wait for someone to be free.\nThey're pre-vetted, they work your hours, and one can start in under three\ndays.\n\nIs that a live problem for you at the moment, or have you got it covered?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-reviews"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: intake coverage, and the half you can hand over",
+          "body": "Hi Dana,\n\nTo be specific about the work I have in mind.\n\nWhen calls go unreturned it's rarely because nobody cares. It's because\nthe same people answering the phone are also chasing documents and\nbuilding case files, and one of those jobs always gives way.\n\nWe take the back-office half — records, follow-ups, document collection —\nso your team is free to pick up. Pre-vetted, and free to interview.\n\nWould it help to meet two people who do exactly that?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-reviews"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 0,
+          "subject": "",
+          "body": "",
+          "skipped_reason": "the posting closed, or there is no role to reference",
+          "templates": []
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|new_system|true": {
+    "firm": "An invented personal injury firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "new_system",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Now that you're on Filevine",
+          "body": "Hi Dana,\n\nIt looks like you moved onto Filevine recently.\n\nWhat most firms find about a month in is that the workflow needed a person\nrather than a feature: someone to actually run the records requests the\nsystem is now tracking, and to keep the queue from ageing quietly.\n\nOur people already work inside Filevine, so there's no ramp on the tooling.\nThey're pre-vetted and free to interview, and one can start in under three\ndays.\n\nUseful now, or too early to talk?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-new-system"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: Filevine, and the tasks it can't do for you",
+          "body": "Hi Dana,\n\nTo be specific about the work I have in mind.\n\nA new case system surfaces the same thing every time: the tasks it tracks\nstill need somebody to do them. Records requests queued, follow-ups due,\ndocuments waiting to be chased.\n\nOur people already work inside Filevine, so there's no ramp on the tooling\nand no training bill for you. They're pre-vetted and free to interview.\n\nShall I send two profiles?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-new-system"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "The unbilled hours between you and the fee",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn contingency, every hour your team spends chasing records is unbilled,\nand it sits between you and the fee. A demand writer isn't a saving. It\nshortens the gap to settlement, which is a different argument entirely,\nand the reason personal injury firms are usually the easiest version of\nthis conversation.\n\nIf it's worth ten minutes, I'll walk you through how those numbers tend to\nlook at a firm your size.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-contingency"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 0,
+          "subject": "",
+          "body": "",
+          "skipped_reason": "the posting closed, or there is no role to reference",
+          "templates": []
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "1A|new_system|false": {
+    "firm": "An invented personal injury firm in Atlanta, its case system not known",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1A",
+    "pain": "new_system",
+    "system": false,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": "unresolved_token:cms",
+      "excluded_display": "An email needs the case system, and it is not known",
+      "touches": []
+    }
+  },
+  "1B|open_role|true": {
+    "firm": "An invented immigration firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "1B",
+    "pain": "open_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Your legal assistant opening, and a faster way to fill it",
+          "body": "Hi Dana,\n\nYour legal assistant post has been up since 28 August. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\nWe place bilingual legal assistants with immigration firms: form\npreparation at volume, the evidence chase, status checks, and Spanish as a\nfirst language, working inside Filevine.\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-open-role",
+            "1-paragraph-immigration"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your legal assistant opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most immigration firms hand over first isn't the whole assistant\nrole. It's form preparation at volume, the I-130s, the adjustment packets\nand the evidence chase, plus the Spanish-language calls that eat an\nafternoon.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-immigration"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "Margin, one matter at a time",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter,\nwhich makes this unusually easy to measure: you'll see the effect on the\nnext twenty cases, not next year.\n\nWorth ten minutes to run those numbers together?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-flat-fee"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The legal assistant seat is still open",
+          "body": "Hi Dana,\n\nThe legal assistant post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "2|open_role|true": {
+    "firm": "An invented employment firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "2",
+    "pain": "open_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Your case manager opening, and a faster way to fill it",
+          "body": "Hi Dana,\n\nYour case manager post has been up since 28 August. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\nWe place trained case managers with employment firms: records, agency\nforms and the status chasing that never appears on an invoice, working\ninside Filevine.\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-open-role",
+            "1-paragraph-fee-shifting"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your case manager opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "Who actually pays for those hours",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nThe defendant pays the fees. Your own labour getting there's still an\nunbilled input — records, employer files, agency forms — and nobody\nreimburses the time it took to chase them.\n\nIt's the same arithmetic as contingency, and noticeably fewer people are\nhaving this conversation with you.\n\nTen minutes to go through the numbers?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-fee-shifting"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The case manager seat is still open",
+          "body": "Hi Dana,\n\nThe case manager post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "3|open_role|true": {
+    "firm": "An invented bankruptcy firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "3",
+    "pain": "open_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "Your legal assistant opening, and a faster way to fill it",
+          "body": "Hi Dana,\n\nYour legal assistant post has been up since 28 August. When a seat stays open\nthat long it's usually the local market rather than the offer, and another\nmonth of the same search rarely changes it.\n\nWe place trained legal assistants with bankruptcy firms: document\nassembly, client chasing and scheduling. One person, your matters, your\nprocess.\n\nEvery candidate is pre-vetted and trained on firm work before you meet\nthem. Interviewing costs nothing, and someone who fits can start in under\nthree days.\n\nIf it would help, I'll send two profiles matched to that seat. No\nobligation either way.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-open-role",
+            "1-paragraph-flat-fee"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 3,
+          "subject": "Re: your legal assistant opening, the part that's usually stuck",
+          "body": "Hi Dana,\n\nOne thing I should have said in my last note.\n\nThe part most personal injury firms hand over first isn't the paralegal\nseat itself. It's the records chase: provider requests, the fourth call to\nthe same clinic, and the follow-up nobody has time to send before the week\nends.\n\nIf that's the part that's actually stuck, I can introduce two people who\ndo exactly that work all day. Interviewing costs nothing, and you keep the\nprofiles whether or not you hire.\n\nWould that be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "2-job-post",
+            "2-paragraph-most"
+          ]
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "Margin, one matter at a time",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nOn a flat fee the price is fixed the day you're retained. Every extra hour\non that matter comes straight out of the margin on that specific matter.\n\nThin margins and a lot of matters means the support hours are the whole\ngame. Shift those and the economics move immediately, in the same quarter.\n\nWorth ten minutes to run those numbers together?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-flat-fee-volume"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 10,
+          "subject": "A firm about your size, the same problem",
+          "body": "Hi Dana,\n\nA six-attorney personal injury firm we work with had the same shape of\nproblem: advertising was bringing in cases faster than two paralegals\ncould process them, and the backlog was in the records.\n\nThey started with one demand writer. Within a couple of months their\nparalegals had stopped doing records entirely and gone back to case work,\nwhich is what they were hired for.\n\nI'm not saying that's you, but the pattern is common enough to be worth\nmentioning.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "4"
+          ]
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The legal assistant seat is still open",
+          "body": "Hi Dana,\n\nThe legal assistant post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  },
+  "4_NONBILLABLE|open_role|true": {
+    "firm": "An invented estate planning firm in Atlanta, on Filevine",
+    "person": "Dana Whitfield, managing partner",
+    "tier": "4_NONBILLABLE",
+    "pain": "open_role",
+    "system": true,
+    "band": "SEQUENCE",
+    "drafts": {
+      "band": "SEQUENCE",
+      "excluded_reason": null,
+      "excluded_display": null,
+      "touches": [
+        {
+          "step": 1,
+          "day": 0,
+          "subject": "The hours nobody at your firm can bill",
+          "body": "Hi Dana,\n\nThis is a narrower note than the one you usually get from people like me.\n\nI'm not going to suggest a paralegal. Yours are billable, and moving\nbillable work off your own books would be a poor trade for you.\n\nIt's the rest that interests me: the bookkeeping, the intake calls, the\nmarketing admin. Nobody bills for those and they still take someone's day.\nThat's the part we'd staff, with someone trained for it, pre-vetted, and\nfree to interview.\n\nWorth ten minutes to see whether the numbers work?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "1-hourly"
+          ]
+        },
+        {
+          "step": 2,
+          "day": 0,
+          "subject": "",
+          "body": "",
+          "skipped_reason": "no job-posting role to reference",
+          "templates": []
+        },
+        {
+          "step": 3,
+          "day": 7,
+          "subject": "Only the part nobody bills",
+          "body": "Hi Dana,\n\nA different angle on the same thing.\n\nEverything your team does that appears on an invoice should stay exactly\nwhere it is. It's the rest — reconciliation, intake, chasing your own\npaperwork — that's pure overhead in an hourly shop, and the only part\nworth moving.\n\nTen minutes to see whether that holds for your numbers?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "3-hourly"
+          ]
+        },
+        {
+          "step": 4,
+          "day": 0,
+          "subject": "",
+          "body": "",
+          "skipped_reason": "not applicable for this lead",
+          "templates": []
+        },
+        {
+          "step": 5,
+          "day": 14,
+          "subject": "Confidentiality, supervision, and how this actually works",
+          "body": "Hi Dana,\n\nThe question I'm usually asked around now is about client information, so\nlet me answer it before you have to ask.\n\nYour person works inside Filevine under permissions you set, exactly as an\nin-house hire would. They're HIPAA-trained, and the NDA and\nconfidentiality agreement are signed before day one. You supervise the\nwork the way you'd supervise anyone's, and you can end the arrangement at\nany point.\n\nI'm happy to send the agreement over to read before we ever speak.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "5"
+          ]
+        },
+        {
+          "step": 6,
+          "day": 18,
+          "subject": "I may have aimed at the wrong end of this",
+          "body": "Hi Dana,\n\nIt's possible I've been writing about the wrong half of the problem.\n\nIf the bottleneck isn't the demand side but the front of the file —\nrequests going out, chasing providers, the clinic that never responds —\nthen what you need is a document collector rather than anything larger.\nIt's a smaller commitment and a faster thing to try.\n\nWhich end hurts more? I'll send profiles for that one instead.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "6"
+          ]
+        },
+        {
+          "step": 7,
+          "day": 21,
+          "subject": "Am I writing to the right person?",
+          "body": "Hi Dana,\n\nI may be writing to the wrong person entirely, which would explain the\nsilence.\n\nIf someone else at the firm handles hiring and case workflow — an office\nmanager or a firm administrator — I'm glad to talk to them instead and\nleave you out of it. A name is all I need.\n\nOtherwise I'll take it that the timing isn't right, and leave you in\npeace.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "7"
+          ]
+        },
+        {
+          "step": 8,
+          "day": 25,
+          "subject": "The bookkeeper seat is still open",
+          "body": "Hi Dana,\n\nThe bookkeeper post is still up as of this week.\n\nIf you've filled it, congratulations, and please ignore me. If it's still\nopen 24 days on, that's usually the market telling you the\ncandidate isn't there locally, and another month of the same search tends\nto confirm it.\n\nThat's the specific gap we fill, and interviewing costs nothing.\n\nWould two profiles be useful?\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "8"
+          ]
+        },
+        {
+          "step": 9,
+          "day": 28,
+          "subject": "Closing the loop on this",
+          "body": "Hi Dana,\n\nI'll stop here, as I don't want to be the reason your inbox is full.\n\nIf the records backlog becomes a bigger problem later, or a seat opens\nthat you'd rather not advertise, we're easy to find and the interviews are\nalways free.\n\nNo hard feelings either way, and good luck with the hire.\n\nBest regards,\nLegal Soft — legalsoft.com\n\n--\nReply with the word stop and I won't write to you again.",
+          "skipped_reason": null,
+          "templates": [
+            "9"
+          ]
+        }
+      ]
+    }
+  }
+}

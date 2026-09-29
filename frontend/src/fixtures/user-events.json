@@ -1,0 +1,97 @@
+{
+  "user-fx-priya": [
+    {
+      "kind": "onboarded",
+      "detail": {
+        "full_name": "Priya Nair",
+        "title": "SDR",
+        "team": "Sales",
+        "purpose": "Work the queue each morning and send the first email to the firms with an open role. I also want to see which of my leads replied.",
+        "phone": ""
+      },
+      "actor": "priya.nair@legalsoft.com",
+      "at": "2026-09-27T09:14:00Z"
+    },
+    { "kind": "signed_in", "detail": null, "actor": "priya.nair@legalsoft.com", "at": "2026-09-27T09:11:00Z" },
+    {
+      "kind": "signed_up",
+      "detail": { "access": "pending", "admin_by_settings": false },
+      "actor": "priya.nair@legalsoft.com",
+      "at": "2026-09-27T09:11:00Z"
+    }
+  ],
+  "user-fx-vishal": [
+    { "kind": "signed_in", "detail": null, "actor": "vishal.tiwari@legalsoft.com", "at": "2026-09-28T08:40:00Z" },
+    { "kind": "signed_in", "detail": null, "actor": "vishal.tiwari@legalsoft.com", "at": "2026-09-26T16:02:00Z" },
+    {
+      "kind": "signed_up",
+      "detail": { "access": "admin", "admin_by_settings": true },
+      "actor": "vishal.tiwari@legalsoft.com",
+      "at": "2026-09-26T16:02:00Z"
+    }
+  ],
+  "user-fx-marcus": [
+    { "kind": "signed_in", "detail": null, "actor": "marcus.hale@legalsoft.com", "at": "2026-09-27T14:05:00Z" },
+    {
+      "kind": "access_set",
+      "detail": { "from": "pending", "to": "operator" },
+      "actor": "vishal.tiwari@legalsoft.com",
+      "at": "2026-09-26T18:10:00Z"
+    },
+    {
+      "kind": "onboarded",
+      "detail": {
+        "full_name": "Marcus Hale",
+        "title": "Account executive",
+        "team": "Sales",
+        "purpose": "Check the ready leads before they go to the vendor, and record what each firm answered.",
+        "phone": "555-0142"
+      },
+      "actor": "marcus.hale@legalsoft.com",
+      "at": "2026-09-26T17:30:00Z"
+    },
+    { "kind": "signed_in", "detail": null, "actor": "marcus.hale@legalsoft.com", "at": "2026-09-26T17:26:00Z" },
+    {
+      "kind": "signed_up",
+      "detail": { "access": "pending", "admin_by_settings": false },
+      "actor": "marcus.hale@legalsoft.com",
+      "at": "2026-09-26T17:26:00Z"
+    }
+  ],
+  "user-fx-elena": [
+    {
+      "kind": "access_set",
+      "detail": { "from": "pending", "to": "viewer" },
+      "actor": "vishal.tiwari@legalsoft.com",
+      "at": "2026-09-26T19:20:00Z"
+    },
+    {
+      "kind": "onboarded",
+      "detail": {
+        "full_name": "Elena Ruiz",
+        "title": "Marketing lead",
+        "team": "Marketing",
+        "purpose": "Read the pain analyses and the email wording so the campaigns say the same thing.",
+        "phone": ""
+      },
+      "actor": "elena.ruiz@legalsoft.com",
+      "at": "2026-09-26T19:00:00Z"
+    },
+    { "kind": "signed_in", "detail": null, "actor": "elena.ruiz@legalsoft.com", "at": "2026-09-26T18:55:00Z" },
+    {
+      "kind": "signed_up",
+      "detail": { "access": "pending", "admin_by_settings": false },
+      "actor": "elena.ruiz@legalsoft.com",
+      "at": "2026-09-26T18:55:00Z"
+    }
+  ],
+  "user-fx-tom": [
+    { "kind": "signed_in", "detail": null, "actor": "tom.baxter@legalsoft.com", "at": "2026-09-28T07:50:00Z" },
+    {
+      "kind": "signed_up",
+      "detail": { "access": "pending", "admin_by_settings": false },
+      "actor": "tom.baxter@legalsoft.com",
+      "at": "2026-09-28T07:50:00Z"
+    }
+  ]
+}

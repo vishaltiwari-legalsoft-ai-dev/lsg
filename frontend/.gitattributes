@@ -1,0 +1,5 @@
+# Keep LF everywhere; Windows autocrlf otherwise rewrites every file on checkout
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.woff2 binary

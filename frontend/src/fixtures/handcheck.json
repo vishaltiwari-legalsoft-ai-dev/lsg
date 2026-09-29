@@ -1,0 +1,1112 @@
+{
+  "gate": {
+    "needed": 50,
+    "reviewed_firms": 2,
+    "passed": false,
+    "rule": "Gate G2 passes when 50 probe firms are checked and every attribute is at least 95% correct."
+  },
+  "accuracy": [
+    {
+      "attr": "fee_model",
+      "label": "Fee model",
+      "checked": 2,
+      "correct": 2
+    },
+    {
+      "attr": "primary_practice",
+      "label": "Practice",
+      "checked": 2,
+      "correct": 1
+    },
+    {
+      "attr": "spanish_intake",
+      "label": "Spanish intake",
+      "checked": 2,
+      "correct": 2
+    },
+    {
+      "attr": "languages",
+      "label": "Languages",
+      "checked": 0,
+      "correct": 0
+    },
+    {
+      "attr": "phone",
+      "label": "Phone",
+      "checked": 2,
+      "correct": 2
+    },
+    {
+      "attr": "address",
+      "label": "Address",
+      "checked": 0,
+      "correct": 0
+    },
+    {
+      "attr": "attorney_count",
+      "label": "Attorneys",
+      "checked": 2,
+      "correct": 2
+    },
+    {
+      "attr": "cms_detected",
+      "label": "Case management system",
+      "checked": 2,
+      "correct": 2
+    }
+  ],
+  "sample": [
+    {
+      "firm_id": "firm-atlinjurylawgroup",
+      "name": "Atlanta Personal Injury Law Group",
+      "domain": "atlinjurylawgroup.com",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Contingency",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.95,
+          "evidence": "The attorneys at Atlanta Personal Injury Law Group work on a contingency fee basis.",
+          "evidence_url": null,
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Contingency",
+              "confidence": 0.95,
+              "evidence": "The attorneys at Atlanta Personal Injury Law Group work on a contingency fee basis.",
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Contingency",
+              "confidence": 0.8,
+              "evidence": null,
+              "observed_at": "2026-09-09T14:31:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Personal injury",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.63,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Personal injury",
+              "confidence": 0.63,
+              "evidence": null,
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Personal injury",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-09T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "Yes",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.9,
+          "evidence": "Spanish alternate page at /es/",
+          "evidence_url": "https://atlinjurylawgroup.com/es/",
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Yes",
+              "confidence": 0.9,
+              "evidence": "Spanish alternate page at /es/",
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "languages",
+          "label": "Languages",
+          "display": "English, Spanish",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.9,
+          "evidence": "Spanish alternate page at /es/",
+          "evidence_url": "https://atlinjurylawgroup.com/es/",
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "English, Spanish",
+              "confidence": 0.9,
+              "evidence": "Spanish alternate page at /es/",
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 404-882-9289",
+          "state": "resolved",
+          "source_label": "Firm website",
+          "confidence": 0.9,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website",
+              "display": "+1 404-882-9289",
+              "confidence": 0.9,
+              "evidence": null,
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "address",
+          "label": "Address",
+          "display": "1900 Century Pl NE Suite 200A, Atlanta GA 30345",
+          "state": "resolved",
+          "source_label": "Firm website",
+          "confidence": 0.9,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-09T14:22:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website",
+              "display": "1900 Century Pl NE Suite 200A, Atlanta GA 30345",
+              "confidence": 0.9,
+              "evidence": null,
+              "observed_at": "2026-09-09T14:22:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {}
+    },
+    {
+      "firm_id": "firm-fx-harbor",
+      "name": "Harbor Street Injury Law",
+      "domain": "harborstreetinjury.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Contingency",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "No fee unless we win your case.",
+          "evidence_url": "https://harborstreetinjury.example/fees",
+          "observed_at": "2026-08-16T09:10:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Contingency",
+              "confidence": 0.92,
+              "evidence": "No fee unless we win your case.",
+              "observed_at": "2026-08-16T09:10:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Contingency",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-08-16T09:10:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Personal injury",
+          "state": "conflict",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.61,
+          "evidence": "Car accidents, truck accidents, slip and fall, and wrongful death.",
+          "evidence_url": "https://harborstreetinjury.example/practice-areas",
+          "observed_at": "2026-08-16T09:10:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Personal injury",
+              "confidence": 0.61,
+              "evidence": "Car accidents, truck accidents, slip and fall, and wrongful death.",
+              "observed_at": "2026-08-16T09:10:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Workers' compensation",
+              "confidence": 0.58,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "No",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-16T09:10:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "No",
+              "confidence": 0.85,
+              "evidence": null,
+              "observed_at": "2026-08-16T09:10:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0162",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-16T09:10:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0162",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-08-16T09:10:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {
+        "fee_model": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "primary_practice": {
+          "correct": false,
+          "corrected_value": "Personal injury and workers' compensation"
+        },
+        "spanish_intake": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "phone": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "cms_detected": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "attorney_count": {
+          "correct": true,
+          "corrected_value": null
+        }
+      }
+    },
+    {
+      "firm_id": "firm-fx-calloway",
+      "name": "Calloway & Reyes Immigration",
+      "domain": "callowayreyes.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Flat fee",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "We offer transparent flat fees for most immigration cases.",
+          "evidence_url": "https://callowayreyes.example/fees",
+          "observed_at": "2026-08-28T15:40:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Flat fee",
+              "confidence": 0.92,
+              "evidence": "We offer transparent flat fees for most immigration cases.",
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Flat fee",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Immigration",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.7,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-28T15:40:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Immigration",
+              "confidence": 0.7,
+              "evidence": null,
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Immigration",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "Yes",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": "Hablamos español — llame hoy.",
+          "evidence_url": null,
+          "observed_at": "2026-08-28T15:40:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Yes",
+              "confidence": 0.85,
+              "evidence": "Hablamos español — llame hoy.",
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0176",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-28T15:40:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0176",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Docketwise",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.88,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-28T15:40:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Docketwise",
+              "confidence": 0.88,
+              "evidence": null,
+              "observed_at": "2026-08-28T15:40:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {
+        "fee_model": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "primary_practice": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "spanish_intake": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "phone": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "cms_detected": {
+          "correct": true,
+          "corrected_value": null
+        },
+        "attorney_count": {
+          "correct": true,
+          "corrected_value": null
+        }
+      }
+    },
+    {
+      "firm_id": "firm-fx-pineridge",
+      "name": "Pine Ridge Trial Lawyers",
+      "domain": "pineridgetrial.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Contingency",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "No fee unless we win your case.",
+          "evidence_url": "https://pineridgetrial.example/fees",
+          "observed_at": "2026-09-04T11:05:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Contingency",
+              "confidence": 0.92,
+              "evidence": "No fee unless we win your case.",
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Contingency",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Personal injury",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.7,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-04T11:05:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Personal injury",
+              "confidence": 0.7,
+              "evidence": null,
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Personal injury",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "No",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-04T11:05:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "No",
+              "confidence": 0.85,
+              "evidence": null,
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0183",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-04T11:05:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0183",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Filevine",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.88,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-09-04T11:05:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Filevine",
+              "confidence": 0.88,
+              "evidence": null,
+              "observed_at": "2026-09-04T11:05:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {}
+    },
+    {
+      "firm_id": "firm-fx-brightwater",
+      "name": "Brightwater Mass Tort Group",
+      "domain": "brightwatertort.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Contingency",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "No fee unless we win your case.",
+          "evidence_url": "https://brightwatertort.example/fees",
+          "observed_at": "2026-08-21T08:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Contingency",
+              "confidence": 0.92,
+              "evidence": "No fee unless we win your case.",
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Contingency",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Mass tort",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.7,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-21T08:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Mass tort",
+              "confidence": 0.7,
+              "evidence": null,
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Mass tort",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "No",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-21T08:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "No",
+              "confidence": 0.85,
+              "evidence": null,
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0127",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-21T08:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0127",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Litify",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.88,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-21T08:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Litify",
+              "confidence": 0.88,
+              "evidence": null,
+              "observed_at": "2026-08-21T08:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {}
+    },
+    {
+      "firm_id": "firm-fx-northgate",
+      "name": "Northgate Workers' Comp Counsel",
+      "domain": "northgatecomp.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Fee-shifting",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "Our fees are paid by the employer or insurer when we win.",
+          "evidence_url": "https://northgatecomp.example/fees",
+          "observed_at": "2026-08-19T13:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Fee-shifting",
+              "confidence": 0.92,
+              "evidence": "Our fees are paid by the employer or insurer when we win.",
+              "observed_at": "2026-08-19T13:00:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Fee-shifting",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-08-19T13:00:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Workers' compensation",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.7,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-19T13:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Workers' compensation",
+              "confidence": 0.7,
+              "evidence": null,
+              "observed_at": "2026-08-19T13:00:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Workers' compensation",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "No",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-19T13:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "No",
+              "confidence": 0.85,
+              "evidence": null,
+              "observed_at": "2026-08-19T13:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0183",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-19T13:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0183",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-08-19T13:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Filevine",
+          "state": "stale",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.74,
+          "evidence": "Filevine client portal",
+          "evidence_url": "https://northgatecomp.example/client-portal",
+          "observed_at": "2026-06-02T09:00:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Filevine",
+              "confidence": 0.74,
+              "evidence": "Filevine client portal",
+              "observed_at": "2026-06-02T09:00:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {}
+    },
+    {
+      "firm_id": "firm-fx-delgado",
+      "name": "Delgado Immigration Partners",
+      "domain": "delgadoimmigration.example",
+      "attributes": [
+        {
+          "attr": "fee_model",
+          "label": "Fee model",
+          "display": "Flat fee",
+          "state": "resolved",
+          "source_label": "Firm website (fee language)",
+          "confidence": 0.92,
+          "evidence": "We offer transparent flat fees for most immigration cases.",
+          "evidence_url": "https://delgadoimmigration.example/fees",
+          "observed_at": "2026-08-30T19:20:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (fee language)",
+              "display": "Flat fee",
+              "confidence": 0.92,
+              "evidence": "We offer transparent flat fees for most immigration cases.",
+              "observed_at": "2026-08-30T19:20:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Firm website (read by AI)",
+              "display": "Flat fee",
+              "confidence": 0.78,
+              "evidence": null,
+              "observed_at": "2026-08-30T19:20:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "primary_practice",
+          "label": "Practice",
+          "display": "Immigration",
+          "state": "resolved",
+          "source_label": "Firm website (practice pages)",
+          "confidence": 0.7,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-30T19:20:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (practice pages)",
+              "display": "Immigration",
+              "confidence": 0.7,
+              "evidence": null,
+              "observed_at": "2026-08-30T19:20:00Z",
+              "won": true
+            },
+            {
+              "source_label": "Purchased firm list",
+              "display": "Immigration",
+              "confidence": 0.5,
+              "evidence": null,
+              "observed_at": "2026-09-02T03:12:00Z",
+              "won": false
+            }
+          ]
+        },
+        {
+          "attr": "spanish_intake",
+          "label": "Spanish intake",
+          "display": "Yes",
+          "state": "resolved",
+          "source_label": "Firm website (page code)",
+          "confidence": 0.85,
+          "evidence": "Hablamos español — llame hoy.",
+          "evidence_url": null,
+          "observed_at": "2026-08-30T19:20:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (page code)",
+              "display": "Yes",
+              "confidence": 0.85,
+              "evidence": "Hablamos español — llame hoy.",
+              "observed_at": "2026-08-30T19:20:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "phone",
+          "label": "Phone",
+          "display": "+1 555-0169",
+          "state": "resolved",
+          "source_label": "Firm website (structured data)",
+          "confidence": 0.97,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": "2026-08-30T19:20:00Z",
+          "claims": [
+            {
+              "source_label": "Firm website (structured data)",
+              "display": "+1 555-0169",
+              "confidence": 0.97,
+              "evidence": null,
+              "observed_at": "2026-08-30T19:20:00Z",
+              "won": true
+            }
+          ]
+        },
+        {
+          "attr": "cms_detected",
+          "label": "Case management system",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        },
+        {
+          "attr": "attorney_count",
+          "label": "Attorneys",
+          "display": "Unknown — not guessed",
+          "state": "unknown",
+          "source_label": null,
+          "confidence": null,
+          "evidence": null,
+          "evidence_url": null,
+          "observed_at": null,
+          "claims": []
+        }
+      ],
+      "reviews": {}
+    }
+  ]
+}
