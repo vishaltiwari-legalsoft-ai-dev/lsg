@@ -14,9 +14,7 @@ data/out/
 # secrets
 .env
 
-# the other two repos live inside this folder but keep their own git history
-/brain/
-/frontend/
+# brain/ (plans, decisions, report) and frontend/ (the screens) are folders of this repository
 
 # measurement scratch: holds people's names and review text, never committed
 scratch/
