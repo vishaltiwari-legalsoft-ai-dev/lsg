@@ -1675,6 +1675,427 @@ scribbled between meetings, not as a firm writing to a firm.
 
 ---
 
+## D-062 · The Google Business Profile and its reviews, through a licensed API, never a scraped page
+
+**Asked for (23 Sep 2026):** "create a Google Business Profile scraper, a review
+collector, and make this available in my enrichment engine ... this is a high
+priority." The brief had asked for both since the start (plan-v3 phase 3) and
+D-058 measured that neither existed: the listing was read only when Serper's
+key was present, and review text was never read at all. What was missing was
+a way to get them that does not break the standing rule against defeating bot
+management -- Google Maps is exactly the kind of page the crawler may not read.
+
+**Rulings:**
+- **A listings seam, like the search seam** (`lge/listings`, `LGE_LISTINGS`):
+  the Google Business Profile and its reviews come from a licensed API and
+  nothing else. Google's own Places API (New) is the first choice --
+  `GOOGLE_PLACES_API_KEY`, one `searchText` call per firm returning the listing
+  and up to five reviews, on a SKU Google's pricing page lists at 1,000 free
+  calls a month, so a 250-firm batch costs nothing -- and Serper's `/places` +
+  `/reviews` on the search key is the second. No key, no lookup: the step says
+  so and skips. Nothing in the engine reads a maps.google.com page, and a 429
+  is a block the pacer backs off from (config/listings.yml), never worked
+  around.
+- **The listing is kept whole** as `business_listing` -- name, category,
+  address, phone, website, rating, review count, Maps URL, status -- under
+  `listing:<provider>`, and its phone and address become claims that
+  config/precedence.yml ranks (address first; phone after the site's
+  structured data), so the firm row's phone and address now come from the
+  listing where the site had none, as phase 3 asked. `review_count` from the
+  listing outranks every search-snippet reading.
+- **Reviews are kept word for word**, one line each (`google_reviews`), never
+  summarised or rewritten: the pain analyser reads them as lines of the record
+  and can only quote one whole, and the lead page shows them as quotations. Two
+  new pain kinds, `review_complaint` and `low_rating`, name what a listing can
+  prove; a five-star review is praise, not a pain. The listing block also
+  carries the one disagreement the engine can see itself: a listing whose
+  website is not the firm's domain (Duron's Manhattan listing, D-058).
+- **One lookup per firm per month**, logged in `search_log` as kind `listing`
+  with the answer as it came back (migration 103), so a rule change re-derives
+  from the stored answer; r_search_links skips its snippet query for reviews
+  while that row is fresh. The step sits in `find_people` before the search
+  step, so the screen's Research button runs it.
+- **Visible where the work is:** an "On Google" section on the lead page and
+  the firm record; the claims table shows the profile in words; Home lists the
+  service ("The Google Business Profile and its reviews", free tier named) and
+  the two parts it unlocks moved from partial and planned to built.
+- **Not verified live.** No Google Places or Serper key is in `.env`; both
+  providers are tested against recorded answers. The first live run over the
+  user's nine firms is the measurement: listings matched, reviews per firm,
+  the address and phone filled where the site had none.
+- **Found by the review (24 Sep 2026), and fixed:** the listing's address claim
+  carried a seventh key, the printed text, so it could never "agree" with the
+  site's address in reconcile -- the same defect D-052 fixed in the site reader;
+  the standalone `city` precedence had not been given the listing sources, so a
+  purchased-list city outranked Google's; a refetch whose reviews call failed
+  wrote an empty review list over the reviews already on file (now the reviews
+  are left standing, and the lookup is logged failed so it is asked again);
+  Serper's cap counted star-only reviews, hiding ones with words; and the
+  docstring promised re-derivation from the stored answer with no path to do
+  it -- `--opt replay=1` now re-derives every claim from `search_log` without
+  a call. The design review then made the section say why there is no listing
+  (never looked up and what that needs, no match, a failed lookup) instead of
+  vanishing, say where the listing disagrees with the firm's own record (a
+  website that is not the domain, an address the site does not print), set the
+  rating as a figure, and write dates and review lines in the sheet's words.
+- **Measured:** 41 new tests (both providers, the seam, the matcher, the step
+  and its replay, the record, the API and its notes, the provider lights); the
+  engine suite passes; the frontend typechecks, lints and passes 73 tests.
+
+
+## D-063 · The AI reads every page the crawler stored; a model is switched only after a bake-off
+
+**Asked for (23 Sep 2026):** "the scrapers ... do a very poor job. I want the
+content that is actually scraped to be passed to an LLM ... really good quality
+but relatively free LLMs ... even the ChatGPT 6 is really cheap." Measured by the
+AI-engineering review on the six firms with stored text: the reader was shown
+24,000 characters of seven page kinds, and the careers and testimonials pages
+the crawler had fetched never reached it.
+
+**Rulings:**
+- **Every stored page kind goes to the reader** (`prompt_rev` v3 for p8 and p9):
+  the eleven kinds of config/crawl.yml, in a display order the prompt explains,
+  with news and testimonials trimmed first and careers last of the trimmable
+  (it is the only page where an in-house recruiter is visible); attorneys and
+  team are still never trimmed. The budget is 120,000 characters, so nothing in
+  the store is trimmed today; the output cap is 3,000 tokens, because a
+  truncated answer is invalid JSON, not a shorter answer. Measured: 75,341
+  characters reach the model over the six firms, 53% more than before, and on
+  the one firm read at both widths three named people came with the extra
+  text. Note the crawl caps: practice, locations, news and fees are capped at
+  zero in config/crawl.yml (D-044), so the widening buys careers and
+  testimonials today; raising `fees` is worth reconsidering, since the fee
+  axis is the reader's first output and the page named after it is off.
+- **No model line changes without measurement.** The bake-off harness exists
+  (scratchpad, read-only against the store, `--models` list, a spend cap) and
+  could not run: every paid slug answered HTTP 402 -- the OpenRouter key is
+  about two cents past its purchased credit. The three free models that could
+  be tried showed the failure that matters: two of three regularly answered
+  in a shape that is not the strict schema (prose, a doubled brace, a wrong
+  type), which loses every claim for that firm rather than weakening one.
+  OpenRouter's "structured outputs" flag is a claim, not a guarantee. So Haiku
+  4.5 stays on p8, ja8 and the sheet reader, Opus 5 on p9, and the user's
+  candidate -- `openai/gpt-6-luna`, at a tenth of Haiku's input price and a
+  million-token window -- is written into config/llm.yml commented, with its
+  real price, next to a free-tier block that names the rate limit and the
+  training-data caveat. Topping up the key and running the harness is the
+  next step; the widened prompt on gpt-6-luna would land near a tenth of a
+  cent a firm if it measures out.
+- **A provider fault is one firm's failure, not the run's.** Found by the
+  harness: OpenRouter answers 200 with a bare error body and no `choices` for
+  an upstream fault or a free-tier throttle, and a `null` content on a cut-off
+  answer; both crashed the whole run. Both now raise `LLMCallError` with the
+  provider's words, per firm, never the key.
+- **Measured:** prices in config/llm.yml corrected to OpenRouter's list of the
+  day; 7 new keyless tests; the engine suite passes; ja8's output cap raised
+  to 1,800 for the review lines D-062 adds to its record.
+
+
+## D-064 · A paid step proves itself on a handful of firms before it may spend; a provider's error is never a verdict
+
+**Asked for (28 Sep 2026):** the user handed over the Serper and NeverBounce
+keys with ten credits on the address checker and said: test first, "if
+nothing is working I don't want to burn my credits". The readiness audit of
+the same day (brain/plan/readiness-audit-2026-09-28.md) had found the faults
+below by reading; the live run confirmed them.
+
+**Rulings:**
+- **Read the balance before the run, cap the run, read the rows after.**
+  NeverBounce's account-info call is free and is the first call of any live
+  check; every paid run carries `--opt max_usd`; the attempt rows are read by
+  hand before the cap is raised. The same discipline applies to the first run
+  of any paid step from now on.
+- **A NeverBounce non-success envelope is a failed call, not a verdict.**
+  The provider answers HTTP 200 with `status` of `auth_failure`,
+  `throttle_triggered`, `temp_unavail` or `general_failure` and no `result`.
+  That now raises, writes no attempt row and leaves the address `unverified`,
+  so a later run asks again. Before, the empty result became `risky` for good
+  and the idempotency guard sealed it. A keyless test pins the envelope.
+- **`UNCLASSIFIED` firms are never paid for.** The verifier's and the guesser's
+  selections exclude them alongside `DQ_*`: the readiness check rejects the
+  tier, so a check there could never make a lead ready. Seven of the nine
+  firms in the store are `UNCLASSIFIED` today because the AI reader has no
+  credit; that is the AI reader's problem to fix, not money for the checker.
+- **One catch-all answer settles the domain.** The verifier marks every other
+  candidate on that domain `catch_all` without a call, in the same run and in
+  later runs (read back from `verify_attempt`). Live: fuchsberg.com answered
+  catch-all on the second address; the run had paid a third time before this
+  rule; the re-run settled the remaining eight for nothing.
+- **A suffix is not a surname.** The first/last split every address scheme is
+  rendered from now drops Jr., Sr., II–V, Esq., J.D. and the like, and reads
+  "Smith, John A." surname-first. "John A. Smith Jr." produced `john.jr@` before.
+- **The seams are forced in `.env`, not left on `auto`:** `LGE_SEARCH_ENGINE=serper`,
+  `LGE_LISTINGS=serper`, `LGE_EMAIL_VERIFIER=neverbounce`. A Google Places key
+  arriving later must not switch listings to the provider that costs twenty
+  times as much (audit finding 8), and a Hunter key must never become the
+  verifier.
+- **Measured live, on the real store:** listings 3 of 3 found through Serper
+  (one with a 4.9 rating and 36 reviews, ten kept word for word); 10 LinkedIn
+  profiles on two firms in 11 queries; 3 NeverBounce checks for $0.024 — one
+  `valid`, the domain catch-all; 7 credits remain. Home's four lights are on
+  after the engine restart (settings are read once; a new key needs a restart).
+  Still owed from the audit before any bulk run: chunked persistence in the AI
+  readers, default spend caps, the queue.
+
+
+## D-065 · Every Serper call runs under one set of rules; a paid search step cannot walk the store, leak a key, or record a refusal as an answer
+
+**Asked for (28 Sep 2026):** "one more security check and one more detail
+check for the places where the SERP API will be used ... I don't want to
+waste even a single credit", with the Google Business Profile named as the
+thing that must work. A security review of every Serper surface found no
+critical or high issue with the key itself (header only, never a URL) and
+six things worth fixing; a read of every call site found the rest. Billing
+was measured from Serper's own `credits` field: **every call is one credit**
+-- a 10-, 20- or 30-result search, page two, a places lookup, a reviews
+page (which returns twenty reviews).
+
+**Where Serper is asked, and why (the whole list):**
+1. `website_check` -- one search per firm whose sheet website is missing,
+   malformed, dead or names another business; the best result is adopted
+   only after its own homepage names the firm.
+2. `r_listing` -- the Google Business Profile: one `/places` call on the
+   firm's name and place, the listing chosen by name overlap and a law
+   category, then one `/reviews` call on its id. Two credits a firm. The
+   only owner of the listing.
+3. `r_search_links` -- one `site:linkedin.com` sweep per firm, a second
+   page only when the first was full, then one query per decision-maker
+   still unmatched (at most four); the company page rides along.
+4. `r_search_emails` -- one query on the firm's domain and one per
+   decision-maker without an address (at most four), read off snippets.
+Nothing ever fetches a Google page; the Maps link is stored and shown only.
+
+**Rulings:**
+- **One call path.** `lge.search.serper.serper_post` is the one function
+  every Serper request goes through, for search and listings alike: 429 is
+  a moment's block (wait once, cool off); 401/403 and a 400/402 that names
+  credit are a **refusal** (`SearchRefused`) that cools the engine off at
+  once, so a run stops on the first bad answer and not the fifth; 5xx and
+  timeouts get two bounded retries; a body that is not JSON is one failed
+  query. Serper's `credits` go to a per-thread meter and every step ends
+  with "provider charged: serper: N call(s), N credit(s)" -- the number to
+  hold against the dashboard after every run.
+- **The listing has one owner.** When a listings provider is configured,
+  `r_search_links` makes no places call and no snippet query of its own;
+  its fallback exists for a machine with no listings provider at all.
+- **A sheet's value is a phrase, never an operator.** `clean_term` strips
+  quotes, control characters, leading signs and `word:` operators and caps
+  a term at 120 characters before it enters any query.
+- **A paid step never walks the store by accident.** Over 250 firms it
+  refuses unless given `limit`, `firm_ids_file` or `all=1`; a persisted
+  daily ceiling (`daily_credit_cap` in config/search.yml, 5,000, counted
+  from search_log so threads and restarts cannot reset it) stops every
+  paid search step; `r_search_emails` has the 600-query run ceiling the
+  LinkedIn step already had; disqualified (`DQ_*`) firms are never
+  searched for. Unclassified firms still are, because the AI reading that
+  classifies them runs later in the same flow.
+- **A refusal is not an answer.** `website_check` writes no row for a firm
+  whose search failed (a row would have kept it from being searched again
+  for thirty days), and stops searching after five failures in a row.
+- **The verifier keys leave the URL and the logs.** NeverBounce is called
+  with the key in a POST body; the httpx logger is set to warnings in the
+  CLI and the API, so no request line with a key or a person's address
+  reaches a terminal or a log file; a transport error's message has its
+  query string cut before it is recorded.
+- **Only our own hosts are answered.** The engine carries a trusted-host
+  check (`127.0.0.1`, `localhost`) and the screens a Host check on every
+  request, so a page elsewhere that re-points its own name at 127.0.0.1
+  cannot read contacts or start paid research from the LAN.
+- **A Maps link is judged by its host,** never by a substring anywhere in
+  the URL; the pacer is thread-safe, so the screen's parallel jobs cannot
+  burst past the rate gap.
+- **Measured live after the change, on the real store:** listing 1/1 found
+  with ten reviews and a reported charge of 2 credits; the link step 4
+  queries, 4 credits, no second listing call; one NeverBounce check by POST
+  answered `valid`; the engine answers 400 to a foreign Host and 200 to its
+  own. 1,403 backend tests and 73 frontend tests pass.
+
+
+## D-066 · A malformed id is "not found", a strange cursor is refused, an "unknown" is asked again
+
+**Asked for (28 Sep 2026):** "sab broken fix karo jaldi se" -- everything the
+readiness audit called broken or degraded, fixed at once.
+
+**Rulings:**
+- **A path id that cannot be a uuid is 404 on every route**, checked by
+  `lge.api.errors.is_uuid` before any query; a pasted or truncated link
+  never reaches Postgres and never becomes a 500.
+- **A cursor the list did not give out is 400 `bad_cursor`**
+  (`lge.api.cursor.cursor_parts`), on the leads views, the stage queue and
+  the firms list; before, it was ignored and the client restarted at page
+  one without knowing.
+- **A hand-check decision needs a real firm and an attribute it has a claim
+  for** (404 / 400); a junk row no longer counts toward gate G2.
+- **A batch action keeps each lead in its own savepoint** and reports a
+  refusal by its message alone, never a Python repr; one lead's failure
+  neither aborts the rest nor rolls back the ones already reported ok.
+- **An import left `loading` by a restart is swept to `failed`** at the
+  engine's start with a note, exactly as jobs are, so it can be loaded
+  again (finished batches are kept and skipped); the start is conditional
+  on the status the request read, so two clicks start one load.
+- **A failed AI call with no usage costs nothing** in `llm_call`; the
+  estimate is booked only for a call that ran.
+- **A verifier's "unknown" is not a verdict.** It is recorded as an attempt
+  with result `unknown` at no cost, the address stays `unverified`, and it
+  is asked again after seven days, twice at most; a real verdict settles
+  the address as before. The guesser records an unknown at no cost and
+  moves to the next scheme.
+- **Measured:** every fix has a test (malformed ids on 16 routes, four bad
+  cursors, hand-check, batch, import sweep, the unknown retry cycle); the
+  suite passes; the live engine answers 404, 400 and 400 to a bad id, a bad
+  cursor and a foreign host.
+
+
+## D-067 · Google sign-in, one admin by settings, an onboarding form, and a Users screen that sets each person's access
+
+**Asked for (28 Sep 2026):** Google authentication and account management.
+vishal.tiwari@legalsoft.com is the primary admin, "the one who will be
+initiating everything"; anyone else from the team who signs in for the
+first time goes through an onboarding form; the admin has a Users tab and
+decides, per person, what access to give. Plan: brain/plan/auth-plan.md.
+
+**Rulings:**
+- **The engine owns sign-in, not the screens.** The OAuth code flow runs
+  through `/api/auth/google/start` and `/callback`; identity comes from
+  Google's own userinfo endpoint over TLS (no token is decoded here, no
+  new dependency); the session is a row keyed on the hash of a random
+  token, the browser holds the token in an HttpOnly, SameSite=Lax cookie,
+  thirty days sliding. The screens' proxy makes the cookie same-origin.
+- **Only legalsoft.com accounts may sign in** (`LGE_ALLOWED_EMAIL_DOMAINS`);
+  an unverified address, another domain or a disabled person is sent back
+  to Home with a plain reason in the address bar, never a stack trace.
+- **The admin is named in settings, not in the table.** `LGE_ADMIN_EMAILS`
+  makes those addresses admins the moment they sign in, onboarded without
+  the form, and the Users screen cannot demote or disable them; nor can an
+  admin take away their own access. The owner never waits for approval.
+- **Everyone else lands `pending` and fills the form once** -- name, role,
+  team, what they will use the engine for, phone -- kept whole and shown to
+  the admin; then they wait until the admin sets viewer, operator, admin or
+  disabled. Every change of standing is a row in `app_user_event` with who
+  made it.
+- **Three levels are the whole of "what kind of access":** viewer reads,
+  operator works the leads (every write), admin also sees Users. The door
+  is one dependency on every ordinary router: 401 signed out; 403 with the
+  standing as the code; 403 read_only on a viewer's write; 403 admin_only.
+  Sign-in, health and the docs stand outside it.
+- **The door is open until the OAuth client is configured.** With no
+  `GOOGLE_OAUTH_CLIENT_ID`/`_SECRET` the engine answers its one local
+  operator as before, so nothing locks the owner out before the client is
+  made; Home's capabilities say sign-in is off. The one-time setup is a
+  Google Cloud OAuth client (Web application) with
+  `http://127.0.0.1:5000/api/auth/google/callback` as its redirect URI.
+- **Records name the person.** Decisions, notes, outcomes, journey edits
+  and hand-check decisions carry the signed-in address as their actor
+  where they used to say "ui".
+- **Measured:** migration 104; 9 sign-in tests walking start → callback →
+  onboarding → the admin's decision → a viewer's refused write, with Google
+  faked; the API suite passes; the contract is exported and the screens'
+  types regenerated.
+
+
+## D-068 · Two doors: Legal Soft walks in, an email vendor's team only by the allow list
+
+**Asked for (29 Sep 2026):** "sign-in pages mein pucho ki user Legal Soft se
+hai ya email vendor ki team se ... jo Legal Soft se hai usko seedha login do;
+email vendors ko check karna hai ki wo allow list mein hai ya nahi, jo ki
+hum baad mein banayenge."
+
+**Rulings:**
+- **The sign-in screen asks first.** "I'm from Legal Soft" is the staff
+  door: a legalsoft.com Google account, Google shown only that domain,
+  straight in. "I'm from an email vendor's team" is the vendor door: any
+  Google account, but the callback admits it only when `vendor_allow`
+  names the address or its whole domain (`@sendco.com`); otherwise the
+  person is sent back with `signin=not_invited` and told to ask the admin.
+  Which door was chosen rides inside the signed state, so nobody can
+  switch doors between start and callback.
+- **A Legal Soft account is staff by either door.** The domain decides,
+  not the button.
+- **A vendor's person is a person like any other after the door**: kind
+  `vendor`, the vendor's name from the allow list on their row, the same
+  onboarding form, the same wait for the admin, the same three levels.
+- **The allow list is the admin's, and its API exists now** (`GET/POST
+  /api/users/vendors`, `DELETE /api/users/vendors/{id}`; an entry is a
+  whole address or a whole domain, with the vendor's name, a note and who
+  added it). The screen for it comes with the handover work; until then the
+  admin adds an entry through the API.
+- **Measured:** migration 108; one test walks the vendor door refused,
+  the staff door refused for the same account, the admin listing the
+  domain, the vendor admitted as `vendor` with the vendor's name, a Legal
+  Soft account through the vendor door still staff, and the entry removed
+  closing the door again; 137 API tests pass; the screens' contract and
+  types regenerated.
+
+
+## D-069 · Twenty reviews a firm, the poor ones first
+
+**Asked for (29 Sep 2026):** "max reviews rakho 20 jisme hume low star review
+ko main preference dena hai, cause yeh hi humara pain point pakadne mein
+help karega." Found on the way: on a 54-review listing the "most relevant"
+page Google serves first held one 1-star review; the same listing sorted
+lowest-first held eight.
+
+**Rulings:**
+- **`max_reviews` is 20** (config/listings.yml). Serper returns twenty a
+  page, so the old cap of ten threw half of one paid page away.
+- **The poor reviews come first.** Serper is asked for the lowest-rated
+  page; every review at or below `low_star_max` (3) stars is kept; the rest
+  of the cap is filled from the most relevant page, never a repeat. Two
+  credits a firm for reviews instead of one, only when the poor ones do not
+  fill the cap on their own. Google's own Places API cannot sort and stays
+  at its five.
+- **Measured on The Duron Law Firm:** ten reviews (one 1-star) became
+  seventeen (six 1-star, all in Spanish); the pain analysis went from one
+  pain ("site not updated since 2013") to three, the new two quoting the
+  reviews themselves — the attorney does not return calls; staff spoke ill
+  of a client on a line that was still open — at 90% confidence, nothing
+  dropped. Cost of the re-read: 3 Serper credits and half a cent of Haiku.
+
+
+## D-070 · Every email carries Legal Soft's offer in its own numbers, and one call to action
+
+**Asked for (30 Sep 2026):** the team read the Duron report. The subject
+was right; the bodies were not: "our USPs were not mentioned", they want
+"numbers related to the revenue growth that can be achieved", the offer
+must be inserted "intelligently ... addressing the pain point", and "the
+CTA was actually lacking ... a button, a link". Two emails that had worked
+before were given as the pattern (pre-vetted, trained by U.S. attorneys,
+start in under 3 days, full-time and exclusive, about 60% less than local
+hires, no long-term contract).
+
+**Rulings:**
+- **The numbers are the company's own, never the engine's.** config/usp.yml
+  holds each fact with where it was read: legalsoft.com on 30 Sep 2026
+  ("under 3 days", "60% savings compared to hiring locally", "40% increase
+  in profits reported by law firms", "2,500 staff across 1,000+ law firms",
+  "trained by U.S. attorneys", a legal assistant "from $2,227/mo") and the
+  team's sent emails ("full-time exclusively for your firm", "no long-term
+  contract"). A figure changes there when the company's claim changes.
+- **The offer is chosen by the pain and rotated by the email.** Under the
+  copy, every drafted email gets one paragraph: who we offer (by the pain
+  that armed the lead; a tier can name its own, so an immigration firm with
+  unreturned calls is offered "bilingual intake specialists"), up to three
+  facts in the order the touch prefers (the arithmetic email leads with the
+  60% and the 40%), and, in the first two emails, the sentence that answers
+  the pain. A fact the copy already states is not said twice. Every email
+  carries at least one number.
+- **The pain is why we write, never what we say.** No offer sentence names
+  a review, a rating or a complaint.
+- **One call to action, as a link.** config/sender.yml `cta`: "Book a
+  15-minute call with our team" and Legal Soft's own contact page, with a
+  line for the reader who would rather reply. In plain text it is a line; a
+  sending tool that writes HTML gets the same label and link as a button
+  (`lge.journey.usp.cta_html`). No link configured, no call to action drafted.
+- **Cost is now said, in the company's words.** D-060's copy kept price out
+  of the emails; the team's word is that the 60% and the 40% belong in
+  them. The banned phrases stay banned ("replace", "cut costs", "reduce
+  headcount", "offshore", "virtual assistant", "cheaper than hiring"): the
+  saving is stated as the company states it, not as a reason to let anyone go.
+- **Measured:** 119 journey tests pass; six new ones pin the offer, the
+  number in every email, the link, the rotation, the no-repeat rule and the
+  banned phrases. The Duron report was rebuilt with the new emails.
+
+
 ## Standing rulings that were never in dispute
 
 Recorded here because they are load-bearing and easy to erode:

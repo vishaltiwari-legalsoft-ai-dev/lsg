@@ -336,3 +336,22 @@ interface JourneyExample { firm: string; person: string; tier; pain; system: boo
 | `internal_firms` | Purchased firm list |
 | `internal_jobs` | Job history file |
 | `careers` | Careers page |
+
+---
+
+## Revision 4 — sign-in and accounts (D-067, 28 Sep 2026)
+
+Every route below `/api` except `/api/health` and `/api/auth/*` stands behind the door once Google sign-in is configured (`GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` in `.env`). Until then the door is open and `/api/auth/me` answers `standing: "off"`.
+
+| Method | Path | Answer |
+|---|---|---|
+| GET | `/api/auth/me` | `AuthStatus { configured, standing: off / signed_out / needs_onboarding / awaiting_access / disabled / active, user: AuthUser or null, sign_in_path, onboarding_fields[], allowed_domains[] }` |
+| GET | `/api/auth/google/start?next=/path` | 302 to Google; sets a short-lived state cookie |
+| GET | `/api/auth/google/callback` | 302 back to the screens' origin; `?signin=<reason>` on failure (domain, unverified, cancelled, state, expired, google, disabled, off) |
+| POST | `/api/auth/onboarding` | body `{ answers }` → `AuthStatus`; 422 with the missing field in words |
+| POST | `/api/auth/signout` | 204 |
+| GET | `/api/users` | admin only: `{ items: AuthUser[], waiting, levels[] }`, the waiting first |
+| GET | `/api/users/{id}` | admin only: `{ user, events[] }` |
+| PATCH | `/api/users/{id}` | admin only: body `{ access: admin / operator / viewer / disabled }`; 409 `not_allowed` for a settings-admin or oneself |
+
+Errors from the door use the standard envelope: 401 `signed_out`; 403 `needs_onboarding`, `awaiting_access`, `disabled`, `read_only` (a viewer's write), `admin_only`; 409 `sign_in_off` when a sign-in route is asked with sign-in unconfigured. `GET /api/meta/providers` gained `sign_in: boolean`. The actor written on decisions, notes, outcomes, journey edits and hand-check decisions is the signed-in address, else `ui`.
