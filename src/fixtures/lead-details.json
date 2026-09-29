@@ -132,7 +132,47 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": {
+      "name": "Atlanta Personal Injury Law Group",
+      "category": "Personal injury attorney",
+      "address": "3560 Lenox Rd NE Suite 3000, Atlanta, GA 30326, USA",
+      "phone": "(404) 555-0142",
+      "website": "https://atlinjurylawgroup.com/",
+      "rating": 4.6,
+      "review_count": 87,
+      "url": "https://maps.google.com/?cid=1",
+      "status": "operational",
+      "source_label": "Google Business Profile (Google Places API)",
+      "at": "2026-09-22T09:14:00+00:00",
+      "notes": [
+        "The site prints a different address: 1900 Century Pl NE Suite 200A, Atlanta GA 30345."
+      ]
+    },
+    "reviews": [
+      {
+        "author": "M. Torres",
+        "rating": 5,
+        "date": "2026-08-30",
+        "text": "They kept me informed every step of the way and settled faster than I expected.",
+        "url": null
+      },
+      {
+        "author": "D. Nguyen",
+        "rating": 2,
+        "date": "2026-07-18",
+        "text": "Nobody returned my calls for almost three weeks after the intake.",
+        "url": null
+      },
+      {
+        "author": "K. Patel",
+        "rating": 4,
+        "date": "2026-06-02",
+        "text": "Good outcome, though the paperwork took a long time to come back.",
+        "url": null
+      }
+    ],
+    "listing_note": null
   },
   "lead-fx-harbor": {
     "id": "lead-fx-harbor",
@@ -314,7 +354,10 @@
         "reviews"
       ],
       "at": "2026-09-22T09:14:00Z"
-    }
+    },
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-calloway": {
     "id": "lead-fx-calloway",
@@ -458,7 +501,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-pineridge": {
     "id": "lead-fx-pineridge",
@@ -604,7 +650,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-brightwater": {
     "id": "lead-fx-brightwater",
@@ -750,7 +799,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-delgado": {
     "id": "lead-fx-delgado",
@@ -915,7 +967,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-northgate": {
     "id": "lead-fx-northgate",
@@ -1061,7 +1116,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-lakeshore": {
     "id": "lead-fx-lakeshore",
@@ -1209,7 +1267,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-sunbelt": {
     "id": "lead-fx-sunbelt",
@@ -1355,7 +1416,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-oakiron": {
     "id": "lead-fx-oakiron",
@@ -1476,7 +1540,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-meridian": {
     "id": "lead-fx-meridian",
@@ -1622,7 +1689,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-riverbend": {
     "id": "lead-fx-riverbend",
@@ -1770,7 +1840,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-coastal": {
     "id": "lead-fx-coastal",
@@ -1893,7 +1966,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-summit": {
     "id": "lead-fx-summit",
@@ -2019,7 +2095,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-granite": {
     "id": "lead-fx-granite",
@@ -2176,7 +2255,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-magnolia": {
     "id": "lead-fx-magnolia",
@@ -2234,7 +2316,10 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "lead-fx-prairie": {
     "id": "lead-fx-prairie",
@@ -2300,6 +2385,9 @@
     "owner": null,
     "notes": [],
     "job": null,
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   }
 }

@@ -21,7 +21,7 @@ export const cn = createCn({
         "quote-title",
         "quote-proof",
       ],
-      radius: ["control", "panel"],
+      radius: ["control", "panel", "sheet"],
       shadow: ["float"],
     },
   },

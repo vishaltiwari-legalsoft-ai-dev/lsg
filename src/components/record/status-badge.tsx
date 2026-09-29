@@ -1,18 +1,20 @@
 import type { AlertState, ContactSummary, EmailStatus } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-export type BadgeState = "verified" | "unverified" | "failure" | "no_data" | "ok" | "firing";
+export type BadgeState = "verified" | "unverified" | "failure" | "no_data" | "ok" | "firing" | "act";
 
 /*
- * Four treatments, each carrying its word so colour is never the only cue:
+ * Five treatments, each carrying its word so colour is never the only cue:
  *   confirmed  — ledger text, ledger rule, solid marker
  *   unverified — ink text, neutral rule, slate marker (not confirmed, not failed)
  *   problem    — redline text on a faint redline wash
  *   no data    — slate text, dashed outline, no marker: absence is information
+ *   act        — cobalt on its wash: waiting for the person looking at it
  */
 const STYLES: Record<BadgeState, { box: string; marker: string | null }> = {
   verified: { box: "border-ledger/45 text-ledger", marker: "bg-ledger" },
   ok: { box: "border-ledger/45 text-ledger", marker: "bg-ledger" },
+  act: { box: "border-cobalt/45 bg-cobalt-wash text-cobalt", marker: "bg-cobalt" },
   unverified: { box: "border-rule-strong text-ink", marker: "bg-slate" },
   failure: { box: "border-redline/40 bg-redline-wash text-redline", marker: "bg-redline" },
   firing: { box: "border-redline/40 bg-redline-wash text-redline", marker: "bg-redline" },

@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useOverview } from "@/lib/api/hooks";
+import { useAuth, useOverview } from "@/lib/api/hooks";
 import { formatCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { isActive, NAV_HOME, NAV_STEPS, type NavItem } from "./nav";
+import { isActive, NAV_ACCOUNT, NAV_HOME, NAV_STEPS, showsAccount, type NavItem } from "./nav";
 
 /** How many things wait for a person on this screen -- only where something can wait. */
 function useWaiting(): Record<string, number | undefined> {
@@ -58,6 +58,8 @@ function RailLink({ item, count, indent }: { item: NavItem; count?: number; inde
  */
 export function NavLinks() {
   const waiting = useWaiting();
+  const auth = useAuth();
+  const account = showsAccount(auth.data);
   return (
     <nav aria-label="Main" className="min-w-0">
       <ul className="grid gap-0.5 max-md:flex max-md:items-center max-md:gap-1 max-md:overflow-x-auto">
@@ -87,6 +89,21 @@ export function NavLinks() {
             </ul>
           </li>
         ))}
+        {account ? (
+          <li className="md:pt-4 max-md:contents">
+            <p id="rail-account" className="flex items-baseline gap-2.5 pb-1 pl-4 max-md:hidden">
+              <span aria-hidden="true" className="w-4" />
+              <span className="text-meta font-semibold tracking-[0.01em] text-slate">{NAV_ACCOUNT.label}</span>
+            </p>
+            <ul aria-labelledby="rail-account" className="grid gap-0.5 max-md:contents">
+              {NAV_ACCOUNT.items.map((item) => (
+                <li key={item.href}>
+                  <RailLink item={item} indent />
+                </li>
+              ))}
+            </ul>
+          </li>
+        ) : null}
       </ul>
     </nav>
   );

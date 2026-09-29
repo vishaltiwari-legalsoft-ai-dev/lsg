@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { api } from "./client";
 import { describeError } from "./errors";
 import type {
+  AssignableAccess,
+  AuthStatus,
   BatchRequest,
   ContactCreate,
   ContactPatch,
@@ -32,6 +34,9 @@ import type {
 /** Every server-owned input sits in the key, so filters never share a cache entry. */
 export const queryKeys = {
   health: ["health"] as const,
+  auth: ["auth"] as const,
+  users: ["users"] as const,
+  user: (id: string) => ["user", id] as const,
   today: ["today"] as const,
   overview: ["overview"] as const,
   leads: (filters: Omit<LeadsQuery, "cursor">) => ["leads", filters] as const,
@@ -60,6 +65,81 @@ export function useHealth() {
     queryFn: ({ signal }) => api.health(signal),
     staleTime: 60_000,
     retry: false,
+  });
+}
+
+// ── Sign-in, accounts and access (D-067) ────────────────────────────────────
+
+/**
+ * Who is asking and what they may do. The gate reads it to choose the
+ * screen; a person waiting for access is checked again every half minute,
+ * so the screen opens by itself once the admin decides.
+ */
+export function useAuth() {
+  return useQuery({
+    queryKey: queryKeys.auth,
+    queryFn: ({ signal }) => api.authMe(signal),
+    refetchInterval: (query) => (query.state.data?.standing === "awaiting_access" ? 30_000 : false),
+  });
+}
+
+/** The answer becomes the auth state at once: the standing moves on with it. */
+export function useOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (answers: Record<string, string>) => api.onboarding(answers),
+    onSuccess: (status) => {
+      qc.setQueryData<AuthStatus>(queryKeys.auth, status);
+    },
+  });
+}
+
+/**
+ * Closes the session, then asks the engine who is asking: the gate flips to
+ * the sign-in screen, and everything cached for the old person is dropped
+ * once the screens that showed it are gone.
+ */
+export function useSignOut() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.signOut(),
+    onSuccess: async () => {
+      await qc.refetchQueries({ queryKey: queryKeys.auth });
+      qc.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
+  });
+}
+
+export function useUsers() {
+  return useQuery({ queryKey: queryKeys.users, queryFn: ({ signal }) => api.users(signal) });
+}
+
+/** One person with their history; fetched when their row is opened. */
+export function useUser(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.user(id ?? ""),
+    queryFn: ({ signal }) => api.user(id!, signal),
+    enabled: Boolean(id),
+  });
+}
+
+/** Sets a person's access. A refusal (409 `not_allowed`) is the engine's own sentence, as a toast. */
+export function useSetUserAccess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, access }: { id: string; access: AssignableAccess }) => api.setUserAccess(id, access),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.user(detail.user.id), detail);
+      void qc.invalidateQueries({ queryKey: queryKeys.users });
+      const who = detail.user.name ?? detail.user.email;
+      toast.success(`${who} is now ${detail.user.access_display ?? detail.user.access}.`);
+    },
+    onError: (error) => {
+      toast.error(describeError(error));
+    },
   });
 }
 

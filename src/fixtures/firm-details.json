@@ -248,7 +248,47 @@
       "state_display": "Contact pending — no owner or office manager found yet",
       "band": "STRIKE"
     },
-    "pain": null
+    "pain": null,
+    "listing": {
+      "name": "Atlanta Personal Injury Law Group",
+      "category": "Personal injury attorney",
+      "address": "3560 Lenox Rd NE Suite 3000, Atlanta, GA 30326, USA",
+      "phone": "(404) 555-0142",
+      "website": "https://atlinjurylawgroup.com/",
+      "rating": 4.6,
+      "review_count": 87,
+      "url": "https://maps.google.com/?cid=1",
+      "status": "operational",
+      "source_label": "Google Business Profile (Google Places API)",
+      "at": "2026-09-22T09:14:00+00:00",
+      "notes": [
+        "The site prints a different address: 1900 Century Pl NE Suite 200A, Atlanta GA 30345."
+      ]
+    },
+    "reviews": [
+      {
+        "author": "M. Torres",
+        "rating": 5,
+        "date": "2026-08-30",
+        "text": "They kept me informed every step of the way and settled faster than I expected.",
+        "url": null
+      },
+      {
+        "author": "D. Nguyen",
+        "rating": 2,
+        "date": "2026-07-18",
+        "text": "Nobody returned my calls for almost three weeks after the intake.",
+        "url": null
+      },
+      {
+        "author": "K. Patel",
+        "rating": 4,
+        "date": "2026-06-02",
+        "text": "Good outcome, though the paperwork took a long time to come back.",
+        "url": null
+      }
+    ],
+    "listing_note": null
   },
   "firm-fx-harbor": {
     "firm": {
@@ -525,7 +565,10 @@
         "reviews"
       ],
       "at": "2026-09-22T09:14:00Z"
-    }
+    },
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-calloway": {
     "firm": {
@@ -766,7 +809,10 @@
       "state_display": "Resolved — waiting on email verification",
       "band": "STRIKE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-pineridge": {
     "firm": {
@@ -1007,7 +1053,10 @@
       "state_display": "Resolved — ready to write",
       "band": "STRIKE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-brightwater": {
     "firm": {
@@ -1248,7 +1297,10 @@
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-delgado": {
     "firm": {
@@ -1491,7 +1543,10 @@
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-northgate": {
     "firm": {
@@ -1732,7 +1787,10 @@
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-lakeshore": {
     "firm": {
@@ -1966,7 +2024,10 @@
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-sunbelt": {
     "firm": {
@@ -2207,7 +2268,10 @@
       "state_display": "Resolved — ready to write",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-oakiron": {
     "firm": {
@@ -2419,7 +2483,10 @@
       "state_display": "Resolved — ready to write",
       "band": "NURTURE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-meridian": {
     "firm": {
@@ -2651,7 +2718,10 @@
       "state_display": "Resolved — ready to write",
       "band": "NURTURE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-riverbend": {
     "firm": {
@@ -2883,7 +2953,10 @@
       "state_display": "Resolved — named owner, no verifiable email",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-coastal": {
     "firm": {
@@ -3095,7 +3168,10 @@
       "state_display": "Resolved — named owner, no verifiable email",
       "band": "NURTURE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-summit": {
     "firm": {
@@ -3310,7 +3386,10 @@
       "state_display": "Disqualified — not a private firm",
       "band": "HOLD"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-granite": {
     "firm": {
@@ -3551,7 +3630,10 @@
       "state_display": "Suppressed — on the customer list",
       "band": "SEQUENCE"
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-magnolia": {
     "firm": {
@@ -3667,7 +3749,10 @@
       "state_display": "Discovered — site not read yet",
       "band": null
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   },
   "firm-fx-prairie": {
     "firm": {
@@ -3783,6 +3868,9 @@
       "state_display": "Profiling — reading the firm's site",
       "band": null
     },
-    "pain": null
+    "pain": null,
+    "listing": null,
+    "reviews": [],
+    "listing_note": "Not looked up yet. Needs a Google Places key (free for the first 1,000 lookups a month) or a Serper key."
   }
 }

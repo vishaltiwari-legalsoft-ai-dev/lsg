@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, Libre_Caslon_Display, Libre_Caslon_Text } from "next/font/google";
 
+import { AuthGate } from "@/components/auth/auth-gate";
 import { Rail } from "@/components/shell/rail";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -48,12 +49,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <Providers>
-          <Rail />
-          <div className="md:pl-(--rail-width)">
-            <main id="main" className="sheet flex min-w-0 flex-col">
-              {children}
-            </main>
-          </div>
+          {/* The gate (D-067) shows the app -- rail and sheet -- to a person
+              with access, and one sheet saying where they stand to anyone
+              else. The rail is built here so it stays a server component. */}
+          <AuthGate rail={<Rail />}>{children}</AuthGate>
         </Providers>
       </body>
     </html>

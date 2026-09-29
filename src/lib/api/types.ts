@@ -86,6 +86,9 @@ export type LeadDetail = S["LeadDetail"];
 /** What the AI read on a firm and what it proves hurts (D-058). */
 export type PainAnalysis = S["PainAnalysis"];
 export type PainPoint = S["PainPoint"];
+// The Google Business Profile and its reviews (D-062)
+export type ListingSummary = S["ListingSummary"];
+export type ReviewRow = S["ReviewRow"];
 
 export type DraftTouch = S["Touch"];
 export type DraftsResponse = S["DraftsResponse"];
@@ -188,6 +191,24 @@ export type ImportDetail = S["ImportDetail"];
 export type ImportsResponse = S["ImportsResponse"];
 export type MappingRequest = S["MappingRequest"];
 export type ImportLoadResponse = S["ImportLoadResponse"];
+
+// ── Sign-in, accounts and access (D-067) ────────────────────────────────────
+
+/** Who is asking and what they may do: the one call the shell makes. */
+export type AuthStatus = S["AuthStatus"];
+export type AuthStanding = AuthStatus["standing"];
+export type AuthUser = S["AuthUser"];
+export type AccessLevel = AuthUser["access"];
+export type UserStanding = AuthUser["standing"];
+export type OnboardingField = S["OnboardingField"];
+export type OnboardingRequest = S["OnboardingRequest"];
+/** The levels an admin may set; `pending` is only ever the state before a decision. */
+export type AssignableAccess = S["UserAccessRequest"]["access"];
+export type UserAccessRequest = S["UserAccessRequest"];
+export type UserOption = S["UserOption"];
+export type UserEvent = S["UserEvent"];
+export type UsersResponse = S["UsersResponse"];
+export type UserDetail = S["UserDetail"];
 
 // ── Errors ──────────────────────────────────────────────────────────────────
 // The error envelope is written by the backend's exception handler, so it is

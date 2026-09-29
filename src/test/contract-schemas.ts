@@ -70,6 +70,11 @@ const PainPoint = z.strictObject({
 export const PainAnalysis = z.strictObject({
   summary: s, pains: z.array(PainPoint), read: z.array(s), at: s,
 });
+export const ListingSummary = z.strictObject({
+  name: s, category: ns, address: ns, phone: ns, website: ns, rating: nn, review_count: nn,
+  url: ns, status: ns, source_label: s, notes: z.array(s), at: s,
+});
+export const ReviewRow = z.strictObject({ author: ns, rating: nn, date: ns, text: s, url: ns });
 export const LeadDetail = z.strictObject({
   ...leadRowShape,
   contacts: z.array(ContactSummary),
@@ -87,6 +92,9 @@ export const LeadDetail = z.strictObject({
   notes: z.array(LeadNote),
   job: ActionJob.nullable(),
   pain: PainAnalysis.nullable(),
+  listing: ListingSummary.nullable(),
+  listing_note: ns,
+  reviews: z.array(ReviewRow),
 });
 export const DraftsResponse = z.strictObject({
   band: Band.nullable(),
@@ -167,6 +175,9 @@ export const FirmDetail = z.strictObject({
   ),
   lead: z.strictObject({ id: s, state_display: s, band: Band.nullable() }).nullable(),
   pain: PainAnalysis.nullable(),
+  listing: ListingSummary.nullable(),
+  listing_note: ns,
+  reviews: z.array(ReviewRow),
 });
 export const HandcheckResponse = z.strictObject({
   gate: z.strictObject({ needed: n, reviewed_firms: n, passed: z.boolean(), rule: s }),
@@ -192,6 +203,31 @@ export const CapabilitiesResponse = z.strictObject({
   built: n, partial: n, planned: n, waiting: n, summary: s,
 });
 export const HealthResponse = z.strictObject({ db: z.enum(["ok", "down"]), version: s });
+// Sign-in, accounts and access (D-067)
+const UserStanding = z.enum(["needs_onboarding", "awaiting_access", "disabled", "active"]);
+export const AuthUser = z.strictObject({
+  id: s, email: s, name: ns, picture_url: ns,
+  access: z.enum(["admin", "operator", "viewer", "pending", "disabled"]),
+  access_display: ns.optional(), standing: UserStanding, standing_display: ns.optional(),
+  admin_by_settings: z.boolean(), kind: z.enum(["staff", "vendor"]), vendor_name: ns.optional(),
+  onboarded_at: ns, onboarding: z.record(s, z.unknown()).nullable(),
+  created_at: s, last_sign_in_at: ns, access_set_by: ns, access_set_at: ns,
+});
+export const OnboardingField = z.strictObject({
+  name: s, label: s, kind: z.enum(["text", "long_text", "choice"]), required: z.boolean(),
+  hint: ns.optional(), options: z.array(s).nullable().optional(),
+});
+export const AuthStatus = z.strictObject({
+  configured: z.boolean(),
+  standing: z.enum(["off", "signed_out", "needs_onboarding", "awaiting_access", "disabled", "active"]),
+  user: AuthUser.nullable(), sign_in_path: s, vendor_sign_in_path: s,
+  onboarding_fields: z.array(OnboardingField), allowed_domains: z.array(s),
+});
+export const UserEvent = z.strictObject({ kind: s, detail: z.record(s, z.unknown()).nullable(), actor: s, at: s });
+export const UsersResponse = z.strictObject({
+  items: z.array(AuthUser), waiting: n, levels: z.array(z.strictObject({ value: s, label: s })),
+});
+export const UserDetail = z.strictObject({ user: AuthUser, events: z.array(UserEvent) });
 const Attention = TodayResponse.shape.attention;
 export const OverviewResponse = z.strictObject({
   steps: z.array(
@@ -233,4 +269,8 @@ export const pins: [
   Equals<z.infer<typeof JourneyResponse>, T.JourneyResponse>,
   Equals<z.infer<typeof JourneyExample>, T.JourneyExample>,
   Equals<z.infer<typeof CapabilitiesResponse>, T.CapabilitiesResponse>,
-] = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
+  Equals<z.infer<typeof AuthUser>, T.AuthUser>,
+  Equals<z.infer<typeof AuthStatus>, T.AuthStatus>,
+  Equals<z.infer<typeof UsersResponse>, T.UsersResponse>,
+  Equals<z.infer<typeof UserDetail>, T.UserDetail>,
+] = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true];

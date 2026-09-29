@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { JobProgress } from "@/components/case-file/job-progress";
 import { Field, SectionHeading } from "@/components/layout/panel";
+import { BusinessListing } from "@/components/record/business-listing";
 import { PainAnalysis } from "@/components/record/pain-analysis";
 import { ProofQuote } from "@/components/record/proof-quote";
 import { EmailStatusBadge } from "@/components/record/status-badge";
@@ -388,6 +389,12 @@ function FirmRecord({ data }: { data: FirmDetail }) {
       </section>
 
       {data.pain ? <PainAnalysis pain={data.pain} id="firm-pain-heading" /> : null}
+      <BusinessListing
+        listing={data.listing}
+        listingNote={data.listing_note}
+        reviews={data.reviews}
+        id="firm-listing-heading"
+      />
       <People contacts={data.contacts} />
       <SiteSays attributes={data.attributes} />
       <EveryClaim attributes={data.attributes} />

@@ -115,6 +115,35 @@ describe("api client in fixture mode", () => {
   it("answers an unknown id with a 404 ApiError", async () => {
     await expect(api.lead("nope")).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("says sign-in is off, so the screens show as before", async () => {
+    const me = await api.authMe();
+    expect(me.standing).toBe("off");
+    expect(me.user).toBeNull();
+    expect(me.onboarding_fields.map((f) => f.name)).toEqual(["full_name", "title", "team", "purpose", "phone"]);
+    await expect(api.onboarding({ full_name: "x" })).rejects.toMatchObject({ status: 401, code: "signed_out" });
+    await expect(api.signOut()).resolves.toBeUndefined();
+  });
+
+  it("lists who has signed in, the ones waiting first, and sets a person's access", async () => {
+    const before = await api.users();
+    expect(before.waiting).toBe(1);
+    expect(before.items[0]).toMatchObject({ id: "user-fx-priya", standing: "awaiting_access" });
+    const after = await api.setUserAccess("user-fx-priya", "operator");
+    expect(after.user).toMatchObject({ access: "operator", standing: "active", access_set_by: "vishal.tiwari@legalsoft.com" });
+    expect(after.events[0]).toMatchObject({ kind: "access_set", detail: { from: "pending", to: "operator" } });
+    expect((await api.users()).waiting).toBe(0);
+    expect((await api.user("user-fx-priya")).user.access).toBe("operator");
+  });
+
+  it("refuses to change an admin by the engine's settings, with the contract's envelope", async () => {
+    await expect(api.setUserAccess("user-fx-vishal", "viewer")).rejects.toMatchObject({
+      status: 409,
+      code: "not_allowed",
+      message: "That person is an admin by the engine's settings.",
+    });
+    await expect(api.user("nobody")).rejects.toMatchObject({ status: 404 });
+  });
 });
 
 describe("api client over http", () => {

@@ -4,6 +4,97 @@
  */
 
 export interface paths {
+    "/api/auth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Google Callback */
+        get: operations["google_callback_api_auth_google_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/google/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Google Start
+         * @description Two doors (D-068): `kind=staff` (the default) is a Legal Soft account
+         *     and Google is asked to show only that domain; `kind=vendor` is a person
+         *     from an email vendor's team, any Google account, admitted only when the
+         *     allow list names them.
+         */
+        get: operations["google_start_api_auth_google_start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Me */
+        get: operations["get_me_api_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Onboarding */
+        post: operations["post_onboarding_api_auth_onboarding_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/signout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Signout */
+        post: operations["post_signout_api_auth_signout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contacts/{contact_id}": {
         parameters: {
             query?: never;
@@ -664,6 +755,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["list_users_api_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vendors */
+        get: operations["list_vendors_api_users_vendors_get"];
+        put?: never;
+        /** Add Vendor */
+        post: operations["add_vendor_api_users_vendors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/vendors/{allow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Vendor */
+        delete: operations["remove_vendor_api_users_vendors__allow_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User */
+        get: operations["get_user_api_users__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set User Access */
+        patch: operations["set_user_access_api_users__user_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -800,6 +961,80 @@ export interface components {
              * @enum {string}
              */
             state: "resolved" | "unknown" | "conflict" | "stale";
+        };
+        /** AuthStatus */
+        AuthStatus: {
+            /** Allowed Domains */
+            allowed_domains: string[];
+            /** Configured */
+            configured: boolean;
+            /** Onboarding Fields */
+            onboarding_fields: components["schemas"]["OnboardingField"][];
+            /** Sign In Path */
+            sign_in_path: string;
+            /**
+             * Standing
+             * @enum {string}
+             */
+            standing: "off" | "signed_out" | "needs_onboarding" | "awaiting_access" | "disabled" | "active";
+            user: components["schemas"]["AuthUser"] | null;
+            /** Vendor Sign In Path */
+            vendor_sign_in_path: string;
+        };
+        /** AuthUser */
+        AuthUser: {
+            /**
+             * Access
+             * @enum {string}
+             */
+            access: "admin" | "operator" | "viewer" | "pending" | "disabled";
+            /** Access Display */
+            access_display?: string | null;
+            /** Access Set At */
+            access_set_at: string | null;
+            /** Access Set By */
+            access_set_by: string | null;
+            /**
+             * Admin By Settings
+             * @default false
+             */
+            admin_by_settings: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @default staff
+             * @enum {string}
+             */
+            kind: "staff" | "vendor";
+            /** Last Sign In At */
+            last_sign_in_at: string | null;
+            /** Name */
+            name: string | null;
+            /** Onboarded At */
+            onboarded_at: string | null;
+            /** Onboarding */
+            onboarding: {
+                [key: string]: unknown;
+            } | null;
+            /** Picture Url */
+            picture_url: string | null;
+            /**
+             * Standing
+             * @enum {string}
+             */
+            standing: "needs_onboarding" | "awaiting_access" | "disabled" | "active";
+            /** Standing Display */
+            standing_display?: string | null;
+            /** Vendor Name */
+            vendor_name?: string | null;
         };
         /** BatchRequest */
         BatchRequest: {
@@ -1038,7 +1273,12 @@ export interface components {
             documents: components["schemas"]["DocumentRow"][];
             firm: components["schemas"]["FirmRef"];
             lead: components["schemas"]["FirmLeadRef"] | null;
+            listing: components["schemas"]["ListingSummary"] | null;
+            /** Listing Note */
+            listing_note: string | null;
             pain: components["schemas"]["PainAnalysis"] | null;
+            /** Reviews */
+            reviews: components["schemas"]["ReviewRow"][];
             /** Signals */
             signals: components["schemas"]["Proof"][];
             /** Tier Reason */
@@ -1542,6 +1782,9 @@ export interface components {
             /** Intent */
             intent: number | null;
             job: components["schemas"]["ActionJob"] | null;
+            listing: components["schemas"]["ListingSummary"] | null;
+            /** Listing Note */
+            listing_note: string | null;
             /** Missing Roles */
             missing_roles: ("owner" | "admin")[];
             /** Next Action */
@@ -1554,6 +1797,8 @@ export interface components {
             owner: string | null;
             pain: components["schemas"]["PainAnalysis"] | null;
             proof: components["schemas"]["Proof"] | null;
+            /** Reviews */
+            reviews: components["schemas"]["ReviewRow"][];
             score: components["schemas"]["ScoreBreakdown"];
             /** Scored At */
             scored_at: string | null;
@@ -1672,6 +1917,36 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** ListingSummary */
+        ListingSummary: {
+            /** Address */
+            address: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Category */
+            category: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string[];
+            /** Phone */
+            phone: string | null;
+            /** Rating */
+            rating: number | null;
+            /** Review Count */
+            review_count: number | null;
+            /** Source Label */
+            source_label: string;
+            /** Status */
+            status: string | null;
+            /** Url */
+            url: string | null;
+            /** Website */
+            website: string | null;
+        };
         /** ListsSummary */
         ListsSummary: {
             /** Count */
@@ -1696,6 +1971,31 @@ export interface components {
         NoteRequest: {
             /** Text */
             text: string;
+        };
+        /** OnboardingField */
+        OnboardingField: {
+            /** Hint */
+            hint?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "long_text" | "choice";
+            /** Label */
+            label: string;
+            /** Name */
+            name: string;
+            /** Options */
+            options?: string[] | null;
+            /** Required */
+            required: boolean;
+        };
+        /** OnboardingRequest */
+        OnboardingRequest: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            };
         };
         /** OutcomeRequest */
         OutcomeRequest: {
@@ -1855,6 +2155,10 @@ export interface components {
             email_verification: boolean;
             /** Places */
             places: boolean;
+            /** Search */
+            search: boolean;
+            /** Sign In */
+            sign_in: boolean;
         };
         /** QualifiedCheck */
         QualifiedCheck: {
@@ -1967,6 +2271,19 @@ export interface components {
              */
             scope: "full" | "contacts";
         };
+        /** ReviewRow */
+        ReviewRow: {
+            /** Author */
+            author: string | null;
+            /** Date */
+            date: string | null;
+            /** Rating */
+            rating: number | null;
+            /** Text */
+            text: string;
+            /** Url */
+            url: string | null;
+        };
         /** RunningJob */
         RunningJob: {
             /** Done Steps */
@@ -2074,6 +2391,52 @@ export interface components {
             /** Templates */
             templates: string[];
         };
+        /** UserAccessRequest */
+        UserAccessRequest: {
+            /**
+             * Access
+             * @enum {string}
+             */
+            access: "admin" | "operator" | "viewer" | "disabled";
+        };
+        /** UserDetail */
+        UserDetail: {
+            /** Events */
+            events: components["schemas"]["UserEvent"][];
+            user: components["schemas"]["AuthUser"];
+        };
+        /** UserEvent */
+        UserEvent: {
+            /** Actor */
+            actor: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            } | null;
+            /** Kind */
+            kind: string;
+        };
+        /** UserOption */
+        UserOption: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+        };
+        /** UsersResponse */
+        UsersResponse: {
+            /** Items */
+            items: components["schemas"]["AuthUser"][];
+            /** Levels */
+            levels: components["schemas"]["UserOption"][];
+            /** Waiting */
+            waiting: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -2087,6 +2450,38 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VendorAllow */
+        VendorAllow: {
+            /**
+             * Added At
+             * Format: date-time
+             */
+            added_at: string;
+            /** Added By */
+            added_by: string;
+            /** Id */
+            id: string;
+            /** Note */
+            note: string | null;
+            /** Pattern */
+            pattern: string;
+            /** Vendor Name */
+            vendor_name: string;
+        };
+        /** VendorAllowRequest */
+        VendorAllowRequest: {
+            /** Note */
+            note?: string | null;
+            /** Pattern */
+            pattern: string;
+            /** Vendor Name */
+            vendor_name: string;
+        };
+        /** VendorAllowsResponse */
+        VendorAllowsResponse: {
+            /** Items */
+            items: components["schemas"]["VendorAllow"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -2096,6 +2491,142 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    google_callback_api_auth_google_callback_get: {
+        parameters: {
+            query?: {
+                code?: string | null;
+                state?: string | null;
+                error?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    google_start_api_auth_google_start_get: {
+        parameters: {
+            query?: {
+                next?: string;
+                kind?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_me_api_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthStatus"];
+                };
+            };
+        };
+    };
+    post_onboarding_api_auth_onboarding_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_signout_api_auth_signout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     patch_contact_api_contacts__contact_id__patch: {
         parameters: {
             query?: never;
@@ -3279,6 +3810,174 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TodayResponse"];
+                };
+            };
+        };
+    };
+    list_users_api_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsersResponse"];
+                };
+            };
+        };
+    };
+    list_vendors_api_users_vendors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorAllowsResponse"];
+                };
+            };
+        };
+    };
+    add_vendor_api_users_vendors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VendorAllowRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorAllow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_vendor_api_users_vendors__allow_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                allow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_api_users__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_user_access_api_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

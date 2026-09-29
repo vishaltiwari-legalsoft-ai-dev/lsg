@@ -61,8 +61,27 @@ export const NAV_STEPS: NavStep[] = [
   },
 ];
 
-/** Every screen, in rail order -- for the command palette. */
+/**
+ * The admin's own group, under the three steps (D-067). Only an admin sees
+ * it: nothing links to a screen the person cannot open.
+ */
+export const NAV_ACCOUNT: { label: string; items: NavItem[] } = {
+  label: "Account",
+  items: [{ href: "/users", label: "Users", hint: "Who has signed in, and what each may do" }],
+};
+
+/** Every screen everyone has, in rail order -- for the command palette. */
 export const NAV_ITEMS: NavItem[] = [NAV_HOME, ...NAV_STEPS.flatMap((s) => s.items)];
+
+/** Whether the signed-in person gets the Account group: an admin with access. */
+export function showsAccount(status: { standing: string; user: { access: string } | null } | undefined): boolean {
+  return status?.standing === "active" && status.user?.access === "admin";
+}
+
+/** Every screen this person can open, in rail order. */
+export function navItemsFor(status: Parameters<typeof showsAccount>[0]): NavItem[] {
+  return showsAccount(status) ? [...NAV_ITEMS, ...NAV_ACCOUNT.items] : NAV_ITEMS;
+}
 
 export function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";

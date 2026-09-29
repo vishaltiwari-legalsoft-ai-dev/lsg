@@ -10,6 +10,7 @@ import { ProofQuote } from "@/components/record/proof-quote";
 import { TierMark } from "@/components/record/tier-mark";
 import { Unknown, ValueOrUnknown } from "@/components/record/unknown";
 import { ErrorState } from "@/components/states/error-state";
+import { BusinessListing } from "@/components/record/business-listing";
 import { PainAnalysis } from "@/components/record/pain-analysis";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -184,6 +185,7 @@ export function CaseFile({ id, mode, onClose }: { id: string; mode: Mode; onClos
           {data.exclusion_reasons.length > 0 ? <ExclusionNote reasons={data.exclusion_reasons} /> : null}
           <WhyNow lead={data} size="title" />
           {data.pain ? <PainAnalysis pain={data.pain} /> : null}
+          <BusinessListing listing={data.listing} listingNote={data.listing_note} reviews={data.reviews} />
           <PeopleSection lead={data} />
           {draftSection}
         </div>

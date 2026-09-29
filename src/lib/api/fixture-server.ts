@@ -7,6 +7,7 @@
  * end before the API is live. The real API owns every one of those rules;
  * nothing here is a source of truth.
  */
+import authJson from "@/fixtures/auth.json";
 import draftsJson from "@/fixtures/drafts.json";
 import firmDetailsJson from "@/fixtures/firm-details.json";
 import firmsJson from "@/fixtures/firms.json";
@@ -18,12 +19,16 @@ import journeyJson from "@/fixtures/journey.json";
 import leadDetailsJson from "@/fixtures/lead-details.json";
 import leadsJson from "@/fixtures/leads.json";
 import todayJson from "@/fixtures/today.json";
+import userEventsJson from "@/fixtures/user-events.json";
+import usersJson from "@/fixtures/users.json";
 import { copyProblems, dayProblems } from "@/lib/journey";
 
 import { ApiError } from "./errors";
 import type { RequestSpec, Transport } from "./transport";
 import type {
   ActionJob,
+  AssignableAccess,
+  AuthStatus,
   BatchRequest,
   BatchResponse,
   ContactCreate,
@@ -55,10 +60,17 @@ import type {
   QualifiedResponse,
   QualifiedRow,
   TodayResponse,
+  UserDetail,
+  UserEvent,
+  UsersResponse,
 } from "./types";
 
 interface FixtureDb {
   health: HealthResponse;
+  /** Sign-in is off in fixture mode: the app shows as it did before D-067. */
+  auth: AuthStatus;
+  users: UsersResponse;
+  userEvents: Record<string, UserEvent[]>;
   today: TodayResponse;
   leads: Record<LeadView, LeadsResponse>;
   leadDetails: Record<string, LeadDetail>;
@@ -82,6 +94,9 @@ function loadDb(): FixtureDb {
   // parses every file against the contract, which is what backs this cast.
   return structuredClone({
     health: healthJson,
+    auth: authJson,
+    users: usersJson,
+    userEvents: userEventsJson,
     today: todayJson,
     leads: leadsJson,
     leadDetails: leadDetailsJson,
@@ -387,6 +402,59 @@ export function createFixtureServer({ latencyMs = 0 }: { latencyMs?: number } = 
 
     if (method === "GET" && path === "/api/health") return db.health;
     if (method === "GET" && path === "/api/today") return db.today;
+
+    // ── Sign-in, accounts and access (D-067) ──────────────────────────────
+    if (method === "GET" && path === "/api/auth/me") return db.auth;
+    if (method === "POST" && path === "/api/auth/signout") {
+      db.auth = { ...db.auth, user: null, standing: db.auth.configured ? "signed_out" : "off" };
+      return undefined;
+    }
+    if (method === "POST" && path === "/api/auth/onboarding") {
+      const user = db.auth.user;
+      if (!user) throw new ApiError(401, "signed_out", "You are not signed in.", "Sign in first.");
+      const answers = (spec.body as { answers: Record<string, string> }).answers;
+      const clean: Record<string, string> = {};
+      for (const field of db.auth.onboarding_fields) {
+        const text = (answers[field.name] ?? "").trim();
+        if (field.required && !text) {
+          throw new ApiError(422, "validation_error", `${field.label} is required.`, null);
+        }
+        clean[field.name] = text;
+      }
+      const now = new Date().toISOString();
+      const updated = { ...user, name: clean.full_name || user.name, onboarding: clean, onboarded_at: now,
+        standing: "awaiting_access" as const };
+      db.auth = { ...db.auth, user: updated, standing: "awaiting_access" };
+      return db.auth;
+    }
+    // The Users screen is served whatever the standing, so the screen can be
+    // exercised on sample data; the real engine answers 409 while sign-in is off.
+    if (method === "GET" && path === "/api/users") return db.users;
+    if ((m = path.match(/^\/api\/users\/([^/]+)$/)) && (method === "GET" || method === "PATCH")) {
+      const id = decodeURIComponent(m[1]);
+      const user = db.users.items.find((u) => u.id === id);
+      if (!user) throw notFound("User");
+      if (method === "PATCH") {
+        const access = (spec.body as { access: AssignableAccess }).access;
+        const level = db.users.levels.find((l) => l.value === access);
+        if (!level) throw new ApiError(422, "validation_error", "Access must be one of admin, operator, viewer, disabled.", null);
+        if (user.admin_by_settings) {
+          throw new ApiError(409, "not_allowed", "That person is an admin by the engine's settings.", null);
+        }
+        const now = new Date().toISOString();
+        const actor = "vishal.tiwari@legalsoft.com";
+        const from = user.access;
+        Object.assign(user, {
+          access, access_display: level.label, access_set_by: actor, access_set_at: now,
+          standing: access === "disabled" ? "disabled" : user.standing === "awaiting_access" ? "active" : user.standing,
+        });
+        user.standing_display = user.standing === "disabled" ? "Disabled" : user.standing === "active" ? "Active" : user.standing_display;
+        db.userEvents[id] = [{ kind: "access_set", detail: { from, to: access }, actor, at: now }, ...(db.userEvents[id] ?? [])];
+        db.users.waiting = db.users.items.filter((u) => u.standing === "awaiting_access").length;
+      }
+      const detail: UserDetail = { user, events: db.userEvents[id] ?? [] };
+      return detail;
+    }
     // Imports need a real engine (files land on its disk); the fixture has none.
     if (method === "GET" && path === "/api/imports") return { items: [] };
 

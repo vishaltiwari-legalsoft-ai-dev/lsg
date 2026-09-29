@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AuthStatus,
   CapabilitiesResponse,
   DraftsResponse,
   FirmDetail,
@@ -17,7 +18,10 @@ import {
   LeadsResponse,
   pins,
   TodayResponse,
+  UserEvent,
+  UsersResponse,
 } from "@/test/contract-schemas";
+import auth from "./auth.json";
 import capabilities from "./capabilities.json";
 import drafts from "./drafts.json";
 import firmDetails from "./firm-details.json";
@@ -29,6 +33,8 @@ import journey from "./journey.json";
 import leadDetails from "./lead-details.json";
 import leads from "./leads.json";
 import today from "./today.json";
+import userEvents from "./user-events.json";
+import users from "./users.json";
 
 describe("fixtures match the contract exactly", () => {
   it("pins every schema to its contract type", () => {
@@ -41,8 +47,31 @@ describe("fixtures match the contract exactly", () => {
     ["firms.json", FirmsResponse, firms],
     ["handcheck.json", HandcheckResponse, handcheck],
     ["capabilities.json", CapabilitiesResponse, capabilities],
+    ["auth.json", AuthStatus, auth],
+    ["users.json", UsersResponse, users],
   ] as const)("%s", (_name, schema, data) => {
     expect(() => schema.parse(data)).not.toThrow();
+  });
+
+  it("auth.json: sign-in is off, so the screens show as they did before sign-in", () => {
+    expect(AuthStatus.parse(auth).standing).toBe("off");
+  });
+
+  it("users.json: the ones waiting come first, and their count agrees", () => {
+    const parsed = UsersResponse.parse(users);
+    const waiting = parsed.items.filter((u) => u.standing === "awaiting_access").length;
+    expect(parsed.waiting).toBe(waiting);
+    expect(parsed.items.slice(0, waiting).every((u) => u.standing === "awaiting_access")).toBe(true);
+  });
+
+  it("user-events.json: every person on the list has a history, newest first", () => {
+    for (const user of UsersResponse.parse(users).items) {
+      const events = (userEvents as Record<string, unknown[]>)[user.id];
+      expect(events, user.id).toBeDefined();
+      const parsed = events.map((e) => UserEvent.parse(e));
+      expect(parsed.at(-1)?.kind).toBe("signed_up");
+      for (let i = 1; i < parsed.length; i++) expect(parsed[i - 1].at >= parsed[i].at).toBe(true);
+    }
   });
 
   it("leads.json: every view is a LeadsResponse", () => {

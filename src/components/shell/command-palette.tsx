@@ -12,9 +12,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useKeydown } from "@/hooks/use-keydown";
-import { useFirmSearch } from "@/lib/api/hooks";
+import { useAuth, useFirmSearch } from "@/lib/api/hooks";
 import { formatPlace } from "@/lib/format";
-import { NAV_ITEMS } from "./nav";
+import { navItemsFor } from "./nav";
 
 interface PaletteContext {
   open: () => void;
@@ -62,6 +62,9 @@ function PaletteBody({ onDone }: { onDone: () => void }) {
   const [query, setQuery] = useState("");
   const term = query.trim();
   const search = useFirmSearch(term);
+  // The gate has already answered this query; the palette only reads it, so
+  // Users is listed for an admin and for nobody else.
+  const auth = useAuth();
 
   const go = useCallback(
     (href: string) => {
@@ -71,7 +74,7 @@ function PaletteBody({ onDone }: { onDone: () => void }) {
     [onDone, router],
   );
 
-  const screens = NAV_ITEMS.filter(
+  const screens = navItemsFor(auth.data).filter(
     (item) => !term || item.label.toLowerCase().includes(term.toLowerCase()),
   );
   const firms = term.length >= 2 ? (search.data?.items ?? []) : [];

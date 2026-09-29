@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { EngineStatus } from "./engine-status";
 import { NavLinks } from "./nav-links";
+import { RailPerson } from "./rail-person";
 
 /**
  * The rail: the blue back of the binder. The Legal Soft wordmark (its
@@ -33,7 +34,8 @@ export function Rail() {
       <div className="min-w-0 flex-1 md:pl-3">
         <NavLinks />
       </div>
-      <div className="px-5 pb-4 max-md:hidden">
+      <div className="grid gap-3 px-5 pb-4 max-md:hidden">
+        <RailPerson />
         <EngineStatus />
       </div>
     </aside>

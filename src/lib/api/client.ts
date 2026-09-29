@@ -1,6 +1,8 @@
 import { API_BASE, API_MODE } from "./config";
 import { httpTransport, type Transport } from "./transport";
 import type {
+  AssignableAccess,
+  AuthStatus,
   BatchRequest,
   BatchResponse,
   CapabilitiesResponse,
@@ -38,6 +40,8 @@ import type {
   QualifiedQuery,
   QualifiedResponse,
   TodayResponse,
+  UserDetail,
+  UsersResponse,
 } from "./types";
 
 const enc = encodeURIComponent;
@@ -47,6 +51,28 @@ export function createApi(transport: Transport) {
   return {
     health: (signal?: AbortSignal) =>
       transport.json<HealthResponse>({ method: "GET", path: "/api/health", signal }),
+
+    // ── Sign-in, accounts and access (D-067) ──────────────────────────────
+    /** Never fails for lack of a session: the standing says what to show. */
+    authMe: (signal?: AbortSignal) =>
+      transport.json<AuthStatus>({ method: "GET", path: "/api/auth/me", signal }),
+
+    /** The form a new person fills once; 422 `validation_error` names the empty field. */
+    onboarding: (answers: Record<string, string>) =>
+      transport.json<AuthStatus>({ method: "POST", path: "/api/auth/onboarding", body: { answers } }),
+
+    signOut: () => transport.json<void>({ method: "POST", path: "/api/auth/signout" }),
+
+    /** Admin only: everyone who has signed in, the ones waiting first. */
+    users: (signal?: AbortSignal) =>
+      transport.json<UsersResponse>({ method: "GET", path: "/api/users", signal }),
+
+    user: (id: string, signal?: AbortSignal) =>
+      transport.json<UserDetail>({ method: "GET", path: `/api/users/${enc(id)}`, signal }),
+
+    /** 409 `not_allowed` when the admin tries to demote themselves or a settings-admin. */
+    setUserAccess: (id: string, access: AssignableAccess) =>
+      transport.json<UserDetail>({ method: "PATCH", path: `/api/users/${enc(id)}`, body: { access } }),
 
     today: (signal?: AbortSignal) =>
       transport.json<TodayResponse>({ method: "GET", path: "/api/today", signal }),
