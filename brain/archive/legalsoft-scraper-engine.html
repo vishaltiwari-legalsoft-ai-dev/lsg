@@ -1,0 +1,897 @@
+<title>Legal Soft Scraper Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1EF; --surface:#F9FBFA; --surface-2:#E3E9E6;
+  --rule:#C6D2CD; --rule-strong:#9AACA6;
+  --ink:#13201C; --ink-2:#4C5D57; --ink-3:#74857D;
+  --accent:#0E5A4A; --accent-soft:#D4E4DE;
+  --signal:#A93B1C; --signal-soft:#F1DCD4;
+  --brass:#8A6118; --brass-soft:#EDE2C8;
+  --measure:68ch;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.75rem; --s5:2.75rem; --s6:4.25rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+    --rule:#27362F; --rule-strong:#41564E;
+    --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+    --accent:#59BBA0; --accent-soft:#16302A;
+    --signal:#DD8163; --signal-soft:#33201A;
+    --brass:#CBA25D; --brass-soft:#2E2617;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+  --rule:#27362F; --rule-strong:#41564E;
+  --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+  --accent:#59BBA0; --accent-soft:#16302A;
+  --signal:#DD8163; --signal-soft:#33201A;
+  --brass:#CBA25D; --brass-soft:#2E2617;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.62; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:.18em; text-decoration-thickness:.06em}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+
+.shell{max-width:1180px; margin:0 auto; padding:0 var(--s4) var(--s6)}
+@media(min-width:1040px){
+  .shell{display:grid; grid-template-columns:190px minmax(0,1fr); gap:var(--s6); align-items:start}
+  .rail{position:sticky; top:0; padding-top:var(--s5); max-height:100vh; overflow-y:auto}
+}
+.rail{display:none}
+@media(min-width:1040px){.rail{display:block}}
+.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--s1)}
+.rail a{
+  display:flex; gap:.55em; font-family:"IBM Plex Mono",monospace; font-size:.7rem;
+  letter-spacing:.02em; color:var(--ink-2); text-decoration:none; padding:.3em 0; line-height:1.35;
+}
+.rail a:hover{color:var(--accent)}
+.rail a b{color:var(--ink-3); font-weight:500; flex:none}
+.rail .rail-hd{
+  font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-3); padding-bottom:var(--s2);
+  border-bottom:1px solid var(--rule); margin-bottom:var(--s2);
+}
+
+.mast{padding:var(--s6) 0 var(--s5); border-bottom:2px solid var(--ink)}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 var(--s3);
+}
+h1{
+  font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.4rem,6vw,4rem);
+  line-height:1.02; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:16ch;
+}
+.dek{
+  font-family:Newsreader,Georgia,serif; font-size:clamp(1.1rem,2.2vw,1.35rem);
+  line-height:1.5; color:var(--ink-2); max-width:58ch; margin:var(--s3) 0 0;
+}
+.mast-meta{
+  display:flex; flex-wrap:wrap; gap:var(--s1) var(--s4); margin-top:var(--s4);
+  font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--ink-3); letter-spacing:.03em;
+}
+.mast-meta span b{color:var(--ink-2); font-weight:500}
+
+section{padding-top:var(--s6); scroll-margin-top:var(--s3)}
+.sec-hd{display:flex; align-items:baseline; gap:var(--s2); border-bottom:1px solid var(--rule-strong); padding-bottom:var(--s2); margin-bottom:var(--s4)}
+.sec-num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--accent); font-weight:500; flex:none}
+h2{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.55rem,3.4vw,2.1rem); line-height:1.12; letter-spacing:-.012em; margin:0; text-wrap:balance}
+h3{font-family:"Public Sans",sans-serif; font-weight:700; font-size:.94rem; letter-spacing:.01em; margin:var(--s5) 0 var(--s2)}
+h4{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:.7rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:var(--s4) 0 var(--s2)}
+p{margin:0 0 var(--s3); max-width:var(--measure)}
+ul,ol{max-width:var(--measure); padding-left:1.15em; margin:0 0 var(--s3)}
+li{margin-bottom:var(--s1)}
+li::marker{color:var(--ink-3)}
+strong{font-weight:600}
+code,.mono{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:var(--surface-2); padding:.08em .32em}
+.lede{font-family:Newsreader,Georgia,serif; font-size:1.18rem; line-height:1.55; color:var(--ink-2)}
+
+.thesis{border-left:3px solid var(--accent); background:var(--surface); padding:var(--s4); margin:var(--s4) 0; max-width:var(--measure)}
+.thesis p:last-child{margin-bottom:0}
+.thesis .tag{font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:var(--s2)}
+
+.ledger{border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); overflow-x:auto; margin:var(--s3) 0 var(--s5); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:600px; font-size:.85rem}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:left; padding:.85em .9em; border-bottom:1px solid var(--rule-strong); vertical-align:bottom; white-space:nowrap}
+tbody td{padding:.8em .9em; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.k{font-weight:600; color:var(--ink)}
+td small{display:block; color:var(--ink-3); font-size:.86em; line-height:1.4; margin-top:.2em}
+caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace; font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); padding:.85em .9em .5em; border-bottom:1px solid var(--rule)}
+
+.chip{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.07em; text-transform:uppercase; padding:.22em .5em; white-space:nowrap; border:1px solid currentColor; line-height:1.4}
+.chip.go{color:var(--accent)}
+.chip.hot{color:var(--signal); background:var(--signal-soft)}
+.chip.no{color:var(--signal)}
+.chip.mid{color:var(--brass)}
+.money{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--brass); font-weight:500}
+
+/* yield bars */
+.yb{display:flex; align-items:center; gap:.55em; min-width:132px}
+.yb i{display:block; height:8px; background:var(--accent); flex:none; min-width:2px}
+.yb i.warn{background:var(--brass)}
+.yb i.bad{background:var(--signal)}
+.yb b{font-family:"IBM Plex Mono",monospace; font-size:.72rem; font-weight:500; color:var(--ink-2); font-variant-numeric:tabular-nums}
+
+/* stack layers */
+.stack{border-top:1px solid var(--rule); margin:var(--s4) 0 var(--s5)}
+.layer{display:grid; gap:var(--s1) var(--s3); padding:var(--s3) 0; border-bottom:1px solid var(--rule)}
+@media(min-width:820px){.layer{grid-template-columns:9rem 1fr 1.15fr}}
+.layer .ly-n{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); padding-top:.2em}
+.layer .ly-p{font-weight:600; font-size:.95rem}
+.layer .ly-p code{font-size:.82em; background:none; padding:0; color:var(--accent); font-weight:500}
+.layer .ly-p small{display:block; font-weight:400; color:var(--ink-2); font-size:.85rem; line-height:1.5; margin-top:.3em}
+.layer .ly-w{font-size:.85rem; color:var(--ink-2); line-height:1.55}
+.layer .ly-w em{color:var(--ink-3); font-style:normal; font-family:"IBM Plex Mono",monospace; font-size:.85em; display:block; margin-top:.35em}
+
+.two{display:grid; gap:var(--s4)}
+@media(min-width:760px){.two{grid-template-columns:1fr 1fr}}
+.note{border-left:2px solid var(--signal); padding:var(--s2) 0 var(--s2) var(--s3); margin:var(--s3) 0; max-width:var(--measure); font-size:.9rem; color:var(--ink-2)}
+.note b{color:var(--signal); font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:.3em}
+.note p:last-child{margin-bottom:0}
+
+pre{background:var(--surface); border:1px solid var(--rule-strong); padding:var(--s3); overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:.76rem; line-height:1.65; margin:var(--s3) 0 var(--s5); color:var(--ink-2)}
+pre code{background:none; padding:0; font-size:1em}
+pre .c{color:var(--ink-3)}
+pre .t{color:var(--accent)}
+
+.foot{margin-top:var(--s6); padding-top:var(--s3); border-top:2px solid var(--ink); font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--ink-3); line-height:1.9}
+.foot div{margin-bottom:var(--s2); max-width:90ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <div class="rail-hd">Contents</div>
+  <ol>
+    <li><a href="#s1"><b>&sect;1</b> Define "quality"</a></li>
+    <li><a href="#s2"><b>&sect;2</b> The yield model</a></li>
+    <li><a href="#s3"><b>&sect;3</b> Tech stack</a></li>
+    <li><a href="#s4"><b>&sect;4</b> Source ledger</a></li>
+    <li><a href="#s5"><b>&sect;5</b> Schema</a></li>
+    <li><a href="#s6"><b>&sect;6</b> Identity &amp; dedupe</a></li>
+    <li><a href="#s7"><b>&sect;7</b> Extraction cascade</a></li>
+    <li><a href="#s8"><b>&sect;8</b> Signal collectors</a></li>
+    <li><a href="#s9"><b>&sect;9</b> 9-week build</a></li>
+    <li><a href="#s10"><b>&sect;10</b> Cost model</a></li>
+    <li><a href="#s11"><b>&sect;11</b> Delivery infra</a></li>
+    <li><a href="#s12"><b>&sect;12</b> Legal ledger</a></li>
+    <li><a href="#s13"><b>&sect;13</b> Failure modes</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Data Engine Build Plan &middot; Companion to the Lead Engine ICP</p>
+  <h1>Legal Soft Scraper Engine</h1>
+  <p class="dek">The road to 10,000 quality leads runs through roughly <strong>320,000 raw records</strong>. Three stages destroy 80% of it. This plan names those three, tells you the floor at each one, and stops the build when a floor is missed &mdash; because a bad lead is not neutral, it burns a sending domain.</p>
+  <div class="mast-meta">
+    <span><b>Target</b> 10,000 Grade-A leads</span>
+    <span><b>Build</b> 9 weeks</span>
+    <span><b>One-time</b> $4.2k&ndash;6.7k</span>
+    <span><b>Run rate</b> ~$850/mo</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="sec-hd"><span class="sec-num">&sect;1</span><h2>Define "quality" before you scrape anything</h2></div>
+
+  <p class="lede">"10,000 leads" is not a target until "lead" is a testable predicate. Everything downstream &mdash; the yield floors, the cost model, the go/no-go gates &mdash; is measured against this definition, so it gets written first and does not move.</p>
+
+  <p>A record is a <strong>Grade-A lead</strong> only when every one of these is true. Any single failure demotes it; it does not get shipped with a caveat.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Grade-A predicate &middot; all nine required</caption>
+      <thead><tr><th class="num">#</th><th>Condition</th><th>How it is checked</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td class="k">US private law firm, in practice today</td><td>Website responded 200 within the last 30 days; not a directory stub</td></tr>
+        <tr><td class="num">02</td><td class="k">1&ndash;25 attorneys</td><td>Counted from the team page; confidence flag stored alongside</td></tr>
+        <tr><td class="num">03</td><td class="k">Practice area in Tier 1A / 1B / 2 / 3</td><td>Classified from site copy, not from a directory category</td></tr>
+        <tr><td class="num">04</td><td class="k">Fee model is contingency, flat, or fee-shifting</td><td>Detected from fee language on the site &mdash; the ICP axis</td></tr>
+        <tr><td class="num">05</td><td class="k">Named decision-maker with a real title</td><td>Owner / managing partner / firm administrator. Not "info@"</td></tr>
+        <tr><td class="num">06</td><td class="k">Email verified deliverable</td><td>SMTP-verified <em>valid</em>. Catch-all and "risky" both fail</td></tr>
+        <tr><td class="num">07</td><td class="k">Phone number present</td><td>E.164 normalised, main line minimum</td></tr>
+        <tr><td class="num">08</td><td class="k">Not on any suppression list</td><td>Existing customer, prior opt-out, competitor account, disqualified size</td></tr>
+        <tr><td class="num">09</td><td class="k">Enrichment fresher than 90 days</td><td>Timestamped per field, not per record</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Grade B is a product, not a reject pile</span>
+    <p>Roughly 4,000 records will pass every test except email verification &mdash; small firms where no personal mailbox resolves. Those are not waste. They have a named partner, a main line and a live signal, which makes them a <strong>phone-first and LinkedIn-first list</strong>, worked by a different motion.</p>
+    <p>Ship them as Grade B with the failing field named. Deleting them throws away a quarter of the work; emailing them anyway burns the domain.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="sec-hd"><span class="sec-num">&sect;2</span><h2>The yield model &mdash; the whole journey on one page</h2></div>
+
+  <p>Read the <strong>yield</strong> column, not the count column. It shows where the funnel actually collapses, and the <strong>floor</strong> column is a stop condition: if a stage comes in under its floor, the pipeline is broken upstream and running the next stage only multiplies the error.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Raw records to Grade-A leads &middot; yield of previous stage &middot; floors are stop conditions</caption>
+      <thead>
+        <tr><th class="num">#</th><th>Stage</th><th class="num">Records</th><th>Yield of previous</th><th class="num">Floor</th><th>If below floor</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">01</td><td class="k">Raw place records harvested<small>~18,000 grid queries: 15 practice keywords &times; ~1,200 US towns over 15k population</small></td>
+          <td class="num">320,000</td><td><span class="yb"><i style="width:118px"></i><b>&mdash;</b></span></td><td class="num">&mdash;</td><td>&mdash;</td>
+        </tr>
+        <tr>
+          <td class="num">02</td><td class="k">After identity resolution <span class="chip hot">Collapse 1</span><small>Same firm appears in Places, bar directory and Justia under three names</small></td>
+          <td class="num">128,000</td><td><span class="yb"><i class="bad" style="width:47px"></i><b>40%</b></span></td><td class="num">30&ndash;50%</td><td><strong>Above 50%: dedupe is broken.</strong> You will email the same firm four times</td>
+        </tr>
+        <tr>
+          <td class="num">03</td><td class="k">Has a resolvable own website</td>
+          <td class="num">95,000</td><td><span class="yb"><i style="width:87px"></i><b>74%</b></span></td><td class="num">70%</td><td>Places field mask is wrong &mdash; <code>websiteUri</code> not requested</td>
+        </tr>
+        <tr>
+          <td class="num">04</td><td class="k">Site live and crawlable</td>
+          <td class="num">88,000</td><td><span class="yb"><i style="width:110px"></i><b>93%</b></span></td><td class="num">85%</td><td>Crawler is being blocked &mdash; check UA, rate, robots handling</td>
+        </tr>
+        <tr>
+          <td class="num">05</td><td class="k">Practice area in ICP tiers <span class="chip hot">Collapse 2</span></td>
+          <td class="num">48,000</td><td><span class="yb"><i class="bad" style="width:65px"></i><b>55%</b></span></td><td class="num">45%</td><td><strong>Your keyword grid pulled the wrong firms.</strong> Fix the grid, re-harvest</td>
+        </tr>
+        <tr>
+          <td class="num">06</td><td class="k">1&ndash;25 attorneys</td>
+          <td class="num">44,000</td><td><span class="yb"><i style="width:109px"></i><b>92%</b></span></td><td class="num">85%</td><td>Attorney counter is over-counting staff bios as attorneys</td>
+        </tr>
+        <tr>
+          <td class="num">07</td><td class="k">Fee model qualifies</td>
+          <td class="num">31,000</td><td><span class="yb"><i style="width:83px"></i><b>70%</b></span></td><td class="num">60%</td><td>Fee-language patterns too narrow &mdash; widen before re-running</td>
+        </tr>
+        <tr>
+          <td class="num">08</td><td class="k">Decision-maker identified</td>
+          <td class="num">24,000</td><td><span class="yb"><i style="width:91px"></i><b>77%</b></span></td><td class="num">70%</td><td>Add the state bar directory join &mdash; it names partners for free</td>
+        </tr>
+        <tr>
+          <td class="num">09</td><td class="k">Email verified deliverable <span class="chip hot">Collapse 3</span><small>The stage that decides whether the whole engine works</small></td>
+          <td class="num">15,500</td><td><span class="yb"><i class="warn" style="width:77px"></i><b>65%</b></span></td><td class="num">55%</td><td><strong>Wrong enrichment vendor for SMB legal.</strong> Test a second before scaling</td>
+        </tr>
+        <tr>
+          <td class="num">10</td><td class="k">Passes suppression</td>
+          <td class="num">14,200</td><td><span class="yb"><i style="width:109px"></i><b>92%</b></span></td><td class="num">85%</td><td>Suppression list is stale or over-broad</td>
+        </tr>
+        <tr>
+          <td class="num">11</td><td class="k">All nine fields complete and fresh <span class="chip go">Grade A</span></td>
+          <td class="num">11,500</td><td><span class="yb"><i style="width:96px"></i><b>81%</b></span></td><td class="num">75%</td><td>Field-level freshness gaps &mdash; refresh, don't re-harvest</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>11,500 against a 10,000 target</strong> is a 15% buffer, which is the right amount &mdash; every stage above is an estimate, and a plan that lands at exactly 10,000 has no room to be wrong once. Alongside it, roughly <strong>4,000 Grade-B</strong> records (phone and LinkedIn, no verified email).</p>
+
+  <div class="thesis">
+    <span class="tag">What the finished asset actually produces</span>
+    <p>10,000 verified firms is the <em>standing universe</em>, not a campaign list. Layered on top, the signal collectors in &sect;8 light roughly <strong>1,200 of them per month</strong> with a live buying signal on a rolling basis &mdash; which is the number the Lead Engine funnel math runs on.</p>
+    <p>The universe is the durable asset. The signals are the revenue.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="sec-hd"><span class="sec-num">&sect;3</span><h2>Tech stack</h2></div>
+
+  <p>Every pick below is justified against the specific shape of this workload: ~130,000 domains crawled once, then a small hot subset swept nightly, with fuzzy identity resolution across sources.</p>
+
+  <div class="stack">
+    <div class="layer">
+      <span class="ly-n">Bulk crawl</span>
+      <span class="ly-p"><code>Scrapy 2.12</code>
+        <small>The universe crawl &mdash; 130k domains, ~4 pages each. Autothrottle, robots.txt, request dedupe, retry middleware and resumable job state are all built in.</small>
+      </span>
+      <span class="ly-w">Hand-rolling this over <code>asyncio</code> means re-implementing throttling and resumability badly. A crawl that cannot resume will be restarted from zero at least twice.<em>rejected: bare httpx loop, Colly</em></span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">API calls</span>
+      <span class="ly-p"><code>httpx</code> + <code>tenacity</code>
+        <small>Places, DataForSEO, enrichment, verification. Async with bounded concurrency and exponential backoff on 429.</small>
+      </span>
+      <span class="ly-w">Different failure profile from crawling &mdash; paid, rate-limited, and each retry costs money. Keep it out of Scrapy so a crawl retry storm never bills you.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">HTML &rarr; text</span>
+      <span class="ly-p"><code>selectolax</code> + <code>trafilatura</code>
+        <small>selectolax parses; trafilatura strips nav, footer, cookie banners and ad boilerplate down to main content.</small>
+      </span>
+      <span class="ly-w"><strong>trafilatura cuts LLM input tokens by roughly 60%.</strong> On 48,000 extractions that is the difference between a $700 bill and a $280 one, and it improves accuracy by removing the footer that lists every practice area the firm has ever mentioned.<em>rejected: BeautifulSoup &mdash; 3&ndash;5&times; slower at this volume</em></span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">JS rendering</span>
+      <span class="ly-p"><code>Playwright</code>, gated
+        <small>Only fires when the static fetch returns under 500 words. Expect 5&ndash;8% of law firm sites.</small>
+      </span>
+      <span class="ly-w">Rendering everything costs 20&times; the compute for a single-digit share of pages. The gate is one <code>if</code>, and it is the difference between a two-day crawl and a three-week one.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Database</span>
+      <span class="ly-p"><code>Postgres 16</code> on Cloud SQL
+        <small><code>pg_trgm</code> for fuzzy name matching, <code>postgis</code> for the geo grid, <code>JSONB</code> for raw payloads, partial indexes on the hot filters.</small>
+      </span>
+      <span class="ly-w"><strong>Not Firestore.</strong> Nightly rescoring reads all 130,000 records &mdash; that is 130k billed document reads every night, forever. Dedupe needs trigram similarity joins, which Firestore cannot express at all. This workload is relational and analytical; use the relational, analytical database.<em>rejected: Firestore, MongoDB</em></span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Raw storage</span>
+      <span class="ly-p"><code>Cloud Storage</code>
+        <small>Gzipped HTML snapshot per fetch, keyed by content hash. Lifecycle rule to Nearline at 30 days.</small>
+      </span>
+      <span class="ly-w">When the extraction schema changes in week 7 &mdash; and it will &mdash; you re-run extraction over stored HTML for pennies instead of re-crawling 130,000 domains for a week.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Queue / frontier</span>
+      <span class="ly-p"><code>Redis</code>
+        <small>Crawl frontier, per-domain rate-limit tokens, in-flight dedupe set.</small>
+      </span>
+      <span class="ly-w">Per-<em>domain</em> politeness, not global. One firm's site should never see more than one request every two seconds regardless of how many workers are running.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Orchestration</span>
+      <span class="ly-p"><code>Prefect 3</code> on Cloud Run Jobs
+        <small>Python-native flows, typed retries, per-task observability, backfills.</small>
+      </span>
+      <span class="ly-w">Airflow is heavier than this needs; Temporal is a bigger commitment than a data pipeline warrants. If you want zero new dependencies, Cloud Run Jobs + Cloud Scheduler + Pub/Sub is a legitimate substitute &mdash; you trade observability for one less system.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Extraction</span>
+      <span class="ly-p"><code>claude-haiku-4-5</code> via Batch API
+        <small>Structured outputs (<code>output_config.format</code>) for schema-valid JSON. Batch API halves the price. Escalates to <code>claude-opus-5</code> on low confidence.</small>
+      </span>
+      <span class="ly-w">This is bulk extraction over trimmed text &mdash; a Haiku-shaped job. Batch is the right mode because nothing here is latency-sensitive; the whole run can take six hours. Full cascade in &sect;7.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Proxies</span>
+      <span class="ly-p">Datacenter for firm sites, residential for hard sources
+        <small>Bright Data, Oxylabs or Decodo.</small>
+      </span>
+      <span class="ly-w">Law firm sites are overwhelmingly WordPress with no bot protection &mdash; polite rate limiting and an honest user agent get through. Save residential IPs for the small number of sources that need them, and the proxy bill drops from four figures to three.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Verification</span>
+      <span class="ly-p"><code>MillionVerifier</code> or <code>ZeroBounce</code>
+        <small>Every address, before it is ever loaded into a sequencer. Reject catch-all and risky, not just hard-invalid.</small>
+      </span>
+      <span class="ly-w">Under a tenth of a cent per address. The alternative is a 15% bounce rate in week one, which ends the programme &mdash; see &sect;13.</span>
+    </div>
+    <div class="layer">
+      <span class="ly-n">Sending</span>
+      <span class="ly-p"><code>Smartlead</code> or <code>Instantly</code>
+        <small>Across secondary domains and warmed Google Workspace mailboxes. Never the primary domain.</small>
+      </span>
+      <span class="ly-w">Full deliverability build in &sect;11. This is infrastructure, not a tool choice &mdash; it needs four weeks of lead time and must start in week 1, in parallel with the crawl.</span>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="sec-hd"><span class="sec-num">&sect;4</span><h2>Source ledger</h2></div>
+
+  <p>Each source is rated for what it uniquely provides, not for how much data it holds. Sources that only duplicate what a cheaper source already gave you are omitted.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Data sources &middot; what each one is the best source for</caption>
+      <thead><tr><th>Source</th><th>Uniquely provides</th><th>Standing</th><th class="num">Build cost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Google Places API<small>Text Search + Place Details</small></td>
+          <td>The geographic spine. Name, address, phone, website, category, rating and review count for essentially every firm with a physical office.</td>
+          <td><span class="chip go">Official</span> Paid. Note the caching restrictions &mdash; store <code>place_id</code> and your own derived fields, refresh rather than hoard.</td>
+          <td class="num money">$2,500&ndash;3,500</td>
+        </tr>
+        <tr>
+          <td class="k">State bar directories<small>All 50 states</small></td>
+          <td><strong>Attorney names, admission dates, firm affiliation, status.</strong> The single best free source for the decision-maker's actual name &mdash; and the one generic B2B databases miss entirely.</td>
+          <td><span class="chip go">Public record</span> Crawl politely; several states publish bulk downloads on request.</td>
+          <td class="num money">$0</td>
+        </tr>
+        <tr>
+          <td class="k">The firm's own website</td>
+          <td>Practice areas, fee model, attorney count, languages, CMS fingerprint, careers page. Every ICP field that matters is here and nowhere else.</td>
+          <td><span class="chip go">Public</span> robots.txt honoured, rate limited, honest UA.</td>
+          <td class="num money">proxy only</td>
+        </tr>
+        <tr>
+          <td class="k">Justia / Avvo / Martindale</td>
+          <td>Coverage backfill for firms with weak Places presence, plus practice-area cross-check.</td>
+          <td><span class="chip mid">Check ToS</span> Use as a gap-filler, not a primary spine.</td>
+          <td class="num money">proxy only</td>
+        </tr>
+        <tr>
+          <td class="k">DataForSEO<small>Reviews + SERP + Ads</small></td>
+          <td>Full Google review history with text and dates &mdash; the intake-failure signal. Places Details alone returns only a handful of reviews.</td>
+          <td><span class="chip go">Licensed</span> Account already exists.</td>
+          <td class="num money">$150&ndash;400</td>
+        </tr>
+        <tr>
+          <td class="k">Firm careers page<small>JobPosting JSON-LD</small></td>
+          <td>The strongest buying signal, from the firm's own server, with a real <code>datePosted</code>.</td>
+          <td><span class="chip go">Public</span> The defensible way to get job signal.</td>
+          <td class="num money">included</td>
+        </tr>
+        <tr>
+          <td class="k">Meta Ad Library API</td>
+          <td>Active ad creative and spend bands &mdash; the paid-acquisition signal and mass tort campaign detection.</td>
+          <td><span class="chip go">Official free API</span> Requires an app and review.</td>
+          <td class="num money">$0</td>
+        </tr>
+        <tr>
+          <td class="k">DIY tech fingerprinting</td>
+          <td>Filevine, Clio, CASEpeer, MyCase, Litify detection &mdash; from script tags, chat widgets and form endpoints on the homepage you already fetched.</td>
+          <td><span class="chip go">Derived</span> Free; no vendor needed.</td>
+          <td class="num money">$0</td>
+        </tr>
+        <tr>
+          <td class="k">Apollo / Findymail / Prospeo</td>
+          <td>Work email and direct dial for the named partner.</td>
+          <td><span class="chip go">Licensed</span> Test two on the same 500-record sample before committing.</td>
+          <td class="num money">$600&ndash;1,500</td>
+        </tr>
+        <tr>
+          <td class="k">Indeed / ZipRecruiter direct</td>
+          <td>&mdash;</td>
+          <td><span class="chip no">Do not scrape</span> Against ToS. Use careers pages, Google Jobs via DataForSEO, or a licensed feed instead &mdash; you lose almost nothing.</td>
+          <td class="num">&mdash;</td>
+        </tr>
+        <tr>
+          <td class="k">LinkedIn</td>
+          <td>&mdash;</td>
+          <td><span class="chip no">Do not scrape</span> Account bans plus real legal exposure. Sales Navigator used manually is fine; automated extraction at scale is not.</td>
+          <td class="num">&mdash;</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="sec-hd"><span class="sec-num">&sect;5</span><h2>Schema</h2></div>
+
+  <p>Six tables. The important design decision is that <strong>every extracted field carries its own source and timestamp</strong> &mdash; a record is never uniformly "fresh", and treating it that way is what makes a 90-day freshness rule enforceable.</p>
+
+<pre><code><span class="c">-- the resolved entity. one row per real-world firm.</span>
+<span class="t">firm</span> (
+  id, canonical_name, domain, phone_e164, addr_hash, lat, lng, state, city,
+  attorney_count, attorney_count_conf,      <span class="c">-- 0..1, drives Opus escalation</span>
+  practice_areas text[], primary_practice, tier,
+  fee_model,                                <span class="c">-- contingency | flat | fee_shifting | hourly | unknown</span>
+  spanish_intake bool, cms_detected,
+  fit_score int, intent_score int, band,
+  status,                                   <span class="c">-- active | suppressed | disqualified</span>
+  first_seen, last_crawled
+)
+
+<span class="c">-- every raw observation, before resolution. never mutated.</span>
+<span class="t">observation</span> (
+  id, source, source_key, firm_id, raw jsonb, fetched_at
+)
+
+<span class="c">-- the merge audit trail. lets you unpick a bad dedupe.</span>
+<span class="t">firm_alias</span> (
+  firm_id, alias_name, alias_domain, alias_phone, source, merged_at, merge_rule
+)
+
+<span class="c">-- people. bar_number is the join key generic tools do not have.</span>
+<span class="t">contact</span> (
+  id, firm_id, full_name, title, role,      <span class="c">-- owner | admin | attorney</span>
+  email, email_status, email_verified_at,   <span class="c">-- valid | catch_all | risky | invalid</span>
+  phone_direct, linkedin_url, bar_number, source, enriched_at
+)
+
+<span class="c">-- append-only. intent score is derived from this, never stored raw.</span>
+<span class="t">signal</span> (
+  id, firm_id, kind, weight, evidence jsonb, <span class="c">-- evidence = the quote for the first line</span>
+  observed_at, expires_at
+)
+
+<span class="c">-- checked before every send. domain OR email OR firm_id.</span>
+<span class="t">suppression</span> (
+  scope, value, reason, added_at            <span class="c">-- customer | optout | competitor | dq</span>
+)
+</code></pre>
+
+  <div class="thesis">
+    <span class="tag">Two fields that pay for themselves</span>
+    <p><code>signal.evidence</code> holds the actual review sentence or job-posting title. Without it, the sequencer cannot write the first line, and the first line is the entire difference between a 3% and an 11% reply rate in the Lead Engine funnel.</p>
+    <p><code>attorney_count_conf</code> is what routes a record to Opus instead of Haiku. One float column replaces a manual QA queue.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="sec-hd"><span class="sec-num">&sect;6</span><h2>Identity resolution &mdash; where the project actually dies</h2></div>
+
+  <p class="lede">Collapse 1 destroys 60% of the records and it is the stage most teams get wrong, because a broken dedupe looks like success: more rows, more leads, more coverage. You find out in week ten, when the same managing partner has received four emails from four of your domains.</p>
+
+  <p>Law firms are unusually hard to deduplicate. One firm is legitimately <em>"Smith &amp; Associates"</em>, <em>"Law Offices of John Smith"</em>, <em>"Smith Law Firm, P.C."</em> and <em>"John Smith, Attorney at Law"</em> across four sources &mdash; and two genuinely different firms in the same city are often <em>"Smith Law"</em> and <em>"Smith Legal"</em>.</p>
+
+  <h3>Match rules, strongest first</h3>
+
+  <div class="ledger">
+    <table>
+      <caption>Applied in order &middot; a match at any level merges the cluster</caption>
+      <thead><tr><th class="num">#</th><th>Rule</th><th>Key</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td class="k">Registered domain</td><td>eTLD+1, lowercased, <code>www</code> stripped. Shared-host and directory domains excluded by blocklist.</td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">02</td><td class="k">Phone</td><td>E.164 normalised. Excludes tracking numbers &mdash; if one number maps to 4+ candidate firms, drop it as a shared answering service.</td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">03</td><td class="k">Address + name stem</td><td>USPS-normalised street + ZIP+4 hash, <em>and</em> trigram similarity &gt; 0.55 on the stemmed name. Address alone is not enough &mdash; office buildings hold twenty firms.</td><td><span class="chip go">Strong</span></td></tr>
+        <tr><td class="num">04</td><td class="k">Name similarity within ZIP</td><td><code>pg_trgm</code> similarity &gt; 0.82 on the name with <em>law, legal, offices, attorneys, PC, LLP, PLLC, &amp;, and</em> stripped.</td><td><span class="chip mid">Review queue</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Run rules 1&ndash;3 as connected components (union-find) over the observation set. Rule 4 does <strong>not</strong> auto-merge &mdash; it writes to a review queue, sampled by a human. Auto-merging on name similarity alone is how two real firms become one and a genuine prospect silently disappears.</p>
+
+  <div class="note">
+    <b>The test that catches a broken dedupe</b>
+    <p>After resolution, query for firms sharing a phone number or a domain. A correct run returns almost nothing. If it returns thousands, rules 1 and 2 did not fire &mdash; usually because phones were stored formatted rather than E.164, or because <code>www.</code> and trailing slashes were not stripped before hashing. <strong>Run this query before stage 3, not after stage 11.</strong></p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="sec-hd"><span class="sec-num">&sect;7</span><h2>Extraction cascade</h2></div>
+
+  <p>Three tiers, cheapest first. Each tier only sees what the tier above could not resolve, which is what keeps the total LLM bill under $400 for 48,000 firms.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Extraction tiers &middot; cost is for the full 48,000-firm run</caption>
+      <thead><tr><th>Tier</th><th>Method</th><th>Resolves</th><th class="num">Share</th><th class="num">Cost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">1 <span class="chip go">Free</span></td>
+          <td>Deterministic. <code>schema.org</code> JSON-LD (<code>LegalService</code>, <code>Attorney</code>, <code>JobPosting</code>), plus regex for fee language &mdash; <em>"no fee unless we win"</em>, <em>"flat fee"</em>, <em>"hourly rate"</em>, <em>"Hablamos Espa&ntilde;ol"</em> &mdash; and CMS script fingerprints.</td>
+          <td>Fee model, languages, CMS, job postings, and practice area on well-marked-up sites.</td>
+          <td class="num">~55%</td>
+          <td class="num money">$0</td>
+        </tr>
+        <tr>
+          <td class="k">2 <span class="chip go">Bulk</span></td>
+          <td><code>claude-haiku-4-5</code> over trafilatura-trimmed text from homepage, about, team and practice pages. <strong>Batch API</strong> (50% off) with structured outputs for schema-valid JSON.</td>
+          <td>Practice areas, attorney count, fee model, decision-maker name and title &mdash; everything the markup did not declare.</td>
+          <td class="num">~42%</td>
+          <td class="num money">~$140</td>
+        </tr>
+        <tr>
+          <td class="k">3 <span class="chip mid">Escalation</span></td>
+          <td><code>claude-opus-5</code>, live not batched, on records where tier 2 returned <code>attorney_count_conf &lt; 0.6</code> or a fee model of <code>unknown</code> &mdash; and on every Tier-1A firm regardless of confidence.</td>
+          <td>The ambiguous cases, plus the highest-value segment where a wrong tier costs a real deal.</td>
+          <td class="num">~3%</td>
+          <td class="num money">~$120</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Total: roughly $260</strong> for the full run, against $4,200&ndash;6,700 for the build overall. The extraction that everyone assumes will be the expensive part is under 5% of the cost &mdash; because trafilatura removes the boilerplate before the model ever sees it, and Batch halves what remains.</p>
+
+  <div class="note">
+    <b>Two things to get right in the extraction prompt</b>
+    <p>Make the model return <code>unknown</code> as a first-class value with a confidence float. A model forced to choose between contingency and hourly will choose, confidently and wrongly, and the ICP axis from the Lead Engine is exactly the field you cannot afford to guess.</p>
+    <p>Ask for the <em>evidence span</em> alongside each field &mdash; the sentence it read the fee model from. It makes QA a sampling job instead of a re-reading job, and it is what fills <code>signal.evidence</code>.</p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="sec-hd"><span class="sec-num">&sect;8</span><h2>Signal collectors</h2></div>
+
+  <p>The universe crawl runs once. These run forever, and they are what turn 10,000 static records into ~1,200 in-market accounts a month.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Ongoing sweeps &middot; cadence, scope, cost</caption>
+      <thead><tr><th>Collector</th><th>Cadence</th><th>Scope</th><th>Method</th><th class="num">Monthly</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Job postings <span class="chip hot">Tier 1</span></td>
+          <td>Nightly</td>
+          <td>All 14,000 qualified firms</td>
+          <td>Fetch <code>/careers</code>, <code>/jobs</code>, <code>/employment</code>; parse <code>JobPosting</code> JSON-LD for <code>title</code> + <code>datePosted</code>. Backfill via Google Jobs through DataForSEO where the site has no careers page. <strong>Track first-seen date yourself</strong> &mdash; that is what makes the "open &gt;21 days" signal possible.</td>
+          <td class="num money">$80</td>
+        </tr>
+        <tr>
+          <td class="k">Reviews</td>
+          <td>Weekly</td>
+          <td>Tier 1A + 1B only (~6,000)</td>
+          <td>DataForSEO Google Reviews. Filter last 90 days, match against the unreturned-call phrase set, store the matching sentence as evidence.</td>
+          <td class="num money">$60</td>
+        </tr>
+        <tr>
+          <td class="k">Paid acquisition</td>
+          <td>Monthly</td>
+          <td>Tier 1A (~4,000)</td>
+          <td>Meta Ad Library API for active creative; Google Ads Transparency via DataForSEO. Mass tort detection = tort keywords in ad copy.</td>
+          <td class="num money">$40</td>
+        </tr>
+        <tr>
+          <td class="k">Tech stack change</td>
+          <td>Quarterly</td>
+          <td>All qualified</td>
+          <td>Re-fingerprint the homepage. A CMS that appears where none was = a fresh implementation = signal 09.</td>
+          <td class="num money">$15</td>
+        </tr>
+        <tr>
+          <td class="k">Liveness &amp; freshness</td>
+          <td>Rolling 90-day</td>
+          <td>All 14,000</td>
+          <td>HEAD request; on change, re-crawl and re-extract. Keeps the freshness clause of the Grade-A predicate true.</td>
+          <td class="num money">$25</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>The nightly job sweep is the highest-value job in the system</b>
+    <p>It is also the one with a hard latency requirement. Signal 01 decays &mdash; a posting found on day 2 converts far better than the same posting found on day 20. Run it at a fixed hour, alert on failure, and treat a missed night as an incident, not a retry.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <div class="sec-hd"><span class="sec-num">&sect;9</span><h2>Nine-week build</h2></div>
+
+  <p>Two tracks in parallel. The data track builds the universe; the delivery track warms sending infrastructure, which needs four weeks of calendar time and cannot be compressed at the end.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Build sequence &middot; gate = what must be true to proceed</caption>
+      <thead><tr><th>Wk</th><th>Data track</th><th>Delivery track</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">1</td>
+          <td>Postgres schema, Prefect scaffold, Redis frontier. Build the grid: 15 practice keywords &times; ~1,200 towns.</td>
+          <td>Register 5 sending domains. SPF, DKIM, DMARC. 18 Google Workspace mailboxes created.</td>
+          <td>One grid cell end-to-end into <code>observation</code></td>
+        </tr>
+        <tr>
+          <td class="k">2</td>
+          <td><strong>Pilot on 3 metros only</strong> &mdash; Los Angeles, Houston, Atlanta. Full pipeline, small scope.</td>
+          <td>Warmup begins on all 18 mailboxes. Do not touch until week 6.</td>
+          <td>Pilot yields land within &sect;2 floors</td>
+        </tr>
+        <tr>
+          <td class="k">3</td>
+          <td>Full Places harvest. Identity resolution over the whole set. <strong>Run the shared-phone/shared-domain test.</strong></td>
+          <td>Warmup continues.</td>
+          <td><span class="chip hot">Hard gate</span> Collapse-1 yield 30&ndash;50%</td>
+        </tr>
+        <tr>
+          <td class="k">4</td>
+          <td>Universe crawl: 130k domains, ~4 pages each, HTML to Cloud Storage.</td>
+          <td>Warmup continues. Draft the five sequences from Lead Engine &sect;9.</td>
+          <td>Crawl success &ge;85%, no source blocking</td>
+        </tr>
+        <tr>
+          <td class="k">5</td>
+          <td>Extraction cascade, all three tiers. Classification and fee-model detection.</td>
+          <td>Warmup continues.</td>
+          <td><span class="chip hot">Hard gate</span> Collapse-2 yield &ge;45%</td>
+        </tr>
+        <tr>
+          <td class="k">6</td>
+          <td>State bar directory join for partner names. Contact enrichment on the qualified set.</td>
+          <td>Warmup complete. Send volume test at 10/day/mailbox.</td>
+          <td>Decision-maker found on &ge;70%</td>
+        </tr>
+        <tr>
+          <td class="k">7</td>
+          <td>Email verification. Suppression build. <strong>Human QA on a random 200 &mdash; eight fields each.</strong></td>
+          <td>Sequencer wired to the database. Live-fire on 50 leads.</td>
+          <td><span class="chip hot">Hard gate</span> QA accuracy &ge;95%, bounce &lt;2%</td>
+        </tr>
+        <tr>
+          <td class="k">8</td>
+          <td>Signal collectors live. Fit and intent scoring. Nightly rescore job.</td>
+          <td>Scale to 40/day/mailbox. Reply handling and routing.</td>
+          <td>Signals firing on &ge;1,000 accounts</td>
+        </tr>
+        <tr>
+          <td class="k">9</td>
+          <td><strong>10,000 Grade-A + ~4,000 Grade-B delivered.</strong> Refresh loop running.</td>
+          <td>Full cadence. Attribution back to originating signal.</td>
+          <td>Signal-to-contact latency under 48h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Week 2 is not optional</span>
+    <p>Three metros, full pipeline, every stage measured. It costs four days and it is the only cheap opportunity to discover that the keyword grid is pulling estate-planning firms, or that the fee-language regex misses <em>"contingency"</em> spelled as <em>"contingent fee basis"</em>.</p>
+    <p>Finding that in week 5, after the full harvest, means re-running Places at full cost. The pilot is the single highest-return four days in the plan.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <div class="sec-hd"><span class="sec-num">&sect;10</span><h2>Cost model</h2></div>
+
+  <div class="two">
+    <div>
+      <h4>One-time build</h4>
+      <div class="ledger">
+        <table style="min-width:0">
+          <thead><tr><th>Item</th><th class="num">Cost</th></tr></thead>
+          <tbody>
+            <tr><td>Google Places API<small>~18k Text Search + ~130k Details</small></td><td class="num money">$2,500&ndash;3,500</td></tr>
+            <tr><td>Contact enrichment<small>~30k lookups</small></td><td class="num money">$600&ndash;1,500</td></tr>
+            <tr><td>Proxies</td><td class="num money">$200&ndash;400</td></tr>
+            <tr><td>DataForSEO<small>reviews + SERP backfill</small></td><td class="num money">$150&ndash;400</td></tr>
+            <tr><td>LLM extraction<small>Haiku batch + Opus escalation</small></td><td class="num money">$260&ndash;400</td></tr>
+            <tr><td>Cloud SQL<small>build months</small></td><td class="num money">$300</td></tr>
+            <tr><td>Cloud Run + storage</td><td class="num money">$150&ndash;300</td></tr>
+            <tr><td>Email verification<small>~24k</small></td><td class="num money">$30&ndash;100</td></tr>
+            <tr><td class="k">Total</td><td class="num money"><strong>$4,190&ndash;6,900</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h4>Monthly run rate</h4>
+      <div class="ledger">
+        <table style="min-width:0">
+          <thead><tr><th>Item</th><th class="num">Cost</th></tr></thead>
+          <tbody>
+            <tr><td>Cloud SQL Postgres</td><td class="num money">$120</td></tr>
+            <tr><td>Cloud Run + storage</td><td class="num money">$60</td></tr>
+            <tr><td>Signal collectors<small>&sect;8 total</small></td><td class="num money">$220</td></tr>
+            <tr><td>Enrichment refresh<small>new signal accounts</small></td><td class="num money">$150</td></tr>
+            <tr><td>Sending<small>18 mailboxes + sequencer + domains</small></td><td class="num money">$250</td></tr>
+            <tr><td>LLM<small>new firms + reclassification</small></td><td class="num money">$50</td></tr>
+            <tr><td class="k">Total</td><td class="num money"><strong>~$850</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.88rem">Excludes SDR salaries, which sit in the Lead Engine funnel model, not here.</p>
+    </div>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">What a lead actually costs</span>
+    <p>Take the midpoint: <span class="money">$5,500</span> to produce 10,000 Grade-A plus 4,000 Grade-B records. That is <strong><span class="money">$0.39</span> per qualified, verified, decision-maker-attached lead</strong> &mdash; against an account ACV of <span class="money">$35,900</span> and a published allowable CAC of <span class="money">$2,500</span>.</p>
+    <p>The data layer is not where this business is cost-constrained. Which is the argument for spending properly on it &mdash; better verification, a second enrichment vendor, the Opus escalation tier &mdash; rather than saving $200 and shipping a list that bounces.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <div class="sec-hd"><span class="sec-num">&sect;11</span><h2>Delivery infrastructure</h2></div>
+
+  <p class="lede">10,000 perfect leads produce nothing if the mail lands in spam. This track starts in week 1 and runs in parallel, because warmup is calendar time that cannot be bought back.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Element</th><th>Spec</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Sending domains</td><td>5 secondary domains. Never <code>legalsoft.com</code>.</td><td>The primary domain carries client mail, invoices and the app. A cold-outbound reputation hit there is unrecoverable and affects the whole business.</td></tr>
+        <tr><td class="k">Mailboxes</td><td>18 &mdash; 3&ndash;4 per domain, Google Workspace.</td><td>Real mailboxes on a real provider deliver better than SMTP relays. Spreading across domains means one flagged domain is not one flagged programme.</td></tr>
+        <tr><td class="k">Authentication</td><td>SPF, DKIM and DMARC on every domain before the first send.</td><td>Missing DMARC alone is enough for bulk filtering at Google and Microsoft.</td></tr>
+        <tr><td class="k">Warmup</td><td>4 weeks minimum, automated, ramping to 40/day.</td><td>A new domain sending 40 cold emails on day one is a spam trap by definition.</td></tr>
+        <tr><td class="k">Steady volume</td><td>40/day/mailbox &rarr; 720/day &rarr; ~15,000/month.</td><td>10,000 leads &times; 4 touches = 40,000 sends, worked through in roughly ten weeks.</td></tr>
+        <tr><td class="k">Bounce ceiling</td><td>Hard stop at 2%. Pause the domain, do not push through.</td><td>Above 3% the domain is effectively finished. This is the number that verification in &sect;1 exists to protect.</td></tr>
+        <tr><td class="k">CAN-SPAM</td><td>Physical postal address in every email, a working opt-out honoured within 10 days, no deceptive headers or subject lines.</td><td>B2B cold email is lawful in the US on these conditions. The Woodland Hills address satisfies the first.</td></tr>
+        <tr><td class="k">Global suppression</td><td>Every opt-out writes to <code>suppression</code> at <em>domain</em> scope, checked before every send across all sequences.</td><td>One partner opting out must silence the whole firm, not just that mailbox.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <div class="sec-hd"><span class="sec-num">&sect;12</span><h2>Legal ledger</h2></div>
+
+  <p>Stated plainly so the boundaries are a decision rather than an accident. This is an engineering summary, not legal advice &mdash; have counsel confirm before go-live.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Activity</th><th>Standing</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Crawling firm websites</td><td><span class="chip go">Clear</span></td><td>Public pages, robots.txt honoured, rate limited, identifiable user agent, no login bypass.</td></tr>
+        <tr><td class="k">State bar directories</td><td><span class="chip go">Clear</span></td><td>Public records. Respect per-site terms and rate limits; ask for a bulk file where offered.</td></tr>
+        <tr><td class="k">Google Places API</td><td><span class="chip go">Clear</span></td><td>Licensed use. Observe the caching and display restrictions &mdash; keep <code>place_id</code> and your own derived fields, refresh rather than warehouse.</td></tr>
+        <tr><td class="k">Meta Ad Library API</td><td><span class="chip go">Clear</span></td><td>Official API, app review required.</td></tr>
+        <tr><td class="k">DataForSEO</td><td><span class="chip go">Clear</span></td><td>Licensed provider, existing account.</td></tr>
+        <tr><td class="k">Job boards, direct scrape</td><td><span class="chip no">Avoid</span></td><td>Against ToS. Careers pages plus Google Jobs plus a licensed feed cover the same signal.</td></tr>
+        <tr><td class="k">LinkedIn, automated</td><td><span class="chip no">Avoid</span></td><td>Bans plus real legal exposure. Manual Sales Navigator use is a different thing.</td></tr>
+        <tr><td class="k">B2B cold email</td><td><span class="chip go">Lawful</span></td><td>CAN-SPAM conditions in &sect;11. Suppress on request, immediately and globally.</td></tr>
+        <tr><td class="k">Cold calling</td><td><span class="chip mid">Conditional</span></td><td>Business lines are outside most DNC scope, but scrub against the National DNC anyway &mdash; solos often list a mobile as the firm number. State laws vary.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <div class="sec-hd"><span class="sec-num">&sect;13</span><h2>Failure modes</h2></div>
+
+  <p>Ranked by how often they end the programme rather than merely delay it.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th class="num">#</th><th>Failure</th><th>How it shows up</th><th>Prevention</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">01</td><td class="k">Skipping email verification <span class="chip hot">Fatal</span></td>
+          <td>15% bounce in week one. Domains blacklisted before a single reply. Ten weeks of work unusable.</td>
+          <td>Verify every address. Reject catch-all and risky, not just hard-invalid. It costs under a tenth of a cent.</td>
+        </tr>
+        <tr>
+          <td class="num">02</td><td class="k">Broken identity resolution <span class="chip hot">Fatal</span></td>
+          <td>Looks like success &mdash; more rows than expected. Surfaces as a managing partner receiving four emails from four domains and reporting all of them.</td>
+          <td>Collapse-1 floor as a hard gate in week 3. Run the shared-phone/shared-domain query before proceeding.</td>
+        </tr>
+        <tr>
+          <td class="num">03</td><td class="k">Sending from the primary domain <span class="chip hot">Fatal</span></td>
+          <td>Client mail and app notifications start landing in spam. Not recoverable on any useful timescale.</td>
+          <td>Five secondary domains, provisioned week 1. This is not a shortcut worth taking once.</td>
+        </tr>
+        <tr>
+          <td class="num">04</td><td class="k">Full harvest before the pilot</td>
+          <td>Week 5 reveals the grid pulled the wrong practice areas. Places spend already committed.</td>
+          <td>The three-metro pilot in week 2. Four days against a $3,000 re-run.</td>
+        </tr>
+        <tr>
+          <td class="num">05</td><td class="k">Firestore as the lead store</td>
+          <td>Nightly rescore bills 130k document reads. Dedupe cannot be expressed at all, so it gets skipped &mdash; which causes failure 02.</td>
+          <td>Postgres. The one architectural decision that is hard to reverse later.</td>
+        </tr>
+        <tr>
+          <td class="num">06</td><td class="k">No suppression check</td>
+          <td>Cold outbound reaches an existing Legal Soft customer. Worse than a wasted send &mdash; it damages a paying account.</td>
+          <td>Load the customer list into <code>suppression</code> at domain scope on day one, before the first send.</td>
+        </tr>
+        <tr>
+          <td class="num">07</td><td class="k">Not storing raw HTML</td>
+          <td>The extraction schema changes in week 7 and the only way to backfill is re-crawling 130,000 domains.</td>
+          <td>Cloud Storage, gzipped, content-hash keyed. Cheaper than one re-crawl.</td>
+        </tr>
+        <tr>
+          <td class="num">08</td><td class="k">Job sweep silently failing</td>
+          <td>No error, just no new signals. Discovered weeks later when pipeline dries up.</td>
+          <td>Alert on <em>absence</em> &mdash; if the nightly sweep finds zero new postings across 14,000 firms, that is a failure, not a quiet night.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Where to start on Monday</span>
+    <p>Two things, in parallel, before anything else: <strong>register the five sending domains and start warmup</strong> &mdash; it is four weeks of calendar time and nothing else in this plan can shorten it &mdash; and <strong>stand up Postgres with the &sect;5 schema</strong>, then run the three-metro pilot against it.</p>
+    <p>Everything else in this document is downstream of those two, and both can be done this week.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Companion to the Legal Soft Lead Engine ICP &middot; tier definitions, signal weights and funnel conversion assumptions are carried from that document.</div>
+  <div>Yield percentages and record counts are modelled estimates to be replaced with pilot measurements in week 2. Google Places, enrichment and proxy pricing move &mdash; verify current SKU rates before committing budget. LLM costs computed at published Claude API rates with Batch API pricing applied to tier 2. The legal ledger is an engineering summary, not legal advice.</div>
+</footer>
+
+</main>
+</div>

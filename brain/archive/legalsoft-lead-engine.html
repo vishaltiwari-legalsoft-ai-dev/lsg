@@ -1,0 +1,1023 @@
+<title>Legal Soft Lead Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1EF; --surface:#F9FBFA; --surface-2:#E3E9E6;
+  --rule:#C6D2CD; --rule-strong:#9AACA6;
+  --ink:#13201C; --ink-2:#4C5D57; --ink-3:#74857D;
+  --accent:#0E5A4A; --accent-soft:#D4E4DE;
+  --signal:#A93B1C; --signal-soft:#F1DCD4;
+  --brass:#8A6118; --brass-soft:#EDE2C8;
+  --measure:68ch;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.75rem; --s5:2.75rem; --s6:4.25rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+    --rule:#27362F; --rule-strong:#41564E;
+    --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+    --accent:#59BBA0; --accent-soft:#16302A;
+    --signal:#DD8163; --signal-soft:#33201A;
+    --brass:#CBA25D; --brass-soft:#2E2617;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+  --rule:#27362F; --rule-strong:#41564E;
+  --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+  --accent:#59BBA0; --accent-soft:#16302A;
+  --signal:#DD8163; --signal-soft:#33201A;
+  --brass:#CBA25D; --brass-soft:#2E2617;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.62; margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:.18em; text-decoration-thickness:.06em}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+
+/* ---------- shell ---------- */
+.shell{max-width:1180px; margin:0 auto; padding:0 var(--s4) var(--s6)}
+@media(min-width:1040px){
+  .shell{display:grid; grid-template-columns:190px minmax(0,1fr); gap:var(--s6); align-items:start}
+  .rail{position:sticky; top:0; padding-top:var(--s5); max-height:100vh; overflow-y:auto}
+}
+.rail{display:none}
+@media(min-width:1040px){.rail{display:block}}
+.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--s1)}
+.rail a{
+  display:flex; gap:.55em; font-family:"IBM Plex Mono",monospace; font-size:.7rem;
+  letter-spacing:.02em; color:var(--ink-2); text-decoration:none; padding:.3em 0; line-height:1.35;
+}
+.rail a:hover{color:var(--accent)}
+.rail a b{color:var(--ink-3); font-weight:500; flex:none}
+.rail .rail-hd{
+  font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-3); padding-bottom:var(--s2);
+  border-bottom:1px solid var(--rule); margin-bottom:var(--s2);
+}
+
+/* ---------- masthead ---------- */
+.mast{padding:var(--s6) 0 var(--s5); border-bottom:2px solid var(--ink)}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 var(--s3);
+}
+h1{
+  font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.4rem,6vw,4rem);
+  line-height:1.02; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:16ch;
+}
+.dek{
+  font-family:Newsreader,Georgia,serif; font-size:clamp(1.1rem,2.2vw,1.35rem);
+  line-height:1.5; color:var(--ink-2); max-width:58ch; margin:var(--s3) 0 0;
+}
+.mast-meta{
+  display:flex; flex-wrap:wrap; gap:var(--s1) var(--s4); margin-top:var(--s4);
+  font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--ink-3);
+  letter-spacing:.03em;
+}
+.mast-meta span b{color:var(--ink-2); font-weight:500}
+
+/* ---------- sections ---------- */
+section{padding-top:var(--s6); scroll-margin-top:var(--s3)}
+.sec-hd{display:flex; align-items:baseline; gap:var(--s2); border-bottom:1px solid var(--rule-strong); padding-bottom:var(--s2); margin-bottom:var(--s4)}
+.sec-num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--accent); font-weight:500; flex:none}
+h2{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.55rem,3.4vw,2.1rem); line-height:1.12; letter-spacing:-.012em; margin:0; text-wrap:balance}
+h3{font-family:"Public Sans",sans-serif; font-weight:700; font-size:.94rem; letter-spacing:.01em; margin:var(--s5) 0 var(--s2)}
+h4{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:.7rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:var(--s4) 0 var(--s2)}
+p{margin:0 0 var(--s3); max-width:var(--measure)}
+ul,ol{max-width:var(--measure); padding-left:1.15em; margin:0 0 var(--s3)}
+li{margin-bottom:var(--s1)}
+li::marker{color:var(--ink-3)}
+strong{font-weight:600}
+em{font-style:italic}
+code,.mono{font-family:"IBM Plex Mono",monospace; font-size:.86em}
+.lede{font-family:Newsreader,Georgia,serif; font-size:1.18rem; line-height:1.55; color:var(--ink-2)}
+
+/* ---------- thesis block ---------- */
+.thesis{
+  border-left:3px solid var(--accent); background:var(--surface);
+  padding:var(--s4); margin:var(--s4) 0; max-width:var(--measure);
+}
+.thesis p:last-child{margin-bottom:0}
+.thesis .tag{
+  font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--accent); display:block; margin-bottom:var(--s2);
+}
+
+/* ---------- ledger blocks (tables) ---------- */
+.ledger{
+  border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);
+  overflow-x:auto; margin:var(--s3) 0 var(--s5); background:var(--surface);
+}
+table{border-collapse:collapse; width:100%; min-width:600px; font-size:.85rem}
+thead th{
+  font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:left;
+  padding:.85em .9em; border-bottom:1px solid var(--rule-strong); vertical-align:bottom;
+  white-space:nowrap;
+}
+tbody td{padding:.8em .9em; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.k{font-weight:600; color:var(--ink)}
+td small{display:block; color:var(--ink-3); font-size:.86em; line-height:1.4; margin-top:.2em}
+caption{
+  caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace;
+  font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+  padding:.85em .9em .5em; border-bottom:1px solid var(--rule);
+}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.63rem;
+  letter-spacing:.07em; text-transform:uppercase; padding:.22em .5em; white-space:nowrap;
+  border:1px solid currentColor; line-height:1.4;
+}
+.chip.go{color:var(--accent)}
+.chip.hot{color:var(--signal); background:var(--signal-soft)}
+.chip.no{color:var(--signal)}
+.chip.mid{color:var(--brass)}
+.money{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--brass); font-weight:500}
+
+/* ---------- intent bar ---------- */
+.bar{display:flex; align-items:center; gap:.5em; min-width:104px}
+.bar i{display:block; height:7px; background:var(--accent); flex:none}
+.bar i.hot{background:var(--signal)}
+.bar b{font-family:"IBM Plex Mono",monospace; font-size:.72rem; font-weight:500; color:var(--ink-2); font-variant-numeric:tabular-nums}
+
+/* ---------- fee matrix (centerpiece) ---------- */
+.matrix{display:grid; gap:1px; background:var(--rule-strong); border:1px solid var(--rule-strong); margin:var(--s4) 0 var(--s5)}
+@media(min-width:760px){.matrix{grid-template-columns:1fr 1fr 1fr}}
+.mcell{background:var(--surface); padding:var(--s3)}
+.mcell.hd{background:var(--surface-2); display:flex; flex-direction:column; gap:.4em}
+.mcell h5{margin:0; font-family:Newsreader,Georgia,serif; font-weight:500; font-size:1.22rem; letter-spacing:-.01em}
+.mcell .sub{font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3)}
+.mcell p{font-size:.86rem; margin:0 0 var(--s2); max-width:none; line-height:1.5}
+.mcell p:last-child{margin-bottom:0}
+.mcell .lbl{font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); display:block; margin-bottom:.3em}
+
+/* ---------- stage pipeline ---------- */
+.stages{list-style:none; padding:0; margin:var(--s4) 0 var(--s5); max-width:none; border-top:1px solid var(--rule)}
+.stages li{
+  display:grid; gap:var(--s1) var(--s3); padding:var(--s3) 0;
+  border-bottom:1px solid var(--rule); margin:0;
+}
+@media(min-width:720px){.stages li{grid-template-columns:2.4rem 1fr 1.25fr}}
+.stages .st-n{font-family:"IBM Plex Mono",monospace; font-size:.8rem; color:var(--accent); font-weight:500}
+.stages .st-t{font-weight:600; font-size:.95rem}
+.stages .st-t small{display:block; font-weight:400; color:var(--ink-2); font-size:.84rem; line-height:1.5; margin-top:.25em}
+.stages .st-io{font-family:"IBM Plex Mono",monospace; font-size:.72rem; color:var(--ink-2); line-height:1.65}
+.stages .st-io u{text-decoration:none; color:var(--ink-3); letter-spacing:.09em; text-transform:uppercase; font-size:.85em}
+
+/* ---------- email specimens ---------- */
+.spec{border:1px solid var(--rule-strong); background:var(--surface); margin:var(--s3) 0; max-width:var(--measure)}
+.spec-hd{
+  padding:.7em .95em; border-bottom:1px solid var(--rule); background:var(--surface-2);
+  display:flex; flex-wrap:wrap; gap:.4em var(--s2); align-items:center;
+}
+.spec-hd .trg{font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--signal)}
+.spec-hd .sub{font-size:.87rem; font-weight:600}
+.spec-bd{padding:var(--s3) .95em; font-size:.88rem; line-height:1.6; color:var(--ink-2)}
+.spec-bd p{margin:0 0 .7em; max-width:none}
+.spec-bd p:last-child{margin-bottom:0}
+.spec-bd v{color:var(--accent); font-family:"IBM Plex Mono",monospace; font-size:.9em; font-style:normal}
+
+/* ---------- misc ---------- */
+.two{display:grid; gap:var(--s4)}
+@media(min-width:760px){.two{grid-template-columns:1fr 1fr}}
+.note{
+  border-left:2px solid var(--signal); padding:var(--s2) 0 var(--s2) var(--s3);
+  margin:var(--s3) 0; max-width:var(--measure); font-size:.9rem; color:var(--ink-2);
+}
+.note b{color:var(--signal); font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:.3em}
+.note p:last-child{margin-bottom:0}
+.foot{margin-top:var(--s6); padding-top:var(--s3); border-top:2px solid var(--ink); font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--ink-3); line-height:1.9}
+.foot div{margin-bottom:var(--s2); max-width:90ch}
+hr{border:none; border-top:1px solid var(--rule); margin:var(--s5) 0}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <div class="rail-hd">Contents</div>
+  <ol>
+    <li><a href="#s1"><b>&sect;1</b> The business, decoded</a></li>
+    <li><a href="#s2"><b>&sect;2</b> Unit economics</a></li>
+    <li><a href="#s3"><b>&sect;3</b> The ICP axis</a></li>
+    <li><a href="#s4"><b>&sect;4</b> Tiers &amp; filters</a></li>
+    <li><a href="#s5"><b>&sect;5</b> Buying committee</a></li>
+    <li><a href="#s6"><b>&sect;6</b> The signal board</a></li>
+    <li><a href="#s7"><b>&sect;7</b> Scoring model</a></li>
+    <li><a href="#s8"><b>&sect;8</b> Engine architecture</a></li>
+    <li><a href="#s9"><b>&sect;9</b> Message matrix</a></li>
+    <li><a href="#s10"><b>&sect;10</b> Objections</a></li>
+    <li><a href="#s11"><b>&sect;11</b> Funnel math</a></li>
+    <li><a href="#s12"><b>&sect;12</b> Site gaps</a></li>
+    <li><a href="#s13"><b>&sect;13</b> First 30 days</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Ideal Customer Profile &amp; Demand Engine Blueprint</p>
+  <h1>Legal Soft Lead Engine</h1>
+  <p class="dek">Legal Soft doesn't sell staffing. It sells <em>capacity a law firm cannot buy locally at any price</em> &mdash; and the firms that buy hardest are the ones whose support staff generate no revenue. That distinction, not firm size, is the targeting axis.</p>
+  <div class="mast-meta">
+    <span><b>Subject</b> legalsoft.com</span>
+    <span><b>Prepared</b> 10 Sep 2026</span>
+    <span><b>Basis</b> 14 site sections + market data</span>
+    <span><b>For</b> Revenue / GTM build</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <div class="sec-hd"><span class="sec-num">&sect;1</span><h2>The business, decoded</h2></div>
+
+  <p class="lede">Founded 2015 by Hamid Kohan. Woodland Hills, California. Seven offices across California, Arizona, Mexico, Ecuador, Colombia, Nicaragua and the Philippines. 1,000+ US law firms served, 2,500 staff placed, 600+ pre-vetted candidates on the bench.</p>
+
+  <p>The product is a <strong>dedicated, legal-trained remote employee</strong> &mdash; not a task marketplace and not a BPO contract. The firm interviews candidates for free, picks one, and that person starts in under three days working inside the firm's own case management system. A platform layer wraps it: timesheets, live activity screenshots, productivity reports, invoicing, bonuses, and a support ticket queue.</p>
+
+  <p>Ten SKUs, priced monthly, month-to-month, no setup fee, with a free replacement if a placement fails.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>SKU ladder &middot; monthly, full-time &middot; source: legalsoft.com/pricing</caption>
+      <thead>
+        <tr><th>Role</th><th class="num">Monthly</th><th>Client-facing?</th><th>Best-fit wedge</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Legal Assistant</td><td class="num money">$2,227</td><td>Partly</td><td>Generalist entry &mdash; solo &amp; small firms</td></tr>
+        <tr><td class="k">Intake Specialist</td><td class="num money">$2,227</td><td>Yes</td><td>Firms buying paid leads; after-hours coverage</td></tr>
+        <tr><td class="k">Document Collector</td><td class="num money">$2,227</td><td>No</td><td><strong>Lowest-risk first placement.</strong> Zero client contact</td></tr>
+        <tr><td class="k">Lien Negotiator</td><td class="num money">$2,227</td><td>No</td><td>PI firms with settlement-stage backlog</td></tr>
+        <tr><td class="k">Bookkeeper</td><td class="num money">$2,327</td><td>No</td><td>IOLTA / trust accounting hygiene</td></tr>
+        <tr><td class="k">Case Manager</td><td class="num money">$2,525</td><td>Yes</td><td>Family &amp; PI firms with client-update failures</td></tr>
+        <tr><td class="k">Paralegal</td><td class="num money">$2,922</td><td>Partly</td><td>Direct substitute for the unfillable local req</td></tr>
+        <tr><td class="k">Demand Writer</td><td class="num money">$2,997</td><td>No</td><td><strong>Clearest ROI story in the catalogue</strong></td></tr>
+        <tr><td class="k">Marketing Specialist</td><td class="num money">$2,997</td><td>No</td><td>Firms already spending on ads</td></tr>
+        <tr><td class="k">Remote Attorney</td><td class="num money">$3,323</td><td>Partly</td><td>Immigration appeals, document review</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Read this before writing a single sequence</span>
+    <p>The catalogue holds two structurally different products. <strong>Client-facing roles</strong> (Intake, Case Manager) carry accent, trust and bar-rule anxiety &mdash; a hard first sale. <strong>Back-office roles</strong> (Document Collector, Lien Negotiator, Demand Writer, Bookkeeper) touch no client and carry almost none of that objection.</p>
+    <p>Lead with a back-office wedge. Land at <span class="money">$2,227</span>, prove the platform, then expand into client-facing seats on the firm's own initiative. Expansion revenue is where the account economics actually live.</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <div class="sec-hd"><span class="sec-num">&sect;2</span><h2>Unit economics &mdash; and the CAC ceiling they already published</h2></div>
+
+  <p>Legal Soft's referral program pays <strong><span class="money">$2,500</span> flat on first deployment, or 7% of monthly billing for twelve months</strong>. That is not a marketing detail &mdash; it is a published statement of what the company will pay for one closed law firm. It sets the budget ceiling for the entire engine.</p>
+
+  <p>The two options also reveal the expected account size. For them to be roughly equivalent, 7% &times; monthly &times; 12 must approach $2,500 &mdash; implying an anticipated average billing near <span class="money">$2,975/mo</span>, i.e. slightly more than one seat.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Derived account economics &middot; italics = estimate, not published</caption>
+      <thead><tr><th>Line</th><th class="num">Value</th><th>Derivation</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Average seat price</td><td class="num money">$2,600</td><td>Midpoint of the ten published SKUs</td></tr>
+        <tr><td class="k">Implied seats per account</td><td class="num">1.15</td><td>Back-solved from the referral payout equivalence</td></tr>
+        <tr><td class="k">Average account ACV</td><td class="num money">$35,900</td><td>$2,975/mo &times; 12</td></tr>
+        <tr><td class="k">Bill rate</td><td class="num">$12.87/hr</td><td>$2,227 &divide; 173 hrs &mdash; matches their "$12&ndash;13/hr" copy</td></tr>
+        <tr><td class="k"><em>Delivery cost</em></td><td class="num"><em>$5&ndash;7/hr</em></td><td><em>LatAm / PH legal-trained, fully loaded</em></td></tr>
+        <tr><td class="k"><em>Gross margin</em></td><td class="num"><em>~50%</em></td><td><em>Implied by the above</em></td></tr>
+        <tr><td class="k"><em>Year-one gross profit</em></td><td class="num money"><em>~$18,000</em></td><td><em>Per account</em></td></tr>
+        <tr><td class="k">Published allowable CAC</td><td class="num money">$2,500</td><td>Their own referral payout</td></tr>
+        <tr><td class="k"><em>GP : CAC at that ceiling</em></td><td class="num"><em>7.2 : 1</em></td><td><em>Year one only, before expansion or retention</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The headroom is the point. An engine can spend <span class="money">$1,500&ndash;2,500</span> to acquire a firm and still return better than 3:1 in the first year alone. That funds real data, real research, and a human SDR on the highest-intent accounts &mdash; none of which a $200-CAC business could afford.</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <div class="sec-hd"><span class="sec-num">&sect;3</span><h2>The ICP axis: fee model, not firm size</h2></div>
+
+  <p class="lede">Every competitor in this category segments by practice area and headcount. Both are proxies. The variable that actually determines whether a firm can buy is <strong>how the firm bills</strong>.</p>
+
+  <p>In an hourly firm, a paralegal is a <em>profit centre</em>: the firm pays $35/hr and bills the client $150/hr. Replacing that person with a $13/hr offshore paralegal whose time cannot be billed at the same rate destroys margin instead of creating it. Selling a Paralegal SKU into an hourly firm is asking them to convert revenue into cost.</p>
+
+  <p>In a contingency or flat-fee firm, the same paralegal is a <em>pure cost centre</em>. Nothing that person does is billed to anyone. Every hour moved from a US payroll to a $13/hr seat drops straight to the partner's distribution. Same SKU, opposite economics.</p>
+
+  <div class="matrix">
+    <div class="mcell hd">
+      <span class="sub">Fee model 01</span>
+      <h5>Contingency</h5>
+      <span class="chip go">Tier 1 &mdash; all SKUs</span>
+    </div>
+    <div class="mcell hd">
+      <span class="sub">Fee model 02</span>
+      <h5>Flat fee</h5>
+      <span class="chip go">Tier 1 &mdash; all SKUs</span>
+    </div>
+    <div class="mcell hd">
+      <span class="sub">Fee model 03</span>
+      <h5>Hourly</h5>
+      <span class="chip mid">Tier 3 &mdash; non-billable only</span>
+    </div>
+
+    <div class="mcell">
+      <span class="lbl">Support staff is</span>
+      <p>Overhead against a fee earned months later. Payroll runs every two weeks; settlements don't.</p>
+      <span class="lbl">Sell</span>
+      <p>Every SKU. Demand Writer and Lien Negotiator convert fastest because each one visibly accelerates cash.</p>
+    </div>
+    <div class="mcell">
+      <span class="lbl">Support staff is</span>
+      <p>A direct subtraction from a fee that is already fixed. Every extra hour on a matter reduces the margin on that matter.</p>
+      <span class="lbl">Sell</span>
+      <p>Every SKU. Document-heavy, form-driven work is the wedge &mdash; immigration especially.</p>
+    </div>
+    <div class="mcell">
+      <span class="lbl">Support staff is</span>
+      <p>Billable inventory. Paralegal hours are resold to the client at a 3&ndash;4&times; markup.</p>
+      <span class="lbl">Sell</span>
+      <p>Only what can never be billed: <strong>Bookkeeper, Marketing Specialist, Intake Specialist, Document Collector</strong>. Never lead with Paralegal.</p>
+    </div>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">The one-line qualifier</span>
+    <p>Before a rep spends a minute on an account: <strong>does this firm bill the client for its paralegal's time?</strong> If yes, the deal is small and the wrong SKU will kill it. If no, the entire catalogue is available and the arithmetic sells itself.</p>
+  </div>
+
+  <p>This also explains a pattern sitting in plain sight on the site's own testimonial wall. Alongside the personal-injury names sit <strong>lemon-law and employment firms</strong> &mdash; Help with Lemons, Robison Lemon Law Group, Termechi Employment Law. Those are fee-shifting practices: the defendant pays the fees, so support staff is overhead exactly as in contingency work. Fee-shifting litigation is a proven, under-named segment that is already buying.</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <div class="sec-hd"><span class="sec-num">&sect;4</span><h2>Tiers and machine-readable filters</h2></div>
+
+  <div class="ledger">
+    <table>
+      <caption>Segment tiers &middot; ranked by close probability &times; account size</caption>
+      <thead>
+        <tr><th>Tier</th><th>Segment</th><th>Why it buys</th><th>Lead SKU</th><th class="num">Seats</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="k">1A <span class="chip go">Core</span></td>
+          <td class="k">Personal injury &amp; mass tort<small>2&ndash;20 attorneys &middot; contingency</small></td>
+          <td>Case volume scales faster than payroll can. Records, liens and demands are unbilled labour standing between the firm and its fee.</td>
+          <td>Demand Writer<br><small>then Document Collector</small></td>
+          <td class="num">2&ndash;5</td>
+        </tr>
+        <tr>
+          <td class="k">1B <span class="chip go">Core</span></td>
+          <td class="k">Immigration<small>flat fee &middot; high Spanish-language need</small></td>
+          <td>Fixed fee per matter against enormous form and document volume. Legal Soft's four LatAm offices staff native Spanish speakers on US hours &mdash; a structural edge over Philippines-only rivals.</td>
+          <td>Bilingual Legal Assistant</td>
+          <td class="num">1&ndash;3</td>
+        </tr>
+        <tr>
+          <td class="k">2 <span class="chip go">Expand</span></td>
+          <td class="k">Fee-shifting litigation<small>employment &middot; lemon law &middot; workers' comp &middot; SSDI &middot; consumer</small></td>
+          <td>Same overhead economics as contingency, a fraction of the competitive noise. Already present in the testimonial wall but absent from the messaging.</td>
+          <td>Case Manager</td>
+          <td class="num">1&ndash;3</td>
+        </tr>
+        <tr>
+          <td class="k">3 <span class="chip mid">Volume</span></td>
+          <td class="k">Flat-fee volume practices<small>bankruptcy &middot; criminal defence &middot; estate planning &middot; family</small></td>
+          <td>Predictable fee, repetitive document work, thin margins. Buys one seat readily; expands slowly.</td>
+          <td>Legal Assistant</td>
+          <td class="num">1&ndash;2</td>
+        </tr>
+        <tr>
+          <td class="k">4 <span class="chip mid">Narrow</span></td>
+          <td class="k">Hourly practices<small>business &middot; real estate &middot; tax &middot; IP</small></td>
+          <td>Only non-billable functions are sellable. Real but capped &mdash; do not spend Tier-1 effort here.</td>
+          <td>Bookkeeper / Marketing</td>
+          <td class="num">1</td>
+        </tr>
+        <tr>
+          <td class="k">&mdash; <span class="chip no">Suppress</span></td>
+          <td class="k">Disqualified</td>
+          <td>50+ attorneys (procurement, InfoSec review, incumbent ALSP) &middot; in-house legal departments &middot; government &middot; non-US &middot; firms under two years old or under ~$300k revenue &middot; current customers of a direct rival</td>
+          <td>&mdash;</td>
+          <td class="num">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Filter spec for the list build</h3>
+  <p>Everything below should be expressible as a query, not a judgement call. Anything that cannot be belongs in enrichment, not in targeting.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Targeting filters &middot; hard gates and scoring inputs</caption>
+      <thead><tr><th>Attribute</th><th>Include</th><th>Where it comes from</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Entity type</td><td>Private US law firm</td><td>State bar directories, Justia, Avvo, Martindale</td></tr>
+        <tr><td class="k">Attorney count</td><td>1&ndash;25 (sweet spot 2&ndash;12)</td><td>Firm site team page, LinkedIn headcount, bar records</td></tr>
+        <tr><td class="k">Fee model</td><td>Contingency &middot; flat fee &middot; fee-shifting</td><td>Inferred from practice area plus "no fee unless we win" / "flat fee" on the site</td></tr>
+        <tr><td class="k">Practice area</td><td>Tier 1A / 1B / 2 / 3 above</td><td>Site nav, Google Business Profile category, directory taxonomy</td></tr>
+        <tr><td class="k">Geography</td><td>US only. Weight CA, TX, FL, NY, GA, AZ, NV, IL, NJ, CO</td><td>Matches the existing customer concentration &mdash; 13 of 22 public testimonials are Californian</td></tr>
+        <tr><td class="k">Spanish-language need</td><td>Site has an <code>/es</code> path or "Hablamos Espa&ntilde;ol"</td><td>Crawl. Routes directly to the LatAm advantage</td></tr>
+        <tr><td class="k">Case management system</td><td>Filevine &middot; CASEpeer &middot; Clio &middot; MyCase &middot; Litify &middot; SmartAdvocate</td><td>BuiltWith / Wappalyzer / careers-page mentions</td></tr>
+        <tr><td class="k">Paid acquisition</td><td>Active Google Ads, Local Services or Meta ads</td><td>Google Ads Transparency Center, Meta Ad Library</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Universe size</h3>
+  <p>The US has roughly <strong>50,400 personal-injury firms</strong>, of which about 60% are solo, and small firms of ten attorneys or fewer handle around 70% of all PI cases. Filtering to 2&ndash;25 attorney PI and mass-tort firms leaves an addressable core in the region of <strong>13,000&ndash;16,000</strong> firms. Legal Soft's existing 1,000 accounts therefore represent single-digit penetration of its own core segment &mdash; before Tier 1B, 2 and 3 are counted at all.</p>
+
+  <div class="note">
+    <b>Do not guess the rest</b>
+    <p>The PI count is a published figure. Immigration, employment and family-law firm counts should be <em>built</em> from state bar directories during the list phase, not estimated. A TAM slide with an invented denominator will be the first thing a sceptical operator picks apart.</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <div class="sec-hd"><span class="sec-num">&sect;5</span><h2>The buying committee</h2></div>
+
+  <p>In a 2&ndash;20 attorney firm there is no procurement, no security questionnaire, and no committee in the enterprise sense. There is an owner who signs, an operator who feels the pain, and a person who quietly kills the deal.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Roles, motives, and the thing each one actually says</caption>
+      <thead><tr><th>Role</th><th>Who</th><th>What they want</th><th>What they say</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Economic buyer</td>
+          <td>Managing partner / owner. Usually the founder, usually named on the door.</td>
+          <td>Take home more money. Get weekends back. Add case volume without W-2 risk, unemployment insurance or a lease.</td>
+          <td><em>"I can't find anyone, and I can't afford to be wrong twice."</em></td>
+        </tr>
+        <tr>
+          <td class="k">Champion</td>
+          <td>Firm administrator / office manager / director of operations. Appears above roughly eight staff.</td>
+          <td>Stop drowning. They are the person who posted the req that got no applicants &mdash; they will forward a relevant email the same day.</td>
+          <td><em>"I've been covering intake myself for six weeks."</em></td>
+        </tr>
+        <tr>
+          <td class="k">Blocker</td>
+          <td>Senior in-house paralegal, or the attorney's own risk instinct.</td>
+          <td>Not to be replaced. Not to be the partner who put client PHI on an offshore laptop.</td>
+          <td><em>"Are we even allowed to do this?"</em></td>
+        </tr>
+        <tr>
+          <td class="k">Influencer</td>
+          <td>The firm's marketing agency and coach &mdash; Rankings.io, RizeUp, OnTrac, Pilmma, My Legal Academy.</td>
+          <td>Their client to convert more of the leads they are already generating.</td>
+          <td><em>"Your intake is the bottleneck, not your ads."</em></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Two moves the persona map hands you</span>
+    <p><strong>Neutralise the blocker in the first email.</strong> Frame every placement as added capacity, never as replacement. The in-house paralegal who fears the pitch is often the one reading the owner's inbox.</p>
+    <p><strong>The influencers are already partners.</strong> Sixteen agencies and coaches are listed on <code>/partners</code>, and the alliance program pays recurring commission. An agency whose PI client is buying leads that go unanswered has a commercial reason to make the introduction &mdash; their own campaign performance depends on it. This is the cheapest channel in the model and it is currently a logo wall.</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <div class="sec-hd"><span class="sec-num">&sect;6</span><h2>The signal board</h2></div>
+
+  <p class="lede">Law firms do not buy at a revenue threshold. They buy at a moment. The engine's entire job is to detect that moment within days of it happening &mdash; because the alternative is a 60-day local hiring process that ends in a hire, and the window closes.</p>
+
+  <p>Signals are ranked by intent strength, not by how easy they are to collect. The weight column feeds directly into &sect;7.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Buying signals &middot; ranked by intent &middot; weight feeds the scoring model</caption>
+      <thead>
+        <tr><th class="num">#</th><th>Signal</th><th>What it proves</th><th>Source</th><th>Weight</th><th>Act within</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">01</td>
+          <td class="k">Legal-support job posting open <strong>&gt;21 days</strong> <span class="chip hot">Strongest</span><small>Paralegal, legal assistant, case manager, intake specialist</small></td>
+          <td>Budget approved, demand published, <em>and local hiring has failed</em>. Paralegal unemployment sits near 1.9% &mdash; this firm will not fill the role.</td>
+          <td>Indeed, ZipRecruiter, LinkedIn Jobs, Google Jobs, firm careers page</td>
+          <td><span class="bar"><i class="hot" style="width:60px"></i><b>40</b></span></td>
+          <td>24 hrs</td>
+        </tr>
+        <tr>
+          <td class="num">02</td>
+          <td class="k">Same posting, live <strong>&lt;7 days</strong></td>
+          <td>In-market right now, still optimistic about hiring locally. Earlier in the window, lower urgency.</td>
+          <td>Same</td>
+          <td><span class="bar"><i class="hot" style="width:45px"></i><b>30</b></span></td>
+          <td>72 hrs</td>
+        </tr>
+        <tr>
+          <td class="num">03</td>
+          <td class="k">Inbound: pricing page or tool used</td>
+          <td>Self-identified. Already comparing cost.</td>
+          <td>Site analytics plus reverse-IP / form capture</td>
+          <td><span class="bar"><i class="hot" style="width:38px"></i><b>25</b></span></td>
+          <td>Same day</td>
+        </tr>
+        <tr>
+          <td class="num">04</td>
+          <td class="k">Google reviews citing unreturned calls <span class="chip hot">Under-used</span><small>"never called back", "couldn't reach anyone", "no response"</small></td>
+          <td>Documented intake failure, in the firm's own public record. In PI this is signed cases walking to the firm that answered.</td>
+          <td>Google Places API review text, last 90 days</td>
+          <td><span class="bar"><i class="hot" style="width:23px"></i><b>15</b></span></td>
+          <td>1 week</td>
+        </tr>
+        <tr>
+          <td class="num">05</td>
+          <td class="k">Two or more simultaneous openings</td>
+          <td>Expansion, not backfill. A multi-seat deal.</td>
+          <td>Job boards, deduplicated by firm</td>
+          <td><span class="bar"><i style="width:15px"></i><b>10</b></span></td>
+          <td>72 hrs</td>
+        </tr>
+        <tr>
+          <td class="num">06</td>
+          <td class="k">Heavy paid acquisition</td>
+          <td>Buying leads faster than staff can work them. Every unanswered call is a paid lead wasted twice.</td>
+          <td>Google Ads Transparency Center, Meta Ad Library, SEMrush</td>
+          <td><span class="bar"><i style="width:15px"></i><b>10</b></span></td>
+          <td>2 weeks</td>
+        </tr>
+        <tr>
+          <td class="num">07</td>
+          <td class="k">Joined a mass tort campaign<small>Advertising a specific tort or litigation</small></td>
+          <td>Thousands of claimants inbound, each needing four to six provider record requests. Pure Document Collector demand, at volume, on a deadline.</td>
+          <td>Ad libraries, tort-specific landing pages, litigation news</td>
+          <td><span class="bar"><i style="width:15px"></i><b>10</b></span></td>
+          <td>2 weeks</td>
+        </tr>
+        <tr>
+          <td class="num">08</td>
+          <td class="k">New office or lateral attorney hire</td>
+          <td>Capacity added at the top with no support beneath it. Infrastructure spend already approved.</td>
+          <td>LinkedIn company updates, Google Business Profile, legal press</td>
+          <td><span class="bar"><i style="width:12px"></i><b>8</b></span></td>
+          <td>3 weeks</td>
+        </tr>
+        <tr>
+          <td class="num">09</td>
+          <td class="k">Case management system implemented in last 6 months</td>
+          <td>A new CMS is when a firm discovers the workflow needed a person, not a feature. Legal Soft partners with both Filevine and Clio &mdash; this is a co-sell, not a cold call.</td>
+          <td>BuiltWith change log, partner referral, tooling named in job posts</td>
+          <td><span class="bar"><i style="width:12px"></i><b>8</b></span></td>
+          <td>3 weeks</td>
+        </tr>
+        <tr>
+          <td class="num">10</td>
+          <td class="k">Partner or alliance introduction</td>
+          <td>Warm, pre-qualified, and the referrer is financially motivated to close it.</td>
+          <td>Partner portal</td>
+          <td><span class="bar"><i class="hot" style="width:52px"></i><b>35</b></span></td>
+          <td>Same day</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">Signal 01 is the whole business</span>
+    <p>A law firm with a stale paralegal req is not a prospect who might one day need this. It is a firm that has <em>already decided to buy</em>, published the budget, and failed to find supply. Legal Soft's entire pitch &mdash; legal-trained, three days, <span class="money">$2,922</span> against a US market rate of roughly <span class="money">$7,185</span> &mdash; is the exact answer to the exact question that firm is currently failing to answer.</p>
+    <p>There were about <strong>24,300 paralegal postings</strong> and <strong>68,200 legal-operations postings</strong> in the US over the last cycle. Even after filtering to law firms in the target practice areas and sizes, that is roughly <strong>1,200 qualified in-market accounts per month</strong> &mdash; arriving continuously, for free, with a timestamp on each one.</p>
+  </div>
+
+  <h4>Negative signals &mdash; suppress on sight</h4>
+  <ul>
+    <li>50+ attorneys, or any AmLaw / NLJ ranking</li>
+    <li>A careers page listing an in-house recruiter &mdash; they have hiring capacity and will use it</li>
+    <li>An existing offshore or ALSP vendor named on the site</li>
+    <li>Exclusively hourly corporate, tax or IP practice <em>and</em> no non-billable role open</li>
+    <li>Firm founded under 24 months ago, single attorney, no paid advertising &mdash; no budget</li>
+    <li>Government, in-house legal department, non-US</li>
+  </ul>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <div class="sec-hd"><span class="sec-num">&sect;7</span><h2>Scoring model and routing</h2></div>
+
+  <p>Two independent scores, never merged into one number until the routing step. <strong>Fit</strong> answers <em>should we ever sell to them</em>. <strong>Intent</strong> answers <em>should we call them today</em>. A perfect-fit firm with no intent is a nurture contact, not a call &mdash; and treating it as a call is how outbound teams burn their best accounts.</p>
+
+  <div class="two">
+    <div>
+      <h4>Fit score &middot; 0&ndash;50</h4>
+      <div class="ledger">
+        <table style="min-width:0">
+          <thead><tr><th>Attribute</th><th class="num">Pts</th></tr></thead>
+          <tbody>
+            <tr><td>Contingency or flat-fee model</td><td class="num">+15</td></tr>
+            <tr><td>PI or mass tort</td><td class="num">+10</td></tr>
+            <tr><td>Immigration, employment, lemon law, comp, SSDI</td><td class="num">+8</td></tr>
+            <tr><td>Family, bankruptcy, criminal, estate</td><td class="num">+5</td></tr>
+            <tr><td>2&ndash;12 attorneys</td><td class="num">+12</td></tr>
+            <tr><td>13&ndash;25 attorneys</td><td class="num">+8</td></tr>
+            <tr><td>Solo</td><td class="num">+5</td></tr>
+            <tr><td>US-based</td><td class="num">+6</td></tr>
+            <tr><td>Concentration state (CA/TX/FL/NY/GA/AZ/NV)</td><td class="num">+2</td></tr>
+            <tr><td>Spanish-language need detected</td><td class="num">+5</td></tr>
+            <tr><td>26&ndash;50 attorneys</td><td class="num">&minus;10</td></tr>
+            <tr><td>50+ attorneys, hourly-only, non-US</td><td class="num">disqualify</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h4>Intent score &middot; 0&ndash;50</h4>
+      <div class="ledger">
+        <table style="min-width:0">
+          <thead><tr><th>Signal</th><th class="num">Pts</th></tr></thead>
+          <tbody>
+            <tr><td>Job posting open &gt;21 days</td><td class="num">+40</td></tr>
+            <tr><td>Partner / alliance introduction</td><td class="num">+35</td></tr>
+            <tr><td>Job posting live &lt;7 days</td><td class="num">+30</td></tr>
+            <tr><td>Pricing page visit or tool used</td><td class="num">+25</td></tr>
+            <tr><td>Reviews citing unreturned calls</td><td class="num">+15</td></tr>
+            <tr><td>Two or more simultaneous openings</td><td class="num">+10</td></tr>
+            <tr><td>Active paid acquisition</td><td class="num">+10</td></tr>
+            <tr><td>Mass tort campaign detected</td><td class="num">+10</td></tr>
+            <tr><td>New office or lateral hire</td><td class="num">+8</td></tr>
+            <tr><td>CMS implemented in last 6 months</td><td class="num">+8</td></tr>
+            <tr><td>No signal in 90 days</td><td class="num">decay &minus;5/mo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="ledger">
+    <table>
+      <caption>Routing bands &middot; combined score sets channel and speed, nothing else</caption>
+      <thead><tr><th class="num">Score</th><th>Band</th><th>Treatment</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num k">80+</td>
+          <td class="k"><span class="chip hot">Strike</span></td>
+          <td>Researched call the same day. Personalised email citing the specific posting or review. LinkedIn touch to owner <em>and</em> administrator. Five touches over eight days.</td>
+          <td>Senior SDR</td>
+        </tr>
+        <tr>
+          <td class="num k">60&ndash;79</td>
+          <td class="k"><span class="chip go">Sequence</span></td>
+          <td>Signal-triggered multichannel sequence, nine touches over 21 days. Call attempts on days 1, 4 and 11.</td>
+          <td>SDR pool</td>
+        </tr>
+        <tr>
+          <td class="num k">40&ndash;59</td>
+          <td class="k"><span class="chip mid">Nurture</span></td>
+          <td>Segment newsletter and role-specific content. Re-scored nightly; promotes automatically the moment a signal fires.</td>
+          <td>Automated</td>
+        </tr>
+        <tr>
+          <td class="num k">&lt;40</td>
+          <td class="k"><span class="chip no">Suppress</span></td>
+          <td>Held in the database, contacted by nobody. Re-enters only on a fit change or a Tier-1 signal.</td>
+          <td>&mdash;</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <div class="sec-hd"><span class="sec-num">&sect;8</span><h2>Engine architecture</h2></div>
+
+  <p>Seven stages. Stages 2 and 3 run nightly against the whole universe; everything else is event-driven off a score change.</p>
+
+  <ol class="stages">
+    <li>
+      <span class="st-n">01</span>
+      <span class="st-t">Universe
+        <small>Build and hold the master list of US law firms once. This is an asset, not a campaign &mdash; it compounds, and it is the thing a competitor cannot copy quickly.</small>
+      </span>
+      <span class="st-io"><u>in</u> State bar directories &middot; Justia &middot; Avvo &middot; Martindale &middot; Google Places<br><u>out</u> Firm record: name, site, address, attorneys, practice areas, fee model</span>
+    </li>
+    <li>
+      <span class="st-n">02</span>
+      <span class="st-t">Sense
+        <small>Sweep every signal source nightly. Match hits back to firm records by domain and address, not by name &mdash; firm names collide constantly.</small>
+      </span>
+      <span class="st-io"><u>in</u> Job boards &middot; careers pages &middot; ad libraries &middot; review APIs &middot; LinkedIn &middot; BuiltWith<br><u>out</u> Timestamped signal events attached to firm records</span>
+    </li>
+    <li>
+      <span class="st-n">03</span>
+      <span class="st-t">Score
+        <small>Recompute fit and intent nightly. Intent decays; fit does not. A crossed band is the event that drives everything downstream.</small>
+      </span>
+      <span class="st-io"><u>in</u> Firm record + signal events<br><u>out</u> Fit 0&ndash;50, Intent 0&ndash;50, band, band-change event</span>
+    </li>
+    <li>
+      <span class="st-n">04</span>
+      <span class="st-t">Enrich
+        <small>Only for accounts crossing into Sequence or Strike. Enriching the whole universe is the single largest avoidable cost in this model.</small>
+      </span>
+      <span class="st-io"><u>in</u> Band-change event<br><u>out</u> Owner and administrator: name, title, work email, direct line, LinkedIn</span>
+    </li>
+    <li>
+      <span class="st-n">05</span>
+      <span class="st-t">Compose
+        <small>The signal picks the message and the wedge SKU. A stale paralegal req gets the hiring-failure angle; an intake-failure review gets the lost-case angle. Never one template with a merge field.</small>
+      </span>
+      <span class="st-io"><u>in</u> Top signal + segment + fee model<br><u>out</u> Sequence variant, wedge SKU, opening line citing the specific evidence</span>
+    </li>
+    <li>
+      <span class="st-n">06</span>
+      <span class="st-t">Engage
+        <small>Email, phone and LinkedIn on the cadence set by the band. A reply of any kind pauses automation and hands the account to a human immediately.</small>
+      </span>
+      <span class="st-io"><u>in</u> Sequenced account<br><u>out</u> Replies, meetings booked, free interviews scheduled</span>
+    </li>
+    <li>
+      <span class="st-n">07</span>
+      <span class="st-t">Learn
+        <small>Attribute every closed firm back to its originating signal, then re-weight &sect;7. The scoring table is a hypothesis; after 90 days of outcomes it should no longer look like the one above.</small>
+      </span>
+      <span class="st-io"><u>in</u> Closed-won and closed-lost with originating signal<br><u>out</u> Revised weights, retired signals, new sources</span>
+    </li>
+  </ol>
+
+  <div class="note">
+    <b>Sequencing warning</b>
+    <p>Build stages 1&ndash;3 before writing a single email. A team that starts at stage 6 ends up spraying a purchased list, which produces the CAC of a $200-ACV business against a $35,900-ACV product. The engine's advantage lives entirely in stages 2 and 3.</p>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <div class="sec-hd"><span class="sec-num">&sect;9</span><h2>Message matrix</h2></div>
+
+  <p>One rule: the first line must contain something the sender could only know by looking at that specific firm. Everything else is negotiable.</p>
+
+  <div class="spec">
+    <div class="spec-hd"><span class="trg">Signal 01 &middot; stale req</span><span class="sub">your paralegal req &mdash; still open?</span></div>
+    <div class="spec-bd">
+      <p>Saw the paralegal role at <v>[Firm]</v> has been posted since <v>[date]</v>.</p>
+      <p>Paralegal unemployment is running near 1.9% nationally &mdash; most PI firms we talk to are 60 to 90 days in with no shortlist worth interviewing. That's a quarter of a caseload sitting on someone's desk.</p>
+      <p>We place legal-trained paralegals in under three days, at $2,922/mo, month-to-month. Trained in <v>[their CMS]</v> before day one.</p>
+      <p>Worth fifteen minutes before you re-post?</p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-hd"><span class="trg">Signal 04 &middot; intake failure</span><span class="sub">three reviews mention nobody called back</span></div>
+    <div class="spec-bd">
+      <p>Three of <v>[Firm]</v>'s recent Google reviews say the caller never heard back &mdash; one of them: <v>"[review fragment]"</v>.</p>
+      <p>In PI that isn't a service problem. It's a signed case going to whoever answered second.</p>
+      <p>A bilingual intake specialist covering overflow and after-hours runs $2,227/mo. If you're spending anything meaningful on ads, the first recovered case pays for the year.</p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-hd"><span class="trg">Signal 06 &middot; paid acquisition</span><span class="sub">buying leads faster than you can work them</span></div>
+    <div class="spec-bd">
+      <p>You're running <v>[N]</v> ad groups on <v>[city]</v> accident terms plus a Local Services listing.</p>
+      <p>At that spend the constraint is almost never lead volume. It's the calls that land at 6:40pm on a Friday.</p>
+      <p>One recovered signed case a month covers an intake specialist several times over. Happy to show you what the after-hours coverage actually looks like.</p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-hd"><span class="trg">Signal 07 &middot; mass tort</span><span class="sub">[tort] &mdash; the records volume</span></div>
+    <div class="spec-bd">
+      <p>Saw <v>[Firm]</v> is signing <v>[tort]</v> claimants.</p>
+      <p>Four to six provider requests per claimant, every one of them unbilled, all of them standing between you and the fee.</p>
+      <p>Document collectors at $2,227/mo, deployed in three days. The docket scales; your payroll doesn't have to.</p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-hd"><span class="trg">Tier 1B &middot; immigration + Spanish</span><span class="sub">Spanish-speaking legal assistant, on your hours</span></div>
+    <div class="spec-bd">
+      <p><v>[Firm]</v> runs a Spanish-language intake page, so this is probably relevant.</p>
+      <p>Our Mexico, Colombia, Ecuador and Nicaragua offices staff native Spanish speakers on US business hours &mdash; not a Manila night shift with a US-hours label on it.</p>
+      <p>On flat-fee immigration work every hour moved off US payroll is margin on that matter, not a billing question. Starts at $2,227/mo.</p>
+    </div>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">The ROI line that actually converts PI owners</span>
+    <p>Do not lead with 60% savings. Lead with recovered revenue. <strong>One additional signed case per month, at a typical PI attorney fee, is roughly <span class="money">$144,000</span> a year against a <span class="money">$26,724</span> intake specialist.</strong> Cost savings argue about overhead. Recovered cases argue about the thing the owner already lies awake over.</p>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <div class="sec-hd"><span class="sec-num">&sect;10</span><h2>Objections, and the ones competitors will plant</h2></div>
+
+  <div class="ledger">
+    <table>
+      <caption>Handling matrix &middot; every rep should have these cold</caption>
+      <thead><tr><th>Objection</th><th>What is really being asked</th><th>Handle</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">"Are we even allowed to do this?"</td>
+          <td>Bar-rule and malpractice exposure.</td>
+          <td>ABA Formal Opinion 08-451 addresses outsourcing legal and non-legal support work, subject to supervision, confidentiality safeguards and &mdash; where warranted &mdash; client disclosure. Confirm the specific state rule; do not overstate it. Send the compliance pages rather than arguing.</td>
+        </tr>
+        <tr>
+          <td class="k">"Client data offshore?"</td>
+          <td>PHI in a PI case; a HIPAA breach headline.</td>
+          <td>HIPAA-compliant staffing and a documented data-protection posture already exist on site. Reinforce with a back-office wedge that touches records inside the firm's own CMS, never on local storage.</td>
+        </tr>
+        <tr>
+          <td class="k">"My clients will notice."</td>
+          <td>Accent, and elderly or injured claimants.</td>
+          <td>Do not fight it &mdash; route around it. Open with Document Collector, Lien Negotiator or Demand Writer: zero client contact. Let the firm raise client-facing roles once trust exists.</td>
+        </tr>
+        <tr>
+          <td class="k">"I tried a VA and it failed."</td>
+          <td>They were sold a generalist from a marketplace.</td>
+          <td>Different category: dedicated, legal-trained, US-attorney-supervised training, monitored on-platform, free replacement. Name the failure mode they actually experienced and explain which of those four addresses it.</td>
+        </tr>
+        <tr>
+          <td class="k">"Time zones." <span class="chip no">Planted</span></td>
+          <td>A named competitor attacks Philippines coverage as "shifted US hours".</td>
+          <td>Lead LatAm. Mexico, Colombia, Ecuador and Nicaragua sit natively within US business hours. This objection becomes a differentiator the moment it is raised.</td>
+        </tr>
+        <tr>
+          <td class="k">"The platform is redundant." <span class="chip no">Planted</span></td>
+          <td>Same competitor: firms already run Clio or Filevine.</td>
+          <td>The platform manages the <em>employee</em> &mdash; timesheets, invoicing, bonuses, escalation. The CMS manages the <em>case</em>. Staff work inside the firm's CMS. Both are true and they do not overlap.</td>
+        </tr>
+        <tr>
+          <td class="k">"Three days is too fast to vet." <span class="chip no">Planted</span></td>
+          <td>Fast placement implies shallow matching.</td>
+          <td>The vetting happened before the firm arrived &mdash; 600+ pre-vetted candidates on the bench, top 1% of applicants. Three days is time-to-start, not time-to-screen. Close with the replacement guarantee.</td>
+        </tr>
+        <tr>
+          <td class="k">"This will upset my paralegal."</td>
+          <td>The blocker, speaking through the owner.</td>
+          <td>Capacity, never replacement. Position the placement as reporting to the senior paralegal &mdash; the blocker becomes the supervisor and the objection inverts.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <div class="sec-hd"><span class="sec-num">&sect;11</span><h2>Funnel math</h2></div>
+
+  <p>Modelled on signal-triggered outbound only &mdash; no inbound, no partner channel. Both of those sit on top of this.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Monthly funnel &middot; conservative and target cases</caption>
+      <thead><tr><th>Stage</th><th class="num">Conservative</th><th class="num">Target</th><th>Assumption</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Tier-1 signal accounts detected</td><td class="num">1,200</td><td class="num">1,200</td><td>~5,700 monthly legal-ops postings, filtered to law firms in target segments</td></tr>
+        <tr><td class="k">Contactable after enrichment</td><td class="num">840</td><td class="num">900</td><td>70&ndash;75% owner or administrator reachable</td></tr>
+        <tr><td class="k">Entered into sequence</td><td class="num">840</td><td class="num">900</td><td>All contactable</td></tr>
+        <tr><td class="k">Positive replies</td><td class="num">59</td><td class="num">99</td><td>7% vs 11% &mdash; signal-relevant outbound, not cold spray</td></tr>
+        <tr><td class="k">Meetings held</td><td class="num">25</td><td class="num">41</td><td>3.0% vs 4.5% of sequenced</td></tr>
+        <tr><td class="k">Free interviews scheduled</td><td class="num">13</td><td class="num">25</td><td>50&ndash;60% of meetings &mdash; the free-interview offer is unusually low friction</td></tr>
+        <tr><td class="k">Placements (new firms)</td><td class="num">5</td><td class="num">11</td><td>40&ndash;45% of interviews</td></tr>
+        <tr><td class="k">New ARR added</td><td class="num money">$180k</td><td class="num money">$395k</td><td>At $35,900 ACV</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ledger">
+    <table>
+      <caption>Annualised &middot; one channel</caption>
+      <thead><tr><th>Line</th><th class="num">Conservative</th><th class="num">Target</th></tr></thead>
+      <tbody>
+        <tr><td class="k">New firms per year</td><td class="num">60</td><td class="num">132</td></tr>
+        <tr><td class="k">New ARR</td><td class="num money">$2.15M</td><td class="num money">$4.74M</td></tr>
+        <tr><td class="k">Engine cost<small>2 SDRs, data, tooling, ops</small></td><td class="num money">$220k</td><td class="num money">$260k</td></tr>
+        <tr><td class="k">Blended CAC</td><td class="num money">$3,667</td><td class="num money">$1,970</td></tr>
+        <tr><td class="k">Against published allowable CAC of $2,500</td><td class="num"><span class="chip mid">Over</span></td><td class="num"><span class="chip go">Under</span></td></tr>
+        <tr><td class="k">Year-one gross profit : CAC</td><td class="num">4.9 : 1</td><td class="num">9.1 : 1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Even the conservative case clears a healthy return, and the difference between the two columns is almost entirely reply rate &mdash; which is a function of how specific the first line is, which is a function of stages 2 and 3. That is the argument for building the signal layer properly rather than buying a list.</p>
+
+  <h4>Instrument these four, and little else</h4>
+  <ul>
+    <li><strong>Signal-to-contact latency</strong> &mdash; hours between a posting going live and the first touch. The strongest single predictor of reply rate in this model.</li>
+    <li><strong>Reply rate by signal type</strong> &mdash; this is what re-weights &sect;7. Expect at least one signal to underperform badly and one to surprise.</li>
+    <li><strong>Interview-to-placement rate by wedge SKU</strong> &mdash; validates or kills the back-office-first thesis in &sect;1.</li>
+    <li><strong>Seats per account at day 90</strong> &mdash; expansion is where the ACV assumption is proven or broken.</li>
+  </ul>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <div class="sec-hd"><span class="sec-num">&sect;12</span><h2>What the current site is costing them</h2></div>
+
+  <p>Seven findings from the audit that directly affect lead generation. Each is cheap to fix, and each is currently leaking qualified demand.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Findings &middot; ordered by revenue impact</caption>
+      <thead><tr><th class="num">#</th><th>Finding</th><th>Why it costs money</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">01</td>
+          <td class="k">The highest-intent pages on the site are unmonetised</td>
+          <td>"20 Legal Intake Specialist Interview Questions", "39 Law Firm Interview Questions", "How to Hire a Legal Secretary" &mdash; every reader of those pages is <em>actively hiring right now</em>. That is Signal 01 arriving voluntarily, and the pages offer a newsletter box. Each should carry a role-specific offer: <em>"Still interviewing? We have three pre-vetted intake specialists available this week."</em></td>
+        </tr>
+        <tr>
+          <td class="num">02</td>
+          <td class="k">Case studies are anonymous and carry no narrative</td>
+          <td>Nine entries with dollar figures, no firm names, no problem statement, no method. A sceptical PI owner reads "$1.5M saved &middot; San Francisco &middot; Enterprise" as invented, and outbound proof is exactly where credibility is thinnest. There are 22 named testimonials on the site &mdash; that is the pool. Three named, filmed PI case studies with before-and-after would carry the entire engine.</td>
+        </tr>
+        <tr>
+          <td class="num">03</td>
+          <td class="k">Three different savings numbers for the same claim</td>
+          <td>60% on the homepage and about page, 70% on the intake specialist page, "up to 80%" on the personal injury page. A prospect who reads two pages finds the inconsistency, and the number stops working. Pick one, source it, use it everywhere.</td>
+        </tr>
+        <tr>
+          <td class="num">04</td>
+          <td class="k">The client screener tool is a growth asset being used as page filler</td>
+          <td>"Free Client Screeners by Practice Area" sits on the <em>prospect's own website</em> capturing <em>their</em> intake. It should require a work email, and it should report back: <em>"You received 43 screener submissions last month. Twelve arrived after 6pm."</em> That is the firm's own data proving the intake problem &mdash; the strongest possible lead magnet in this category, currently ungated and unmeasured.</td>
+        </tr>
+        <tr>
+          <td class="num">05</td>
+          <td class="k">The platform page names zero integrations</td>
+          <td>Role pages name Clio, Filevine, MyCase, CASEpeer, Practice Panther, Rocket Matter, NetDocuments, Leap and Eclipse. The platform page names none &mdash; which is precisely where a competitor's "redundant platform" attack lands. The integration story is the rebuttal, and it is missing from the page that needs it.</td>
+        </tr>
+        <tr>
+          <td class="num">06</td>
+          <td class="k">"600+ signed up" is displayed as social proof</td>
+          <td>It is a newsletter count sitting next to "1,000+ law firms served". The smaller number reframes the larger one as soft. Remove it.</td>
+        </tr>
+        <tr>
+          <td class="num">07</td>
+          <td class="k">Pricing has no anchor</td>
+          <td>$2,227/mo means nothing in isolation. The intake page already cites a US in-house average of $7,185/mo &mdash; that comparison belongs on the pricing page, in the table, on every row.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <div class="sec-hd"><span class="sec-num">&sect;13</span><h2>First 30 days</h2></div>
+
+  <p>Ordered so each week produces something the next week needs. Nothing here requires the full engine to exist.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Week</th><th>Build</th><th>Done when</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">1</td>
+          <td>Stand up the job-signal sweep for Tier 1A only &mdash; PI and mass tort, 2&ndash;25 attorneys, top ten states. One source is enough to start; Indeed alone will do.</td>
+          <td>A daily list of firms with an open legal-support req, deduplicated and matched to a firm record.</td>
+        </tr>
+        <tr>
+          <td class="k">2</td>
+          <td>Enrich the top 200 by hand. Owner and administrator, email and direct line. Write the five sequences in &sect;9 against real firms, not templates.</td>
+          <td>200 accounts contactable; five sequences written and reviewed.</td>
+        </tr>
+        <tr>
+          <td class="k">3</td>
+          <td>Run it manually. One rep, 200 accounts, every first line written against the actual posting. Log signal-to-contact latency on every one.</td>
+          <td>Reply rate measured per signal-age bracket &mdash; under 7 days versus over 21.</td>
+        </tr>
+        <tr>
+          <td class="k">4</td>
+          <td>Re-weight &sect;7 against real replies. Add the review-mining signal. Only now decide what to automate &mdash; and automate the part that worked.</td>
+          <td>A scoring table backed by outcomes, and a defensible case for the engine build.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="thesis">
+    <span class="tag">The one thing to get right</span>
+    <p>Every part of this document is a hypothesis except one: <strong>a law firm with a stale legal-support job posting is already trying to buy what Legal Soft sells, and cannot find it locally at any price.</strong> Roughly 1,200 of them appear every month, timestamped and free to detect. Build the engine that reaches them first, and the rest is optimisation.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Sources &middot; legalsoft.com (home, platform, pricing, about, case studies, partners, referral program, blog, tools, practice-area and role pages) &middot; IBISWorld US personal-injury firm counts &middot; Robert Half 2026 legal hiring data &middot; competitor positioning per getstaffedup.com</div>
+  <div>Figures in italics are derived estimates, not published by Legal Soft. Funnel projections are models, not forecasts. Bar-rule guidance is a starting reference only &mdash; confirm the applicable state rule before using it in a sales conversation.</div>
+</footer>
+
+</main>
+</div>

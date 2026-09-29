@@ -1,0 +1,856 @@
+<title>Legal Soft Target Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1EF; --surface:#F9FBFA; --surface-2:#E3E9E6;
+  --rule:#C6D2CD; --rule-strong:#9AACA6;
+  --ink:#13201C; --ink-2:#4C5D57; --ink-3:#74857D;
+  --accent:#0E5A4A; --accent-soft:#D4E4DE;
+  --signal:#A93B1C; --signal-soft:#F1DCD4;
+  --brass:#8A6118;
+  --measure:70ch;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.75rem; --s5:2.75rem; --s6:4.25rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+    --rule:#27362F; --rule-strong:#41564E;
+    --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+    --accent:#59BBA0; --accent-soft:#16302A;
+    --signal:#DD8163; --signal-soft:#33201A;
+    --brass:#CBA25D;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+  --rule:#27362F; --rule-strong:#41564E;
+  --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+  --accent:#59BBA0; --accent-soft:#16302A;
+  --signal:#DD8163; --signal-soft:#33201A;
+  --brass:#CBA25D;
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:16px; line-height:1.62; margin:0; -webkit-font-smoothing:antialiased}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:.18em}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+.shell{max-width:1180px; margin:0 auto; padding:0 var(--s4) var(--s6)}
+@media(min-width:1040px){
+  .shell{display:grid; grid-template-columns:190px minmax(0,1fr); gap:var(--s6); align-items:start}
+  .rail{position:sticky; top:0; padding-top:var(--s5); max-height:100vh; overflow-y:auto}
+}
+.rail{display:none}
+@media(min-width:1040px){.rail{display:block}}
+.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--s1)}
+.rail a{display:flex; gap:.5em; font-family:"IBM Plex Mono",monospace; font-size:.69rem; color:var(--ink-2); text-decoration:none; padding:.28em 0; line-height:1.35}
+.rail a:hover{color:var(--accent)}
+.rail a b{color:var(--ink-3); font-weight:500; flex:none}
+.rail .rail-hd{font-family:"IBM Plex Mono",monospace; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); padding-bottom:var(--s2); border-bottom:1px solid var(--rule); margin-bottom:var(--s2)}
+
+.mast{padding:var(--s6) 0 var(--s5); border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 var(--s3)}
+h1{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.3rem,5.5vw,3.8rem); line-height:1.03; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:15ch}
+.dek{font-family:Newsreader,Georgia,serif; font-size:clamp(1.08rem,2.1vw,1.32rem); line-height:1.5; color:var(--ink-2); max-width:60ch; margin:var(--s3) 0 0}
+.mast-meta{display:flex; flex-wrap:wrap; gap:var(--s1) var(--s4); margin-top:var(--s4); font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--ink-3)}
+.mast-meta span b{color:var(--ink-2); font-weight:500}
+
+section{padding-top:var(--s6); scroll-margin-top:var(--s3)}
+.sec-hd{display:flex; align-items:baseline; gap:var(--s2); border-bottom:1px solid var(--rule-strong); padding-bottom:var(--s2); margin-bottom:var(--s4)}
+.sec-num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--accent); font-weight:500; flex:none}
+h2{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.5rem,3.3vw,2rem); line-height:1.12; letter-spacing:-.012em; margin:0; text-wrap:balance}
+h3{font-family:"Public Sans",sans-serif; font-weight:700; font-size:.95rem; margin:var(--s5) 0 var(--s2)}
+h4{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:.68rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:var(--s4) 0 var(--s2)}
+p{margin:0 0 var(--s3); max-width:var(--measure)}
+ul,ol{max-width:var(--measure); padding-left:1.15em; margin:0 0 var(--s3)}
+li{margin-bottom:var(--s1)}
+li::marker{color:var(--ink-3)}
+strong{font-weight:600}
+em{font-style:italic}
+code{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:var(--surface-2); padding:.08em .32em}
+.lede{font-family:Newsreader,Georgia,serif; font-size:1.16rem; line-height:1.55; color:var(--ink-2)}
+
+.cond{display:grid; gap:1px; background:var(--rule-strong); border:1px solid var(--rule-strong); margin:var(--s4) 0 var(--s5)}
+@media(min-width:720px){.cond{grid-template-columns:repeat(4,1fr)}}
+.cond > div{background:var(--surface); padding:var(--s3)}
+.cond .cn{font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:.4em}
+.cond h5{margin:0 0 .5em; font-family:Newsreader,Georgia,serif; font-weight:500; font-size:1.12rem; line-height:1.2; letter-spacing:-.01em}
+.cond p{font-size:.85rem; margin:0 0 .55em; max-width:none; line-height:1.5; color:var(--ink-2)}
+.cond p:last-child{margin-bottom:0}
+.cond .mapsto{font-family:"IBM Plex Mono",monospace; font-size:.63rem; color:var(--ink-3); letter-spacing:.04em; display:block; margin-top:.6em; padding-top:.5em; border-top:1px solid var(--rule)}
+
+.ledger{border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); overflow-x:auto; margin:var(--s3) 0 var(--s5); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:620px; font-size:.85rem}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:left; padding:.8em .85em; border-bottom:1px solid var(--rule-strong); vertical-align:bottom; white-space:nowrap}
+tbody td{padding:.75em .85em; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.id{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--accent); white-space:nowrap}
+td.k{font-weight:600; color:var(--ink)}
+td small{display:block; color:var(--ink-3); font-size:.86em; line-height:1.4; margin-top:.2em}
+td .m{font-family:"IBM Plex Mono",monospace; font-size:.92em}
+caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); padding:.8em .85em .45em; border-bottom:1px solid var(--rule)}
+
+.chip{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.07em; text-transform:uppercase; padding:.2em .48em; white-space:nowrap; border:1px solid currentColor; line-height:1.4}
+.chip.go{color:var(--accent)}
+.chip.no{color:var(--signal)}
+.chip.mid{color:var(--brass)}
+
+pre{background:var(--surface); border:1px solid var(--rule-strong); border-left:3px solid var(--accent); padding:var(--s3) var(--s4); overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:.775rem; line-height:1.7; margin:var(--s3) 0 var(--s5); color:var(--ink-2)}
+pre code{background:none; padding:0; font-size:1em}
+pre b{color:var(--ink); font-weight:600}
+pre i{color:var(--accent); font-style:normal}
+pre u{color:var(--brass); text-decoration:none}
+pre s{color:var(--ink-3); text-decoration:none}
+
+figure{margin:var(--s4) 0 var(--s5)}
+figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2)}
+figcaption{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.05em; color:var(--ink-3); margin-top:var(--s2); line-height:1.6; max-width:78ch}
+.svg-lb{font-family:"IBM Plex Mono",monospace; font-size:11px}
+.svg-sub{font-family:"IBM Plex Mono",monospace; font-size:9px}
+.svg-edge{font-family:"IBM Plex Mono",monospace; font-size:9.5px}
+
+.key{border-left:3px solid var(--accent); background:var(--surface); padding:var(--s3) var(--s4); margin:var(--s3) 0 var(--s4); max-width:var(--measure)}
+.key p:last-child{margin-bottom:0}
+.key .tag{font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:var(--s2)}
+.note{border-left:2px solid var(--signal); padding:var(--s2) 0 var(--s2) var(--s3); margin:var(--s3) 0 var(--s4); max-width:var(--measure); font-size:.9rem; color:var(--ink-2)}
+.note b{color:var(--signal); font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:.3em}
+.note p:last-child{margin-bottom:0}
+
+.foot{margin-top:var(--s6); padding-top:var(--s3); border-top:2px solid var(--ink); font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--ink-3); line-height:1.9}
+.foot div{margin-bottom:var(--s2); max-width:90ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <div class="rail-hd">Contents</div>
+  <ol>
+    <li><a href="#s1"><b>1</b> The need model</a></li>
+    <li><a href="#s2"><b>2</b> Practice areas</a></li>
+    <li><a href="#s3"><b>3</b> Fee model</a></li>
+    <li><a href="#s4"><b>4</b> Size &amp; shape</a></li>
+    <li><a href="#s5"><b>5</b> The ICP</a></li>
+    <li><a href="#s6"><b>6</b> Disqualifiers</a></li>
+    <li><a href="#s7"><b>7</b> Where they are</a></li>
+    <li><a href="#s8"><b>8</b> Triangulation</a></li>
+    <li><a href="#s9"><b>9</b> In-market signals</a></li>
+    <li><a href="#s10"><b>10</b> Decision-maker</a></li>
+    <li><a href="#s11"><b>11</b> Collection sequence</a></li>
+    <li><a href="#s12"><b>12</b> The lead record</a></li>
+    <li><a href="#s13"><b>13</b> Keeping it alive</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Ideal Customer Profile &amp; Lead Collection Strategy</p>
+  <h1>Legal Soft Target Map</h1>
+  <p class="dek">Who to target, and how to collect them. The profile is built from how law firms actually make money &mdash; not from anybody's marketing claims &mdash; so it holds up whether or not the numbers on a website are true.</p>
+  <div class="mast-meta">
+    <span><b>Product</b> dedicated remote legal staff</span>
+    <span><b>Market</b> US private law firms</span>
+    <span><b>Two problems</b> universe &middot; in-market</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <div class="sec-hd"><span class="sec-num">&sect;1</span><h2>The need model</h2></div>
+
+  <p class="lede">Start from the buyer, not the product. A law firm needs outsourced legal staff when four conditions hold <em>together</em>. Miss any one and the firm either does not need it, or needs it but will not buy.</p>
+
+  <p>Every filter in this document is derived from one of these four. That is deliberate &mdash; a targeting rule that cannot be traced back to a reason the firm would buy is a rule that will quietly select the wrong firms.</p>
+
+  <div class="cond">
+    <div>
+      <span class="cn">Condition 1</span>
+      <h5>Delegable volume</h5>
+      <p>The firm generates repetitive, procedural work in quantity &mdash; records requests, form preparation, status calls, document collection.</p>
+      <p>Bespoke, judgment-heavy work at low volume cannot be handed to anyone, at any price.</p>
+      <span class="mapsto">&rarr; practice area &sect;2</span>
+    </div>
+    <div>
+      <span class="cn">Condition 2</span>
+      <h5>Remote-executable</h5>
+      <p>The work needs a phone, a browser and the firm's case system &mdash; not a courtroom, a notary stamp, or a physical file room.</p>
+      <p>This is a property of the <em>task</em>, which is why the wedge is a role, not a practice.</p>
+      <span class="mapsto">&rarr; role selection &sect;5</span>
+    </div>
+    <div>
+      <span class="cn">Condition 3</span>
+      <h5>Cost-centre work</h5>
+      <p>The work is not resold to a client at a markup. Nobody is billed for the hour, so a cheaper hour is margin rather than lost revenue.</p>
+      <p>This is the condition that most targeting misses entirely.</p>
+      <span class="mapsto">&rarr; fee model &sect;3</span>
+    </div>
+    <div>
+      <span class="cn">Condition 4</span>
+      <h5>Local hiring blocked</h5>
+      <p>The firm cannot hire the person locally &mdash; too slow, too expensive, or no qualified applicants at all.</p>
+      <p>Without this, the firm just hires. This condition is also the most <em>observable</em> from outside.</p>
+      <span class="mapsto">&rarr; size &sect;4 &middot; signals &sect;9</span>
+    </div>
+  </div>
+
+  <div class="key">
+    <span class="tag">Why this ordering matters for collection</span>
+    <p>Conditions 1&ndash;3 are <strong>stable properties</strong> of a firm. They change rarely, so they can be determined once and stored &mdash; this is the <em>universe</em> problem, solved by breadth.</p>
+    <p>Condition 4 is a <strong>transient state</strong>. A firm is blocked on hiring for a few weeks, then it is not. This is the <em>in-market</em> problem, solved by freshness. Building one system for both is the most common way these projects fail.</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <div class="sec-hd"><span class="sec-num">&sect;2</span><h2>Practice areas &mdash; which generate delegable volume</h2></div>
+
+  <p>Practice area is a proxy for <strong>what the daily work actually consists of</strong>. The question is not "is this a big practice area" but "does this practice generate large amounts of procedural work that a trained remote person can do".</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Practice &rarr; delegable work &middot; ranked by volume of remote-executable task</caption>
+      <thead><tr><th>Practice</th><th>The repetitive work it generates</th><th>Volume</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Personal injury</td>
+          <td>Medical records requests to dozens of providers per case, bill collection, lien negotiation, demand letter drafting, treatment follow-up calls, intake screening.</td>
+          <td class="num">Very high</td>
+          <td><span class="chip go">Core</span></td>
+        </tr>
+        <tr>
+          <td class="k">Mass tort</td>
+          <td>Same as PI, multiplied by claimant count. Four to six provider requests per claimant, thousands of claimants, all on a filing deadline.</td>
+          <td class="num">Extreme</td>
+          <td><span class="chip go">Core</span></td>
+        </tr>
+        <tr>
+          <td class="k">Immigration</td>
+          <td>Form preparation at volume (family petitions, adjustment, naturalisation), evidence collection, translation, case status checks, appointment scheduling. Heavy Spanish-language need.</td>
+          <td class="num">Very high</td>
+          <td><span class="chip go">Core</span></td>
+        </tr>
+        <tr>
+          <td class="k">Social security disability</td>
+          <td>Medical records from every treating provider, agency forms, hearing preparation packets, status chasing across a multi-year timeline.</td>
+          <td class="num">High</td>
+          <td><span class="chip go">Strong</span></td>
+        </tr>
+        <tr>
+          <td class="k">Workers' compensation</td>
+          <td>Medical records, employer records, state board forms, benefit tracking.</td>
+          <td class="num">High</td>
+          <td><span class="chip go">Strong</span></td>
+        </tr>
+        <tr>
+          <td class="k">Consumer / lemon law</td>
+          <td>Repair-order collection, manufacturer correspondence, statutory notice letters, document assembly.</td>
+          <td class="num">High</td>
+          <td><span class="chip go">Strong</span></td>
+        </tr>
+        <tr>
+          <td class="k">Employment</td>
+          <td>Personnel file requests, wage statement analysis, charge filings, document review.</td>
+          <td class="num">Medium-high</td>
+          <td><span class="chip go">Strong</span></td>
+        </tr>
+        <tr>
+          <td class="k">Bankruptcy</td>
+          <td>Schedules and statements, means-test data entry, creditor lists, document collection from the debtor.</td>
+          <td class="num">High</td>
+          <td><span class="chip mid">Good</span></td>
+        </tr>
+        <tr>
+          <td class="k">Family</td>
+          <td>Financial disclosure assembly, document collection, scheduling, client status updates.</td>
+          <td class="num">Medium</td>
+          <td><span class="chip mid">Good</span></td>
+        </tr>
+        <tr>
+          <td class="k">Criminal defence</td>
+          <td>Discovery organisation, records requests, client and family communication.</td>
+          <td class="num">Medium</td>
+          <td><span class="chip mid">Good</span></td>
+        </tr>
+        <tr>
+          <td class="k">Estate planning</td>
+          <td>Intake questionnaires, document assembly from templates, funding follow-up.</td>
+          <td class="num">Medium</td>
+          <td><span class="chip mid">Good</span></td>
+        </tr>
+        <tr>
+          <td class="k">Real estate, tax, business</td>
+          <td>Some document assembly, but much of it is billed to the client and volume is transaction-dependent.</td>
+          <td class="num">Low-medium</td>
+          <td><span class="chip mid">Narrow</span></td>
+        </tr>
+        <tr>
+          <td class="k">Appellate, complex commercial, M&amp;A, IP prosecution</td>
+          <td>Research and drafting are the work, and both are judgment-heavy at low volume. There is little to delegate that a trained non-lawyer can absorb.</td>
+          <td class="num">Low</td>
+          <td><span class="chip no">Exclude</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">The pattern underneath</span>
+    <p>Every practice at the top of this table shares one trait: <strong>the firm must gather documents from third parties who are slow.</strong> Medical providers, employers, manufacturers, government agencies. That chasing is high-volume, low-judgment, entirely remote, and it directly delays the firm getting paid.</p>
+    <p>That single characteristic is a better predictor of need than the practice label, and it is why PI, mass tort, immigration and SSDI cluster at the top despite being unrelated areas of law.</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <div class="sec-hd"><span class="sec-num">&sect;3</span><h2>Fee model &mdash; the axis most targeting misses</h2></div>
+
+  <p class="lede">Two firms can look identical &mdash; same practice, same size, same city &mdash; and have opposite economics on this purchase, because of how they bill.</p>
+
+  <p>In a firm that bills <strong>by the hour</strong>, a paralegal is inventory. The firm pays them a wage and resells their time to the client at a multiple. That person is a profit centre. Replacing their hours with cheaper hours that cannot be resold at the same rate <em>removes</em> revenue.</p>
+
+  <p>In a firm that works on <strong>contingency</strong> or a <strong>flat fee</strong>, the same paralegal is pure overhead. Nobody is billed for their time. The fee is fixed at the outcome or agreed up front, so every hour of support labour is subtracted from the firm's own margin. Move that hour to a cheaper resource and the difference goes straight to the partners.</p>
+
+  <p>Same product, same role, opposite arithmetic. This is condition 3, and it is the strongest single filter in the profile.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Fee model &rarr; what support staff represents &rarr; what can be sold</caption>
+      <thead><tr><th>Fee model</th><th>Support staff is</th><th>Sellable</th><th>How to detect it</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Contingency<small>PI, mass tort, some employment</small></td>
+          <td>Overhead carried for months against a fee that arrives at settlement.</td>
+          <td><span class="chip go">Everything</span><small>Lead with roles that <em>accelerate</em> the fee &mdash; demand writing, lien negotiation &mdash; not roles that merely reduce cost.</small></td>
+          <td class="m">"no fee unless we win", "no recovery no fee", "contingency fee"</td>
+        </tr>
+        <tr>
+          <td class="k">Fee-shifting<small>employment, lemon law, consumer, some civil rights</small></td>
+          <td>Overhead. The losing party pays fees, so the firm's own labour is still an unbilled input.</td>
+          <td><span class="chip go">Everything</span><small>Economically identical to contingency and far less contested by competitors.</small></td>
+          <td class="m">"fees paid by the defendant / manufacturer / employer"</td>
+        </tr>
+        <tr>
+          <td class="k">Flat fee<small>immigration, bankruptcy, criminal, estate</small></td>
+          <td>A direct subtraction from a fee already fixed. Every extra hour on a matter reduces the margin on that specific matter.</td>
+          <td><span class="chip go">Everything</span><small>The margin effect is immediate and per-case rather than deferred, which makes the case easy to make.</small></td>
+          <td class="m">"flat fee", "flat rate", a published price per service</td>
+        </tr>
+        <tr>
+          <td class="k">Hourly<small>business, real estate, tax, IP, defence-side</small></td>
+          <td>Billable inventory resold at a markup.</td>
+          <td><span class="chip mid">Only the unbillable</span><small>Bookkeeping, marketing, intake, document collection. Never lead with a paralegal &mdash; that asks the firm to convert revenue into cost.</small></td>
+          <td class="m">"hourly rate", "billed hourly", "retainer"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Keep hourly firms in the database</b>
+    <p>They are the weakest fit, not a zero. Excluding them at collection time makes this whole axis impossible to verify &mdash; they are never contacted, so evidence that contradicts it can never arrive. Collect them, classify them, and put a deliberate slice into outreach on a non-billable role so the assumption gets tested against real outcomes rather than repeated.</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <div class="sec-hd"><span class="sec-num">&sect;4</span><h2>Size and shape</h2></div>
+
+  <p>Size is a proxy for condition 4 &mdash; whether local hiring is actually blocked &mdash; and for how the purchase decision gets made.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Band</th><th>Hiring reality</th><th>How a purchase happens</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Solo<br>1 attorney</td>
+          <td>Cannot compete for local staff at all. Often does the support work personally.</td>
+          <td>One person decides in a day. No process.</td>
+          <td><span class="chip mid">Include</span><small>Real need, but only where case volume is real. Expect one role.</small></td>
+        </tr>
+        <tr>
+          <td class="k">Small<br>2&ndash;12 attorneys</td>
+          <td>The sharpest version of the problem &mdash; enough volume to genuinely need staff, no HR function, no recruiting budget, competing against bigger firms for the same local hires.</td>
+          <td>Owner or managing partner signs. No procurement, no security review, no committee.</td>
+          <td><span class="chip go">Core</span></td>
+        </tr>
+        <tr>
+          <td class="k">Lower-mid<br>13&ndash;25 attorneys</td>
+          <td>Has an office manager or administrator who feels the pain daily and is usually the one who posted the unfilled job.</td>
+          <td>Administrator champions, owner approves. Slightly longer, still weeks not quarters.</td>
+          <td><span class="chip go">Core</span></td>
+        </tr>
+        <tr>
+          <td class="k">Mid<br>26&ndash;50 attorneys</td>
+          <td>Often has an internal recruiter, so condition 4 is weaker &mdash; they can hire.</td>
+          <td>More stakeholders, some IT involvement.</td>
+          <td><span class="chip mid">Deprioritise</span></td>
+        </tr>
+        <tr>
+          <td class="k">Large<br>50+ attorneys</td>
+          <td>Has recruiting capacity and usually an incumbent outsourcing vendor already.</td>
+          <td>Procurement, infosec review, MSA. A different sales motion entirely.</td>
+          <td><span class="chip no">Exclude</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Better need-proxies than headcount</h3>
+  <p>Attorney count says how big a firm is, not how overloaded it is. Three cheap, observable attributes predict need better, and all three are collectible from sources we are already touching.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Proxy</th><th>What it indicates</th><th>Where it comes from</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Review count</td><td>Case volume. A firm with 300 Google reviews is processing far more matters than one with 12, regardless of attorney count.</td><td class="m">Places record &mdash; free, already collected</td></tr>
+        <tr><td class="k">Staff-to-attorney ratio</td><td>Whether the firm is understaffed. Two attorneys with one assistant is a different firm from two attorneys with six.</td><td class="m">Team page &mdash; count roles, not just people</td></tr>
+        <tr><td class="k">Active paid advertising</td><td>Two things at once: the firm is buying case volume faster than it can process it, and it has predictable money to spend.</td><td class="m">Ad transparency libraries</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Geography</h4>
+  <p>No demand weighting in version one. Weighting states because that is where a company has sold before is circular &mdash; it may simply reflect where the founders' network is, and it can point at a saturated market rather than an open one.</p>
+  <p>Prioritise collection by <strong>density</strong> instead: metropolitan areas first, because more firms per unit of collection effort. That is an efficiency decision, not a demand assumption. Let close-rate data name the good geographies later.</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <div class="sec-hd"><span class="sec-num">&sect;5</span><h2>The ICP</h2></div>
+
+  <p>Everything above, resolved into tiers. Fee model gates first; practice area refines. Each tier carries the role that should open the conversation.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Target tiers &middot; ordered by strength of need</caption>
+      <thead><tr><th>Tier</th><th>Profile</th><th>Why the need is acute</th><th>Opening role</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="id">1A</td>
+          <td class="k">PI &amp; mass tort<small>contingency &middot; 2&ndash;25 attorneys</small></td>
+          <td>Every case requires chasing records from providers who are slow, then drafting a demand. All of it unbilled, all of it standing between the firm and its fee. Case volume scales with advertising; payroll does not.</td>
+          <td class="k">Demand writer<small>then document collector, lien negotiator</small></td>
+        </tr>
+        <tr>
+          <td class="id">1B</td>
+          <td class="k">Immigration<small>flat fee &middot; bilingual need</small></td>
+          <td>Fixed fee per matter against enormous form and evidence volume, plus a client base that frequently needs Spanish. Every hour saved on a matter is margin on that matter.</td>
+          <td class="k">Bilingual legal assistant</td>
+        </tr>
+        <tr>
+          <td class="id">2</td>
+          <td class="k">Fee-shifting litigation<small>employment, lemon law, workers' comp, SSDI, consumer</small></td>
+          <td>Identical overhead economics to contingency, with heavy third-party records work. Far less crowded than PI &mdash; almost every competitor targets PI first.</td>
+          <td class="k">Case manager<small>then document collector</small></td>
+        </tr>
+        <tr>
+          <td class="id">3</td>
+          <td class="k">Flat-fee volume<small>bankruptcy, criminal, estate, family</small></td>
+          <td>Predictable fee, repetitive document assembly, thin margins per matter. Buys one role readily; expands slowly.</td>
+          <td class="k">Legal assistant</td>
+        </tr>
+        <tr>
+          <td class="id">4</td>
+          <td class="k">Hourly practices<small>business, real estate, tax, IP</small></td>
+          <td>Support staff is billable, so only genuinely unbillable functions are sellable. Narrow but not zero &mdash; and the segment that tests whether the fee-model axis is real.</td>
+          <td class="k">Bookkeeper<small>or marketing assistant</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">Open with the role that touches no client</span>
+    <p>Roles that speak to clients &mdash; intake, case management &mdash; carry accent concerns, trust concerns and professional-responsibility anxiety. They are a hard first sale into a firm that has never outsourced.</p>
+    <p>Roles that touch <em>no</em> client &mdash; document collection, demand writing, lien negotiation, bookkeeping &mdash; carry almost none of that. Open there. Client-facing roles become easy once the firm has watched the arrangement work for a quarter, and that expansion is the firm's own idea rather than ours.</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <div class="sec-hd"><span class="sec-num">&sect;6</span><h2>Disqualifiers</h2></div>
+
+  <p>Each of these fails one of the four conditions. Collect them into the database anyway &mdash; a disqualification you can explain is reusable; a firm you never collected is invisible forever.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Disqualifier</th><th>Fails</th><th>Detectable from</th></tr></thead>
+      <tbody>
+        <tr><td class="k">50+ attorneys</td><td>Condition 4 &mdash; they can hire, and they buy through procurement</td><td class="m">team page count</td></tr>
+        <tr><td class="k">In-house recruiter on staff</td><td>Condition 4 &mdash; hiring is explicitly not blocked</td><td class="m">team page, careers page</td></tr>
+        <tr><td class="k">In-house legal department, government, non-profit legal aid</td><td>Not a private firm &mdash; different budget mechanics entirely</td><td class="m">entity classification</td></tr>
+        <tr><td class="k">Appellate-only, patent prosecution, complex commercial</td><td>Condition 1 &mdash; little procedural volume to delegate</td><td class="m">practice classification</td></tr>
+        <tr><td class="k">Non-US</td><td>Out of market</td><td class="m">address</td></tr>
+        <tr><td class="k">Directory listing with no real firm behind it</td><td>Not an entity</td><td class="m">no independent website, no bar record match</td></tr>
+        <tr><td class="k">Brand-new solo, no advertising, no case volume</td><td>Condition 1 &mdash; no volume yet</td><td class="m">bar admission date, zero reviews, no ads</td></tr>
+        <tr><td class="k">Already using a named competitor</td><td class="k">Not a disqualifier <span class="chip mid">Separate motion</span></td><td class="m">Category-educated with an approved budget &mdash; the strongest population there is. Needs a displacement approach and a longer cycle, not the cold sequence.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <div class="sec-hd"><span class="sec-num">&sect;7</span><h2>Where these firms are findable</h2></div>
+
+  <p class="lede">There is no single list of US law firms with the attributes we need. Every available source is authoritative for something and blind to everything else. The collection strategy is therefore not a source choice &mdash; it is a join.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Source map &middot; what each is authoritative for, and what it cannot tell you</caption>
+      <thead><tr><th>Source</th><th>Authoritative for</th><th>Blind to</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">State bar directories<small>all 50 states</small></td>
+          <td><strong>Who actually practises law, and where.</strong> Every practising attorney appears in one. Names, admission dates, status, firm affiliation.</td>
+          <td>Practice area in most states. Website. Firm-level view &mdash; it is organised by person.</td>
+          <td><span class="chip go">Ground truth for people</span></td>
+        </tr>
+        <tr>
+          <td class="k">Business listings<small>Google Places / maps data</small></td>
+          <td>The firm as a <em>business</em>: website, phone, address, hours, review count and review text.</td>
+          <td>Firms with no listing. Practice detail &mdash; categories are coarse and self-selected. Attorney count.</td>
+          <td><span class="chip go">Ground truth for the business</span></td>
+        </tr>
+        <tr>
+          <td class="k">Legal directories<small>Justia, Avvo, Martindale, FindLaw</small></td>
+          <td>Practice area at the attorney level, plus coverage of firms with a weak business listing.</td>
+          <td>Currency &mdash; profiles go stale and are rarely removed. Fee model.</td>
+          <td><span class="chip mid">Coverage backfill</span></td>
+        </tr>
+        <tr>
+          <td class="k">The firm's own website</td>
+          <td><strong>Every attribute that decides the tier</strong> &mdash; fee model, real practice mix, attorney count, staff ratio, languages, case system, open roles.</td>
+          <td>Nothing that matters. But you must already know the firm exists to reach it.</td>
+          <td><span class="chip go">Qualification</span></td>
+        </tr>
+        <tr>
+          <td class="k">Job boards, direct scrape</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td><span class="chip no">Not used</span><small>Terms prohibit it. The same signal is available from the firm's own careers page.</small></td>
+        </tr>
+        <tr>
+          <td class="k">Professional networks, automated</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td><span class="chip no">Not used</span><small>Bans and legal exposure. Manual research is a different matter.</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <div class="sec-hd"><span class="sec-num">&sect;8</span><h2>The triangulation</h2></div>
+
+  <p>Three discovery sources produce a firm candidate; the firm's own site then qualifies it. No source is skippable &mdash; drop the bar directory and you lose the partner's name, drop business listings and you lose the website, drop the site crawl and you lose every attribute the tier depends on.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 244" role="img" aria-label="Three discovery sources — bar directories, business listings and legal directories — join into a firm candidate, which is then crawled on its own website to produce a qualified firm record.">
+      <defs>
+        <marker id="t1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+        </marker>
+        <marker id="t2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <rect x="14" y="14" width="196" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="112" y="35" text-anchor="middle" fill="var(--ink)">Bar directories</text>
+      <text class="svg-sub" x="112" y="51" text-anchor="middle" fill="var(--ink-3)">names &middot; bar no. &middot; firm affiliation</text>
+
+      <rect x="14" y="96" width="196" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="112" y="117" text-anchor="middle" fill="var(--ink)">Business listings</text>
+      <text class="svg-sub" x="112" y="133" text-anchor="middle" fill="var(--ink-3)">website &middot; phone &middot; reviews</text>
+
+      <rect x="14" y="178" width="196" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="112" y="199" text-anchor="middle" fill="var(--ink)">Legal directories</text>
+      <text class="svg-sub" x="112" y="215" text-anchor="middle" fill="var(--ink-3)">practice area &middot; backfill</text>
+
+      <line x1="210" y1="40" x2="288" y2="106" stroke="var(--ink-2)" marker-end="url(#t1)"/>
+      <line x1="210" y1="122" x2="288" y2="122" stroke="var(--ink-2)" marker-end="url(#t1)"/>
+      <line x1="210" y1="204" x2="288" y2="138" stroke="var(--ink-2)" marker-end="url(#t1)"/>
+
+      <rect x="290" y="96" width="160" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="370" y="117" text-anchor="middle" fill="var(--accent)">Firm candidate</text>
+      <text class="svg-sub" x="370" y="133" text-anchor="middle" fill="var(--ink-3)">identity resolved, deduped</text>
+
+      <line x1="450" y1="122" x2="528" y2="122" stroke="var(--ink-2)" marker-end="url(#t1)"/>
+      <text class="svg-edge" x="489" y="114" text-anchor="middle" fill="var(--ink-3)">crawl</text>
+
+      <rect x="530" y="96" width="164" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="612" y="117" text-anchor="middle" fill="var(--ink)">Own website</text>
+      <text class="svg-sub" x="612" y="133" text-anchor="middle" fill="var(--ink-3)">fee model &middot; practice &middot; team</text>
+
+      <line x1="694" y1="122" x2="742" y2="122" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#t2)"/>
+
+      <rect x="744" y="88" width="142" height="68" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="815" y="112" text-anchor="middle" fill="var(--accent)">Qualified</text>
+      <text class="svg-lb" x="815" y="128" text-anchor="middle" fill="var(--accent)">firm record</text>
+      <text class="svg-sub" x="815" y="144" text-anchor="middle" fill="var(--ink-3)">tier assigned</text>
+
+      <text class="svg-edge" x="370" y="176" text-anchor="middle" fill="var(--ink-3)">match on domain, then phone,</text>
+      <text class="svg-edge" x="370" y="190" text-anchor="middle" fill="var(--ink-3)">then address + name similarity</text>
+    </svg>
+    <figcaption>Fig 1 &mdash; Discovery is a three-way join, not a single scrape. The same firm appears in all three sources under different names, so identity resolution sits between discovery and qualification &mdash; not after it, when the crawling cost has already been spent three times over.</figcaption>
+  </figure>
+
+  <div class="note">
+    <b>The bar directory is the differentiated move</b>
+    <p>Generic B2B contact databases are thin on small law firms &mdash; they cover companies with LinkedIn presence and marketing departments, which most 4-attorney firms are not. Bar directories are public records that name every practising attorney and tie them to a firm. That is how the decision-maker gets found for firms no commercial database covers properly, and almost nobody doing outbound into this market bothers with it.</p>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <div class="sec-hd"><span class="sec-num">&sect;9</span><h2>In-market signals</h2></div>
+
+  <p class="lede">The universe tells us who <em>could</em> buy. Signals tell us who is trying to solve this problem <em>right now</em> &mdash; condition 4, observable from outside.</p>
+
+  <p>Ranked below by strength of evidence, with a second column that matters just as much: <strong>how many competitors can see the same thing.</strong> A signal every rival watches is a race; a signal nobody watches is an advantage.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Signals &middot; what each proves &middot; where it is observable</caption>
+      <thead><tr><th class="num">#</th><th>Signal</th><th>What it proves</th><th>Observable from</th><th>Contested?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td class="k">A legal-support role posted and still open after three weeks</td>
+          <td><strong>The strongest possible evidence.</strong> The firm has decided it needs this person, approved the budget, published the need &mdash; and failed to fill it. Condition 4 confirmed, in writing, by the firm itself.</td>
+          <td class="m">firm's own careers page<small>track first-seen ourselves &mdash; that is what makes "still open" computable</small></td>
+          <td><span class="chip no">Heavily</span></td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td class="k">Same role, newly posted</td>
+          <td>In market now, still optimistic about hiring locally. Earlier in the window, less urgency.</td>
+          <td class="m">careers page</td>
+          <td><span class="chip no">Heavily</span></td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td class="k">Reviews complaining nobody called back</td>
+          <td>Documented capacity failure, in the firm's own public record, in the words of the people it lost. For a firm buying leads, this is signed cases walking away.</td>
+          <td class="m">review text, last 90 days<small>phrase set: "never called back", "couldn't reach anyone", "no response"</small></td>
+          <td><span class="chip go">Almost nobody</span></td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td class="k">Two or more support roles open at once</td>
+          <td>Expansion rather than backfill. Multi-role opportunity.</td>
+          <td class="m">careers page</td>
+          <td><span class="chip mid">Somewhat</span></td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td class="k">Heavy active advertising</td>
+          <td>Buying case volume faster than existing staff can absorb it. Also confirms the firm has money moving predictably.</td>
+          <td class="m">ad transparency libraries</td>
+          <td><span class="chip mid">Somewhat</span></td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td class="k">Running a mass tort campaign</td>
+          <td>About to sign claimants in bulk, each needing several provider record requests, all against a filing deadline. Pure document-collection demand at volume.</td>
+          <td class="m">ad copy, tort-specific landing pages</td>
+          <td><span class="chip go">Rarely</span></td>
+        </tr>
+        <tr>
+          <td class="num">7</td>
+          <td class="k">New office, or a lateral attorney hire announced</td>
+          <td>Capacity added at the top with no support added beneath it. Infrastructure spending is already approved.</td>
+          <td class="m">firm news, listings, professional posts</td>
+          <td><span class="chip mid">Somewhat</span></td>
+        </tr>
+        <tr>
+          <td class="num">8</td>
+          <td class="k">Case management system newly implemented</td>
+          <td>The point at which a firm discovers the workflow needed a person, not a feature. Also a natural co-sell if the vendor is a partner.</td>
+          <td class="m">site tech fingerprint, quarter-over-quarter change</td>
+          <td><span class="chip go">Almost nobody</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">Strategy, not just ranking</span>
+    <p>Signal 1 is the strongest evidence and also the one every competing vendor sees the same morning. A firm that posts a paralegal role gets pitched by several of them that week. Treating it as the whole strategy makes <strong>speed the only advantage</strong>, and speed is trivially matched.</p>
+    <p>So run signal 1 at volume, but win it on the <em>opening line</em> &mdash; the specific role, the date it was posted, their actual case system, the partner's real name from the bar record. And put disproportionate effort into signals 3, 6 and 8, which are weaker evidence but effectively uncontested.</p>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <div class="sec-hd"><span class="sec-num">&sect;10</span><h2>Getting to the decision-maker</h2></div>
+
+  <p>In a firm of this size there is no committee. There is one person who signs, one who feels the pain, and one who can quietly kill it.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Role</th><th>Who</th><th>Why they matter</th><th>Findable via</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Signs</td>
+          <td>Owner or managing partner &mdash; usually the name on the door</td>
+          <td>Decides alone, in days. Motivated by taking home more and reclaiming time, not by cost-per-hour tables.</td>
+          <td class="m">bar directory + team page</td>
+        </tr>
+        <tr>
+          <td class="k">Champions</td>
+          <td>Firm administrator, office manager, director of operations &mdash; appears above roughly eight staff</td>
+          <td><strong>The single best first contact where one exists.</strong> They are the person who posted the job nobody applied to. They forward a relevant email the same day.</td>
+          <td class="m">team page &mdash; not in bar records, they are not attorneys</td>
+        </tr>
+        <tr>
+          <td class="k">Blocks</td>
+          <td>Senior in-house paralegal, or the partner's own risk instinct</td>
+          <td>Fears replacement, or fears being the partner who put client information somewhere it should not be. Often reads the owner's inbox.</td>
+          <td class="m">team page</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">Two things this dictates about collection</span>
+    <p><strong>Capture both people, not one.</strong> Owner and administrator. A record with only a generic inbox is not a lead, and a record with only the owner misses the person most likely to act.</p>
+    <p><strong>Frame as capacity, never replacement</strong> &mdash; from the very first line. The blocker is frequently the person who opens the mail, and a message that reads as "replace your staff" dies in that inbox without ever reaching the owner.</p>
+  </div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <div class="sec-hd"><span class="sec-num">&sect;11</span><h2>Collection sequence</h2></div>
+
+  <p class="lede">Do not harvest the whole country and filter afterwards. Collect one segment completely, prove the chain end to end on a set small enough to check by hand, then widen.</p>
+
+  <p>The alternative &mdash; harvest broadly, then discard most of it &mdash; spends the majority of the collection effort on firms that were never going to qualify, and hides errors until they are expensive.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Phased collection &middot; each phase proves something before the next widens</caption>
+      <thead><tr><th>Phase</th><th>Collect</th><th>Proves</th><th>Move on when</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">0 &mdash; Probe</td>
+          <td>Three metros, tier 1A only. A few hundred firms, fully processed through every step.</td>
+          <td>That the whole chain works, and what each stage's real yield is. Every number in a plan like this is an estimate until this phase replaces it.</td>
+          <td>A hand-checked sample of 50 records is accurate on every attribute.</td>
+        </tr>
+        <tr>
+          <td class="k">1 &mdash; Beachhead</td>
+          <td>Tier 1A nationally &mdash; PI and mass tort, 2&ndash;25 attorneys, metros first by density.</td>
+          <td>Coverage at scale, and that identity resolution holds when the same firm appears in three sources across fifty states.</td>
+          <td>Duplicate check is clean and decision-maker coverage holds.</td>
+        </tr>
+        <tr>
+          <td class="k">2 &mdash; Signals</td>
+          <td>No new firms. Add the signal layer over the beachhead.</td>
+          <td>That in-market detection actually fires, and how many firms light up in a given month.</td>
+          <td>Signals fire at a stable weekly rate and reply data starts distinguishing them.</td>
+        </tr>
+        <tr>
+          <td class="k">3 &mdash; Adjacent</td>
+          <td>Tier 1B immigration, then tier 2 fee-shifting.</td>
+          <td>That the profile generalises beyond PI &mdash; the first real test of the fee-model axis.</td>
+          <td>Tier 2 converts within range of tier 1A.</td>
+        </tr>
+        <tr>
+          <td class="k">4 &mdash; Breadth &amp; holdouts</td>
+          <td>Tier 3, plus a deliberate slice of tier 4 hourly firms on a non-billable role.</td>
+          <td>Whether the fee-model axis is a fact or a good story. This is the only phase that can disprove it.</td>
+          <td>&mdash;</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Resolve identity before crawling, not after</b>
+    <p>The same firm arrives from three sources under three names. Deduplicate <em>before</em> the site crawl, or the most expensive stage in collection runs three times on the same firm &mdash; and the same partner later receives three emails from three addresses, which ends the programme faster than any technical failure.</p>
+  </div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <div class="sec-hd"><span class="sec-num">&sect;12</span><h2>What a collected lead contains</h2></div>
+
+  <p>The bar for a usable record. Anything missing means the record is held back, not shipped with a gap &mdash; and the reason is recorded so it can be filled later.</p>
+
+<pre><code><b>FIRM</b>            name &middot; website &middot; phone &middot; city &middot; state
+                <i>practice_areas</i> &middot; <i>primary_practice</i>
+                <u>fee_model</u>            <s>← the tier axis. never guessed.</s>
+                attorney_count &middot; staff_ratio
+                review_count            <s>← case-volume proxy</s>
+                paid_ads_active         <s>← volume + cash signal</s>
+                case_system             <s>← names their tooling in the first line</s>
+                languages &middot; spanish_intake
+                <i>tier</i> &middot; <i>opening_role</i>
+
+<b>PEOPLE</b>          owner        name &middot; title &middot; email &middot; direct line
+                administrator name &middot; title &middot; email &middot; direct line
+                <s>both where they exist. a generic inbox is not a contact.</s>
+
+<b>SIGNAL</b>          kind &middot; first_seen &middot; still_open
+                <u>evidence</u>              <s>← the actual sentence: the job title,</s>
+                                        <s>  the review quote, the tort name.</s>
+                                        <s>  this is what the first line is built</s>
+                                        <s>  from. without it the outreach is generic</s>
+                                        <s>  and the whole targeting effort is wasted.</s>
+
+<b>STATUS</b>          grade                   <s>A = verified email, B = phone-first</s>
+                collected_at &middot; last_verified
+                suppressed &middot; reason</code></pre>
+
+  <div class="key">
+    <span class="tag">Grade B is a product, not a reject pile</span>
+    <p>A meaningful share of small firms will yield a named partner, a working phone and a live signal &mdash; but no verifiable personal email address. Those records are not failures. They are a phone-and-research list, worked by a different motion.</p>
+    <p>Deleting them throws away a large slice of the collection effort. Emailing them anyway, on a guessed address, damages the ability to email anyone.</p>
+  </div>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <div class="sec-hd"><span class="sec-num">&sect;13</span><h2>Keeping the list alive</h2></div>
+
+  <p>A collected list is a depreciating asset. People leave firms, firms merge and rebrand, sites are rebuilt, roles get filled. Collection is not a project that finishes &mdash; the maintenance loop is the product.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Loop</th><th>Cadence</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Signal sweep</td><td>Nightly</td><td>Check every qualified firm for open roles. This is the loop that turns a static list into a pipeline, and the one where lateness costs the most &mdash; a role found on day two converts far better than the same role found on day twenty.</td></tr>
+        <tr><td class="k">Review sweep</td><td>Weekly</td><td>Tier 1A and 1B only. New reviews matched against the intake-failure phrase set.</td></tr>
+        <tr><td class="k">Advertising &amp; tort sweep</td><td>Monthly</td><td>Tier 1A. Detects volume spikes and new mass tort campaigns.</td></tr>
+        <tr><td class="k">Freshness sweep</td><td>Rolling, whole list every 90 days</td><td>Re-check the site. If it changed, re-read the attributes. If a contact no longer appears on the team page, re-resolve the person.</td></tr>
+        <tr><td class="k">Re-pooling</td><td>Continuous</td><td>A firm that did not respond is not spent. It returns to the pool with its verified contact intact and waits for the next signal. Most firms are not in market today; the point of holding a current record is being ready on the day they are.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">What decides whether any of this was right</span>
+    <p>Every closed deal should be traceable to the signal that surfaced it. After a quarter, that one join &mdash; outcome by signal type, and by tier &mdash; is what tells you which signals to invest in and whether the fee-model axis is real.</p>
+    <p>The rankings in this document are reasoned, not measured. They are a starting hypothesis, and the only thing that makes them correct is replacing them with what the outcomes say.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Scope: ideal customer profile and lead collection strategy. Implementation detail &mdash; schema, components, orchestration &mdash; is in the Pipeline Build Spec.</div>
+  <div>Tier rankings, signal ordering and proxy choices are reasoned from how law firms are structured and paid, and are to be replaced by outcome data as it arrives. Two data sources are deliberately excluded: direct job-board scraping and automated professional-network extraction.</div>
+</footer>
+
+</main>
+</div>

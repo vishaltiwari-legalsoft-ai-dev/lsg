@@ -1,0 +1,641 @@
+<title>Job Signal Acquisition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1EF; --surface:#F9FBFA; --surface-2:#E3E9E6;
+  --rule:#C6D2CD; --rule-strong:#9AACA6;
+  --ink:#13201C; --ink-2:#4C5D57; --ink-3:#74857D;
+  --accent:#0E5A4A; --accent-soft:#D4E4DE;
+  --signal:#A93B1C; --signal-soft:#F1DCD4;
+  --brass:#8A6118;
+  --measure:70ch;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.75rem; --s5:2.75rem; --s6:4.25rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+    --rule:#27362F; --rule-strong:#41564E;
+    --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+    --accent:#59BBA0; --accent-soft:#16302A;
+    --signal:#DD8163; --signal-soft:#33201A;
+    --brass:#CBA25D;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+  --rule:#27362F; --rule-strong:#41564E;
+  --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+  --accent:#59BBA0; --accent-soft:#16302A;
+  --signal:#DD8163; --signal-soft:#33201A;
+  --brass:#CBA25D;
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:16px; line-height:1.62; margin:0; -webkit-font-smoothing:antialiased}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:.18em}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+.shell{max-width:1180px; margin:0 auto; padding:0 var(--s4) var(--s6)}
+@media(min-width:1040px){
+  .shell{display:grid; grid-template-columns:186px minmax(0,1fr); gap:var(--s6); align-items:start}
+  .rail{position:sticky; top:0; padding-top:var(--s5); max-height:100vh; overflow-y:auto}
+}
+.rail{display:none}
+@media(min-width:1040px){.rail{display:block}}
+.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--s1)}
+.rail a{display:flex; gap:.5em; font-family:"IBM Plex Mono",monospace; font-size:.69rem; color:var(--ink-2); text-decoration:none; padding:.28em 0; line-height:1.35}
+.rail a:hover{color:var(--accent)}
+.rail a b{color:var(--ink-3); font-weight:500; flex:none}
+.rail .rail-hd{font-family:"IBM Plex Mono",monospace; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); padding-bottom:var(--s2); border-bottom:1px solid var(--rule); margin-bottom:var(--s2)}
+
+.mast{padding:var(--s6) 0 var(--s5); border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 var(--s3)}
+h1{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.3rem,5.5vw,3.7rem); line-height:1.03; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:15ch}
+.dek{font-family:Newsreader,Georgia,serif; font-size:clamp(1.06rem,2.1vw,1.3rem); line-height:1.5; color:var(--ink-2); max-width:60ch; margin:var(--s3) 0 0}
+.mast-meta{display:flex; flex-wrap:wrap; gap:var(--s1) var(--s4); margin-top:var(--s4); font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--ink-3)}
+.mast-meta span b{color:var(--ink-2); font-weight:500}
+
+section{padding-top:var(--s6); scroll-margin-top:var(--s3)}
+.sec-hd{display:flex; align-items:baseline; gap:var(--s2); border-bottom:1px solid var(--rule-strong); padding-bottom:var(--s2); margin-bottom:var(--s4)}
+.sec-num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--accent); font-weight:500; flex:none}
+h2{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.48rem,3.2vw,1.98rem); line-height:1.12; letter-spacing:-.012em; margin:0; text-wrap:balance}
+h3{font-family:"Public Sans",sans-serif; font-weight:700; font-size:.95rem; margin:var(--s5) 0 var(--s2)}
+h4{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:.68rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:var(--s4) 0 var(--s2)}
+p{margin:0 0 var(--s3); max-width:var(--measure)}
+ul,ol{max-width:var(--measure); padding-left:1.15em; margin:0 0 var(--s3)}
+li{margin-bottom:var(--s1)}
+li::marker{color:var(--ink-3)}
+strong{font-weight:600}
+em{font-style:italic}
+code{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:var(--surface-2); padding:.08em .32em}
+.lede{font-family:Newsreader,Georgia,serif; font-size:1.15rem; line-height:1.55; color:var(--ink-2)}
+
+pre{background:var(--surface); border:1px solid var(--rule-strong); border-left:3px solid var(--accent); padding:var(--s3) var(--s4); overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:.77rem; line-height:1.7; margin:var(--s3) 0 var(--s5); color:var(--ink-2)}
+pre code{background:none; padding:0; font-size:1em}
+pre b{color:var(--ink); font-weight:600}
+pre i{color:var(--accent); font-style:normal}
+pre u{color:var(--brass); text-decoration:none}
+pre s{color:var(--ink-3); text-decoration:none}
+
+.ledger{border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); overflow-x:auto; margin:var(--s3) 0 var(--s5); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:.84rem}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:left; padding:.8em .85em; border-bottom:1px solid var(--rule-strong); vertical-align:bottom; white-space:nowrap}
+tbody td{padding:.72em .85em; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.id{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--accent); white-space:nowrap}
+td.k{font-weight:600; color:var(--ink)}
+td small{display:block; color:var(--ink-3); font-size:.86em; line-height:1.4; margin-top:.2em}
+td .m{font-family:"IBM Plex Mono",monospace; font-size:.9em}
+caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); padding:.8em .85em .45em; border-bottom:1px solid var(--rule)}
+
+.chip{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.61rem; letter-spacing:.06em; text-transform:uppercase; padding:.2em .46em; white-space:nowrap; border:1px solid currentColor; line-height:1.4}
+.chip.go{color:var(--accent)}
+.chip.no{color:var(--signal)}
+.chip.mid{color:var(--brass)}
+
+figure{margin:var(--s4) 0 var(--s5)}
+figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2)}
+figcaption{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.05em; color:var(--ink-3); margin-top:var(--s2); line-height:1.6; max-width:78ch}
+.svg-lb{font-family:"IBM Plex Mono",monospace; font-size:11px}
+.svg-sub{font-family:"IBM Plex Mono",monospace; font-size:9px}
+.svg-edge{font-family:"IBM Plex Mono",monospace; font-size:9.5px}
+
+.key{border-left:3px solid var(--accent); background:var(--surface); padding:var(--s3) var(--s4); margin:var(--s3) 0 var(--s4); max-width:var(--measure)}
+.key p:last-child{margin-bottom:0}
+.key .tag{font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:var(--s2)}
+.note{border-left:2px solid var(--signal); padding:var(--s2) 0 var(--s2) var(--s3); margin:var(--s3) 0 var(--s4); max-width:var(--measure); font-size:.9rem; color:var(--ink-2)}
+.note b{color:var(--signal); font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:.3em}
+.note p:last-child{margin-bottom:0}
+
+.foot{margin-top:var(--s6); padding-top:var(--s3); border-top:2px solid var(--ink); font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--ink-3); line-height:1.9}
+.foot div{margin-bottom:var(--s2); max-width:90ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <div class="rail-hd">Contents</div>
+  <ol>
+    <li><a href="#s1"><b>1</b> Where they post</a></li>
+    <li><a href="#s2"><b>2</b> Board register</a></li>
+    <li><a href="#s3"><b>3</b> Three lanes</a></li>
+    <li><a href="#s4"><b>4</b> Agency filter</a></li>
+    <li><a href="#s5"><b>5</b> Cross-board dedupe</a></li>
+    <li><a href="#s6"><b>6</b> Firm resolution</a></li>
+    <li><a href="#s7"><b>7</b> Dates &amp; reposts</a></li>
+    <li><a href="#s8"><b>8</b> Closure detection</a></li>
+    <li><a href="#s9"><b>9</b> Crawl mechanics</a></li>
+    <li><a href="#s10"><b>10</b> Components</a></li>
+    <li><a href="#s11"><b>11</b> Build order</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Extension to the Pipeline Build Spec &middot; Signal 01</p>
+  <h1>Job Signal Acquisition</h1>
+  <p class="dek">The boards everyone names are the wrong list for this ICP. Small law firms largely avoid the expensive ones &mdash; which means the sources with the best coverage of our targets are also the free, structured, publicly crawlable ones.</p>
+  <div class="mast-meta">
+    <span><b>Lanes</b> 3</span>
+    <span><b>Components</b> JA1&ndash;JA6</span>
+    <span><b>Hard problems</b> 5</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="sec-hd"><span class="sec-num">&sect;1</span><h2>Where our firms actually post</h2></div>
+
+  <p class="lede">The obvious answer to "which job boards matter" is Indeed, LinkedIn, ZipRecruiter. For general hiring that is right. For <em>2&ndash;25 attorney law firms hiring support staff</em>, it is misleading &mdash; and the difference decides the whole architecture.</p>
+
+  <p>Posting a role on the large boards costs money per listing or per click. A 4-attorney firm filling one paralegal seat does not run a recruiting budget, so it posts where posting is free or already paid for: <strong>its own website, its bar association, and the niche legal boards it already belongs to.</strong></p>
+
+  <p>That reverses the usual trade-off. Normally the compliant sources are the weak ones and the good data sits behind terms that prohibit collecting it. Here the sources with the <em>best coverage of our exact segment</em> are also the ones that publish structured, machine-readable postings and invite crawling.</p>
+
+  <div class="key">
+    <span class="tag">What follows from this</span>
+    <p>Build lane 1 &mdash; own careers pages, bar boards, ATS endpoints &mdash; first and completely. It covers the ICP better than the big boards do, it is free, it is stable, and nothing about it breaks when a vendor changes its terms.</p>
+    <p>The large boards are a <strong>coverage top-up</strong>, not the foundation. They matter for the larger end of the range and for firms that do run a recruiting budget, and they are bought rather than scraped.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="sec-hd"><span class="sec-num">&sect;2</span><h2>Board register</h2></div>
+
+  <p>Every meaningful US source for legal support-staff postings, with the access route that actually works in 2026 rather than the one that used to.</p>
+
+  <h4>Tier A &mdash; best coverage of our ICP, publicly accessible</h4>
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Source</th><th>Why it matters here</th><th>Access route</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">The firm's own careers page</td>
+          <td>Where small firms post first and often only. Also the one place the posting is unambiguously tied to the firm &mdash; no name resolution needed.</td>
+          <td><span class="m">Crawl. <code>JobPosting</code> JSON-LD is the standard markup, so most pages parse deterministically.</span></td>
+          <td><span class="chip go">Primary</span></td>
+        </tr>
+        <tr>
+          <td class="k">State bar association job boards<small>50 states, most with a career centre</small></td>
+          <td>Free or cheap for members, so firms use them heavily. High legal purity &mdash; almost no noise from other industries.</td>
+          <td><span class="m">Public listings crawl. A minority sit behind member login &mdash; those are out of scope, not a target.</span></td>
+          <td><span class="chip go">Primary</span></td>
+        </tr>
+        <tr>
+          <td class="k">Metro &amp; county bar associations<small>LA County, Chicago, Houston, Dallas, Miami-Dade, Brooklyn, and so on</small></td>
+          <td>Even closer to the target. A county bar board is where a 6-attorney PI firm posts a paralegal role.</td>
+          <td><span class="m">Public listings crawl. Long tail &mdash; prioritise the metros in the collection plan.</span></td>
+          <td><span class="chip go">Primary</span></td>
+        </tr>
+        <tr>
+          <td class="k">Paralegal association boards<small>NALA Career Center, NFPA, NALS, state paralegal associations</small></td>
+          <td>Role-specific and precisely on target &mdash; these boards carry almost nothing but the roles we sell.</td>
+          <td><span class="m">Public listings crawl.</span></td>
+          <td><span class="chip go">Primary</span></td>
+        </tr>
+        <tr>
+          <td class="k">ATS-hosted boards<small>Greenhouse, Lever, Workable, JazzHR, BambooHR, Recruitee</small></td>
+          <td>Firms at the larger end of the range run an ATS. Small share of our universe, but perfectly clean data where present.</td>
+          <td><span class="m">Public per-company JSON endpoints &mdash; e.g. <code>boards-api.greenhouse.io/v1/boards/{co}/jobs</code>, <code>api.lever.co/v0/postings/{co}</code>. Structured, free, documented.</span></td>
+          <td><span class="chip go">Primary</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Tier B &mdash; high volume, licensed access</h4>
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Source</th><th>Why it matters here</th><th>Access route</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Indeed</td>
+          <td>Largest single volume of US support-staff postings. Skews to firms that do pay to advertise roles.</td>
+          <td><span class="m">No public API &mdash; the Publisher API was retired and the remaining Apply API is partner-only. Route is a <strong>licensed job-data provider</strong> (Coresignal, Bright Data, Techmap, TheirStack and similar), which returns normalised JSON.</span></td>
+          <td><span class="chip mid">Buy, don't scrape</span></td>
+        </tr>
+        <tr>
+          <td class="k">LinkedIn Jobs</td>
+          <td>Attorney and administrator roles more than support staff. Useful for the lateral-hire signal.</td>
+          <td><span class="m">Licensed provider only. Direct automated collection carries account bans and real legal exposure &mdash; it is not a technical obstacle to route around.</span></td>
+          <td><span class="chip mid">Buy, don't scrape</span></td>
+        </tr>
+        <tr>
+          <td class="k">ZipRecruiter</td>
+          <td>SMB-heavy, which fits the segment better than LinkedIn does.</td>
+          <td><span class="m">Has a partner API programme. Apply for it; otherwise reach it through the same licensed providers.</span></td>
+          <td><span class="chip mid">Partner API</span></td>
+        </tr>
+        <tr>
+          <td class="k">Craigslist<small>metro jobs &rarr; legal/paralegal</small></td>
+          <td>Genuinely still used by small firms for admin and support roles, especially in large metros. Consistently underestimated.</td>
+          <td><span class="m">Public RSS per city/category exists. Respect rate limits and terms; treat as a low-volume supplementary feed.</span></td>
+          <td><span class="chip mid">Light touch</span></td>
+        </tr>
+        <tr>
+          <td class="k">Glassdoor &middot; SimplyHired</td>
+          <td>Largely mirror Indeed's index. Little independent signal.</td>
+          <td><span class="m">Via the same licensed providers if wanted. Low marginal value.</span></td>
+          <td><span class="chip mid">Skip initially</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Tier C &mdash; legal niche aggregators</h4>
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Source</th><th>Note</th><th>Access route</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="k">LawCrossing</td><td>Aggregates legal jobs including from firm sites. Subscription product &mdash; and its own listings are partly re-published from sources we already cover directly.</td><td><span class="m">Subscription. Evaluate for overlap before paying.</span></td><td><span class="chip mid">Evaluate</span></td></tr>
+        <tr><td class="k">Lawjobs.com &middot; Law.com<small>ALM</small></td><td>Skews larger firms and attorney roles.</td><td><span class="m">Commercial. Low fit with the 2&ndash;25 band.</span></td><td><span class="chip mid">Low priority</span></td></tr>
+        <tr><td class="k">ABA Career Center</td><td>National, attorney-weighted, moderate support-staff volume.</td><td><span class="m">Public listings.</span></td><td><span class="chip mid">Supplementary</span></td></tr>
+        <tr><td class="k">Vault &middot; Leopard Solutions</td><td>Large-firm intelligence products. Our disqualified band.</td><td>&mdash;</td><td><span class="chip no">Out of scope</span></td></tr>
+        <tr><td class="k">Law school career portals<small>Symplicity and similar</small></td><td>Authenticated, institution-scoped.</td><td><span class="m">Requires credentials we have no basis to hold.</span></td><td><span class="chip no">Excluded</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Tier D &mdash; the query lane</h4>
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Source</th><th>Note</th><th>Access route</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Google for Jobs<small>the aggregated jobs panel</small></td>
+          <td>Not a board &mdash; an index built from <code>JobPosting</code> markup across the web. Its value is <em>discovery</em>: it finds postings on sites we have not thought to crawl.</td>
+          <td><span class="m">Google retired its Jobs API, so there is no endpoint to query directly. Reach it through a SERP data provider &mdash; DataForSEO, which the stack already uses, or SerpApi.</span></td>
+          <td><span class="chip go">Discovery lane</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="sec-hd"><span class="sec-num">&sect;3</span><h2>Three lanes, one signal table</h2></div>
+
+  <p>Three acquisition modes with different economics and different failure modes, converging on one deduplicated signal. Each lane can fail without taking the others down.</p>
+
+  <figure>
+    <svg viewBox="0 0 880 250" role="img" aria-label="Three acquisition lanes — direct crawl of careers pages and bar boards, a licensed provider feed for the large boards, and a SERP query lane for discovery — all pass through an agency filter and cross-board deduplication before writing a single job signal record.">
+      <defs>
+        <marker id="j1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+        </marker>
+        <marker id="j2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <rect x="14" y="16" width="196" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="112" y="37" text-anchor="middle" fill="var(--accent)">Lane 1 &mdash; crawl</text>
+      <text class="svg-sub" x="112" y="53" text-anchor="middle" fill="var(--ink-3)">careers &middot; bar boards &middot; ATS</text>
+
+      <rect x="14" y="92" width="196" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="112" y="113" text-anchor="middle" fill="var(--ink)">Lane 2 &mdash; licensed</text>
+      <text class="svg-sub" x="112" y="129" text-anchor="middle" fill="var(--ink-3)">Indeed &middot; LinkedIn &middot; ZipRecruiter</text>
+
+      <rect x="14" y="168" width="196" height="52" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="112" y="189" text-anchor="middle" fill="var(--ink)">Lane 3 &mdash; SERP</text>
+      <text class="svg-sub" x="112" y="205" text-anchor="middle" fill="var(--ink-3)">Google for Jobs &middot; discovery</text>
+
+      <rect x="272" y="82" width="140" height="72" fill="var(--surface)" stroke="var(--signal)" stroke-width="1.5"/>
+      <text class="svg-lb" x="342" y="106" text-anchor="middle" fill="var(--signal)">Agency filter</text>
+      <text class="svg-sub" x="342" y="122" text-anchor="middle" fill="var(--ink-3)">drop recruiters</text>
+      <text class="svg-sub" x="342" y="136" text-anchor="middle" fill="var(--ink-3)">&amp; blind postings</text>
+
+      <line x1="210" y1="42" x2="270" y2="98" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#j2)"/>
+      <line x1="210" y1="118" x2="270" y2="118" stroke="var(--ink-2)" marker-end="url(#j1)"/>
+      <line x1="210" y1="194" x2="270" y2="138" stroke="var(--ink-2)" marker-end="url(#j1)"/>
+
+      <rect x="452" y="82" width="140" height="72" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="522" y="106" text-anchor="middle" fill="var(--ink)">Dedupe</text>
+      <text class="svg-sub" x="522" y="122" text-anchor="middle" fill="var(--ink-3)">one role =</text>
+      <text class="svg-sub" x="522" y="136" text-anchor="middle" fill="var(--ink-3)">one signal</text>
+      <line x1="412" y1="118" x2="450" y2="118" stroke="var(--ink-2)" marker-end="url(#j1)"/>
+
+      <rect x="632" y="82" width="140" height="72" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="702" y="106" text-anchor="middle" fill="var(--ink)">Resolve to firm</text>
+      <text class="svg-sub" x="702" y="122" text-anchor="middle" fill="var(--ink-3)">domain &gt; phone</text>
+      <text class="svg-sub" x="702" y="136" text-anchor="middle" fill="var(--ink-3)">&gt; name + city</text>
+      <line x1="592" y1="118" x2="630" y2="118" stroke="var(--ink-2)" marker-end="url(#j1)"/>
+
+      <rect x="632" y="14" width="140" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="702" y="34" text-anchor="middle" fill="var(--accent)">signal</text>
+      <text class="svg-sub" x="702" y="49" text-anchor="middle" fill="var(--ink-3)">own first_seen</text>
+      <line x1="702" y1="80" x2="702" y2="62" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#j2)"/>
+
+      <text class="svg-edge" x="342" y="176" text-anchor="middle" fill="var(--ink-3)">unmatched &rarr; review queue,</text>
+      <text class="svg-edge" x="342" y="190" text-anchor="middle" fill="var(--ink-3)">never a guessed merge</text>
+    </svg>
+    <figcaption>Fig 1 &mdash; The agency filter sits before deduplication deliberately: a staffing agency posting the same role in eleven cities would otherwise survive as eleven distinct signals against eleven wrong firms. Nothing writes a signal until it has resolved to a real firm.</figcaption>
+  </figure>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="sec-hd"><span class="sec-num">&sect;4</span><h2>The agency filter</h2></div>
+
+  <p class="lede">A large share of legal support-staff postings are placed by staffing and recruiting agencies, not by law firms. These are not leads &mdash; they are a different industry, and the firm that actually needs the person is hidden behind "our client".</p>
+
+  <p>Without this filter the pipeline targets recruiters as if they were prospects, inflates every volume estimate, and writes signals onto companies that will never buy. It is the single highest-value transform in this whole lane.</p>
+
+<pre><code><b>-- reject a posting when ANY of these fire</b>
+
+<i>1. KNOWN AGENCY</i>
+   company matches the maintained legal-staffing blocklist
+   <s>-- Robert Half Legal, Beacon Hill Legal, Adams &amp; Martin,</s>
+   <s>-- Special Counsel / Adecco, Vaco, Lateral Link, Kforce Legal,</s>
+   <s>-- Marina Sirras, Latitude, Hire Counsel … maintained, not static</s>
+
+<i>2. CLIENT LANGUAGE</i>
+   body matches /\bour client\b|\bconfidential client\b/i
+             |  /\b(?:a|our)\s+(?:growing|established|boutique)\s+
+                  (?:law\s+firm|firm)\b/i   <s>-- describes rather than names</s>
+
+<i>3. GEOGRAPHIC SPREAD</i>   <s>-- the strongest behavioural tell</s>
+   same company posting legal support roles
+   in &gt;= 5 distinct metros within 90 days
+   <s>-- a real 2–25 attorney firm does not hire paralegals in</s>
+   <s>-- five cities at once. an agency does it every week.</s>
+
+<i>4. VOLUME</i>
+   same company with &gt;= 20 open legal support roles
+   <s>-- inconsistent with the entire target size band</s>
+
+<i>5. BLIND POSTING</i>
+   employer name absent, generic, or "confidential"
+   <s>-- unresolvable. drop rather than guess.</s>
+
+<b>-- what happens to rejects</b>
+   written to job_posting_rejected with the rule that fired.
+   NOT silently discarded — the reject stream is how the
+   blocklist gets extended, and a sudden spike in rule 3
+   usually means a new agency has appeared, not that the
+   market changed.</code></pre>
+
+  <div class="note">
+    <b>Rule 3 catches what a blocklist cannot</b>
+    <p>Agency names change, new ones appear constantly, and no maintained list stays complete. Geographic spread is a behavioural signature rather than an identity, so it catches agencies nobody has heard of yet &mdash; and it costs one grouped query.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="sec-hd"><span class="sec-num">&sect;5</span><h2>Cross-board deduplication</h2></div>
+
+  <p>One paralegal opening can appear on the firm's careers page, its state bar board, a county bar board, Indeed, ZipRecruiter and Glassdoor. That is one signal, not six &mdash; and counted six times it would push a firm's intent score to the top of the queue for no reason.</p>
+
+<pre><code><b>-- posting fingerprint: same role, same firm, same window</b>
+
+  fingerprint = sha1(
+      firm_id                              <s>-- after resolution</s>
+    ‖ normalize_title(title)               <s>-- see below</s>
+    ‖ metro_code                           <s>-- CBSA, not raw city string</s>
+    ‖ floor_to_week(earliest_posted_date)
+  )
+
+  normalize_title(t):
+    lowercase; strip seniority (sr|jr|senior|junior|lead|i|ii|iii)
+    strip employment terms (full[- ]time|part[- ]time|contract|temp)
+    strip location fragments and firm name
+    map synonyms → canonical role:
+      "legal assistant"|"legal secretary"|"admin assistant, legal"
+                                            → legal_assistant
+      "paralegal"|"certified paralegal"|"litigation paralegal"
+                                            → paralegal
+      "intake specialist"|"client intake"|"intake coordinator"
+                                            → intake_specialist
+      "case manager"|"case coordinator"     → case_manager
+      "records clerk"|"medical records"     → document_collector
+
+<b>-- merge policy on collision</b>
+  keep ONE signal row.
+  first_seen  = MIN across all sources   <s>-- earliest sighting wins</s>
+  last_seen   = MAX across all sources
+  sources[]   = append every board it was seen on
+  canonical_url = prefer the firm's own careers page,
+                  then the bar board, then a licensed source
+
+<s>-- sources[] is not bookkeeping. a role posted on five boards is a</s>
+<s>-- firm trying harder than one posted on a single board — that is a</s>
+<s>-- usable intensity measure, and it only exists if we keep the list.</s></code></pre>
+
+  <div class="key">
+    <span class="tag">Board count as intensity</span>
+    <p>A firm that posted one paralegal role to five different boards is spending effort and money to fill it. A firm that posted the same role only to its own careers page may be casually looking. Same signal kind, materially different urgency &mdash; and it costs nothing to capture, because deduplication already touched every copy.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="sec-hd"><span class="sec-num">&sect;6</span><h2>Resolving a posting to a firm</h2></div>
+
+  <p>Lane 1 mostly solves this for free &mdash; a posting on a firm's own careers page is already attached to a domain. Lanes 2 and 3 give a company name and a city, which is the weakest matching position in the system.</p>
+
+  <p>The practical unlock is to <strong>keep the full posting body, not just the structured fields.</strong> Application emails, "visit our website at", and apply-links back to the firm's own site appear constantly in the text and each one carries a domain, which turns a probabilistic name match into a decisive one.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Resolution ladder for board-sourced postings</caption>
+      <thead><tr><th class="num">#</th><th>Extract</th><th>Match rule</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="k">Apply-email domain in the body<small><code>careers@smithlaw.com</code></small></td><td>eTLD+1 exact against <code>firm.domain</code></td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">2</td><td class="k">Outbound link to a non-board domain</td><td>eTLD+1 exact, board and ATS hosts excluded</td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">3</td><td class="k">Phone number in the body</td><td>E.164 exact</td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">4</td><td class="k">ATS slug<small><code>boards.greenhouse.io/smithlaw</code></small></td><td>Slug to firm map, built once and reused</td><td><span class="chip go">Decisive</span></td></tr>
+        <tr><td class="num">5</td><td class="k">Company name + street address</td><td>Address hash plus name similarity</td><td><span class="chip go">Strong</span></td></tr>
+        <tr><td class="num">6</td><td class="k">Company name + metro</td><td>Trigram within CBSA. Accept only if exactly one candidate clears the threshold.</td><td><span class="chip mid">Review queue</span></td></tr>
+        <tr><td class="num">7</td><td class="k">Company name alone</td><td>&mdash;</td><td><span class="chip no">Reject</span><small>Writes a false hiring signal onto a real firm. Never guess.</small></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">An unmatched posting is still worth keeping</span>
+    <p>If a posting cannot be resolved, it may name a firm that is <strong>not yet in the universe at all</strong> &mdash; a discovery lead rather than a failure. Route it to the discovery queue with its company name and metro so the normal harvest can try to find that firm properly, then re-attempt the match. Do not merge it into an existing record on a hunch.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="sec-hd"><span class="sec-num">&sect;7</span><h2>Dates, and why reposts matter more than dates</h2></div>
+
+  <p>Board-reported dates cannot be trusted. Many boards show relative ages that round badly &mdash; "30+ days ago" covers everything from a month to a year. Worse, employers refresh listings to keep them near the top, which resets the displayed date while the underlying vacancy is unchanged.</p>
+
+  <p>So the system records <strong>its own</strong> <code>first_seen</code>, keyed on the fingerprint from &sect;5. That is what makes "open more than 21 days" computable at all.</p>
+
+<pre><code><b>-- three date fields, three different meanings</b>
+
+  board_posted_date    what the board claims        <s>-- untrusted, stored</s>
+  first_seen           when WE first saw this
+                       fingerprint                  <s>-- the operative one</s>
+  last_seen            most recent sighting         <s>-- drives closure, §8</s>
+
+
+<b>-- REPOST DETECTION — the strongest variant of signal 01</b>
+
+  same fingerprint, but board_posted_date has moved forward
+  while our first_seen stayed put
+    → the firm re-listed a vacancy it has not filled
+    → this is an active, dated admission of hiring failure
+
+  repost_count &gt;= 1                    weight <u>44</u>   <s>-- above the 40</s>
+                                                    <s>-- for "open >21d"</s>
+  repost_count &gt;= 2                    weight <u>48</u>
+
+<s>-- "open more than 21 days" is inferred from absence of an update.</s>
+<s>-- a repost is the firm affirmatively spending effort again on the</s>
+<s>-- same unfilled seat. it is a stronger claim, it is dated, and it</s>
+<s>-- is only detectable if we hold our own first_seen against the</s>
+<s>-- board's shifting one.</s></code></pre>
+
+  <div class="key">
+    <span class="tag">The line a repost writes</span>
+    <p><em>"Saw the paralegal role at [Firm] go back up on [board] this week &mdash; second time since [month]."</em> That is specific, verifiable, and impossible to write without holding the history. It is the clearest example of why keeping our own dates matters more than reading theirs.</p>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="sec-hd"><span class="sec-num">&sect;8</span><h2>Closure detection</h2></div>
+
+  <p>A signal must end when the role is filled, or the pipeline keeps working leads whose reason for existing has gone. But absence from one board is ambiguous &mdash; listings expire on schedules that have nothing to do with the vacancy.</p>
+
+<pre><code><b>-- absence on one board ≠ closed</b>
+
+  a posting is CLOSED only when it is absent from
+  <b>every</b> source in sources[] across two consecutive sweeps
+
+  <i>precedence</i>: the firm's own careers page is authoritative.
+      gone from Indeed, still on careers page   → still OPEN
+      gone from careers page, still on Indeed   → likely CLOSED
+                                                  (board listing is stale)
+
+  <i>grace</i>: 2 sweeps, not 1 — one failed fetch must never
+         close a live signal
+
+  <i>on close</i>: signal.closed_at set → weight drops to 0 → intent
+            recomputes → lead may fall out of the armed band
+            <b>but the lead is not discarded.</b> it returns to the
+            pool with fit and contact intact (lifecycle §10),
+            and the closed posting stays as fit history:
+            this firm hires paralegals.</code></pre>
+
+  <div class="note">
+    <b>Do not close on a fetch failure</b>
+    <p>A site that times out, a board that rate-limits, or a parser that breaks on a redesign all produce the same observable as a removed posting: nothing found. Distinguish <em>fetched successfully and absent</em> from <em>fetch failed</em>, and only the first counts toward closure. Without that distinction, one bad night silently closes thousands of live signals.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <div class="sec-hd"><span class="sec-num">&sect;9</span><h2>Crawl mechanics for lane 1</h2></div>
+
+<pre><code><b>PARSE ORDER</b> — cheapest and most reliable first
+  1. <i>JobPosting</i> JSON-LD in the page            <s>-- deterministic, most sites</s>
+  2. microdata / RDFa                          <s>-- older sites</s>
+  3. ATS JSON endpoint if the page embeds one  <s>-- fully structured</s>
+  4. HTML parse with per-template selectors    <s>-- bar boards: ~40 templates</s>
+  5. LLM extraction, low volume only           <s>-- last resort, flagged</s>
+
+<b>BAR BOARDS</b>
+  ~50 state + ~60 metro boards, but only about 40 distinct
+  platforms behind them (YourMembership, Naylor, MemberClicks,
+  Careerwebsite, Personify …). Write parsers per <b>platform</b>,
+  not per board — coverage per parser is roughly 3:1.
+
+  Member-login boards are out of scope. Not an obstacle to route
+  around; simply not a source.
+
+<b>RATE DISCIPLINE</b>
+  per-host token bucket, ≤ 1 request / 2s, honest User-Agent
+  with a contact address, robots.txt honoured, Crawl-delay
+  respected where declared.
+  <s>-- these are small association servers. being a good citizen</s>
+  <s>-- here is also what keeps the source working long-term.</s>
+
+<b>CADENCE</b>
+  careers pages       nightly, all qualified firms
+  bar boards          nightly, metros first
+  ATS endpoints       nightly, cheap
+  licensed feed       daily delta pull
+  SERP discovery      weekly, rotating query set
+
+<b>CHANGE DETECTION</b>
+  store content hash per listing page.
+  unchanged hash → skip parse entirely.
+  <s>-- most nights, most pages are unchanged. this turns a full</s>
+  <s>-- sweep into a small one and is what makes nightly feasible.</s></code></pre>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <div class="sec-hd"><span class="sec-num">&sect;10</span><h2>Components</h2></div>
+
+  <p>Six components. JA1&ndash;JA3 replace and expand the placeholder watchers W1 and W2 in the build spec.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Job acquisition sub-plane</caption>
+      <thead><tr><th>ID</th><th>Component</th><th>Input &rarr; Output</th><th>Cadence</th><th>On failure</th></tr></thead>
+      <tbody>
+        <tr><td class="id">JA1</td><td class="k">Careers page watcher</td><td><span class="m">firm.domain</span> &rarr; <span class="m">raw_posting</span></td><td>Nightly</td><td>Per-firm isolation; a broken site never stalls the sweep</td></tr>
+        <tr><td class="id">JA2</td><td class="k">Bar board watcher<small>parsers per platform, not per board</small></td><td><span class="m">board registry</span> &rarr; <span class="m">raw_posting</span></td><td>Nightly</td><td>Per-board isolation; alert when a platform parser yields zero across all its boards</td></tr>
+        <tr><td class="id">JA3</td><td class="k">ATS endpoint poller</td><td><span class="m">ats slug map</span> &rarr; <span class="m">raw_posting</span></td><td>Nightly</td><td>Cheap and stable; low alert priority</td></tr>
+        <tr><td class="id">JA4</td><td class="k">Licensed feed ingester</td><td><span class="m">provider delta</span> &rarr; <span class="m">raw_posting</span></td><td>Daily</td><td>Vendor-agnostic adapter &mdash; the provider will change; the schema should not</td></tr>
+        <tr><td class="id">JA5</td><td class="k">SERP discovery</td><td><span class="m">query set</span> &rarr; <span class="m">raw_posting</span> + discovery queue</td><td>Weekly</td><td>Best-effort. Its job is finding sources we do not know about.</td></tr>
+        <tr><td class="id">JA6</td><td class="k">Normaliser<small>agency filter &rarr; dedupe &rarr; resolve &rarr; signal</small></td><td><span class="m">raw_posting</span> &rarr; <span class="m">signal</span></td><td>After each sweep</td><td>Pure function over stored raw postings &mdash; fully re-runnable without re-fetching</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">Why JA6 is separate</span>
+    <p>The agency blocklist will be extended, the title synonym map will be corrected, and the resolution rules will be tuned &mdash; repeatedly, in the first months. Keeping normalisation as a pure function over stored <code>raw_posting</code> rows means every one of those changes is a re-run over what is already on disk, not a re-crawl of the internet.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <div class="sec-hd"><span class="sec-num">&sect;11</span><h2>Build order</h2></div>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th class="num">#</th><th>Build</th><th>Why here</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="k">JA1 careers page watcher</td><td>Best ICP coverage, zero resolution problem, free, stable. Also the source of truth for closure detection in &sect;8, so everything else leans on it.</td></tr>
+        <tr><td class="num">2</td><td class="k">JA6 normaliser &mdash; agency filter first</td><td>Even with one source, agency noise must be filtered before signals are written. Build the filter before the second source multiplies the noise.</td></tr>
+        <tr><td class="num">3</td><td class="k">JA2 bar boards &mdash; top 10 metros</td><td>Highest-value addition after careers pages, and the parsers are reusable across roughly three boards each. Prove the platform-parser approach on ten before writing forty.</td></tr>
+        <tr><td class="num">4</td><td class="k">JA3 ATS endpoints</td><td>Small effort, clean data, no parser maintenance.</td></tr>
+        <tr><td class="num">5</td><td class="k">JA5 SERP discovery</td><td>Reveals which sources are being missed &mdash; and that answer should inform whether lane 2 is worth buying.</td></tr>
+        <tr><td class="num">6</td><td class="k">JA4 licensed feed</td><td>Last. It costs money, and by this point there is a measured coverage gap to size it against instead of an assumption.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">Buy the feed last, not first</span>
+    <p>The instinct is to start with a licensed provider because it arrives as clean JSON. But until lane 1 is running there is no way to know what it adds &mdash; and given that small firms largely avoid the paid boards, the honest expectation is that its incremental coverage of <em>this</em> ICP is smaller than it looks.</p>
+    <p>Run lane 1, measure what share of firms produce postings there, then buy against a number.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Extension to the Pipeline Build Spec. Expands signal 01 acquisition into six components and replaces the placeholder W1/W2 watchers.</div>
+  <div>Access routes reflect the position as of September 2026 &mdash; Indeed's Publisher API is retired with no public replacement, and Google's Jobs API has been phased out. Verify provider terms before contracting. Weights and thresholds are seeded values to be replaced by measurement.</div>
+</footer>
+
+</main>
+</div>

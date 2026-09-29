@@ -1,0 +1,40 @@
+<style>
+@page { size: A4; margin: 15mm 13mm 16mm 13mm; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { background:#ffffff !important; font-size:10pt !important; }
+  .shell { display:block !important; max-width:100% !important; padding:0 !important; }
+  .rail { display:none !important; }
+  .mast { padding:0 0 18pt !important; }
+  h1 { font-size:30pt !important; max-width:20ch !important; }
+  .dek { font-size:12.5pt !important; }
+  .mast-meta { font-size:7.5pt !important; }
+  section { break-before:page; padding-top:0 !important; }
+  section:first-of-type { break-before:avoid; }
+  h2 { font-size:17pt !important; }
+  h2, h3, h4, .sec-hd, caption { break-after:avoid; }
+  .sec-hd { margin-bottom:12pt !important; }
+  .lede { font-size:11.5pt !important; }
+  .ledger { overflow:visible !important; background:#F1F5F3 !important; margin:8pt 0 16pt !important; }
+  table { min-width:0 !important; width:100% !important; font-size:8.2pt !important; table-layout:auto; }
+  thead { display:table-header-group; }
+  tbody tr { break-inside:avoid; }
+  tbody td { padding:.5em .55em !important; }
+  thead th { padding:.55em .55em !important; font-size:6.6pt !important; white-space:normal !important; }
+  caption { font-size:6.8pt !important; padding:.6em .55em .4em !important; }
+  td small { font-size:.85em !important; }
+  .thesis, .note, .spec, .mcell, .layer, .stages li, .matrix, pre, .foot { break-inside:avoid; }
+  .thesis, .spec, .spec-bd { background:#F1F5F3 !important; }
+  .spec-hd, .mcell.hd { background:#E6EDEA !important; }
+  .thesis { padding:12pt 14pt !important; margin:10pt 0 14pt !important; }
+  .matrix { grid-template-columns:1fr 1fr 1fr !important; }
+  .two { grid-template-columns:1fr 1fr !important; }
+  pre { white-space:pre-wrap !important; word-break:break-word; font-size:7.4pt !important; }
+  a { color:inherit !important; text-decoration:none !important; }
+  .chip { font-size:6.4pt !important; }
+  .yb, .bar { min-width:0 !important; }
+  .stack { margin:10pt 0 14pt !important; }
+  .layer { padding:8pt 0 !important; }
+}
+</style>
+</html>

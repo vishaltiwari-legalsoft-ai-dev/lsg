@@ -1,0 +1,599 @@
+<title>First-Party Data Plane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1EF; --surface:#F9FBFA; --surface-2:#E3E9E6;
+  --rule:#C6D2CD; --rule-strong:#9AACA6;
+  --ink:#13201C; --ink-2:#4C5D57; --ink-3:#74857D;
+  --accent:#0E5A4A; --accent-soft:#D4E4DE;
+  --signal:#A93B1C; --signal-soft:#F1DCD4;
+  --brass:#8A6118;
+  --measure:70ch;
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.75rem; --s5:2.75rem; --s6:4.25rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+    --rule:#27362F; --rule-strong:#41564E;
+    --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+    --accent:#59BBA0; --accent-soft:#16302A;
+    --signal:#DD8163; --signal-soft:#33201A;
+    --brass:#CBA25D;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1512; --surface:#121D19; --surface-2:#18251F;
+  --rule:#27362F; --rule-strong:#41564E;
+  --ink:#E4EDE8; --ink-2:#A5B6AE; --ink-3:#7C8D85;
+  --accent:#59BBA0; --accent-soft:#16302A;
+  --signal:#DD8163; --signal-soft:#33201A;
+  --brass:#CBA25D;
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:16px; line-height:1.62; margin:0; -webkit-font-smoothing:antialiased}
+::selection{background:var(--accent-soft); color:var(--ink)}
+a{color:var(--accent); text-underline-offset:.18em}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+.shell{max-width:1180px; margin:0 auto; padding:0 var(--s4) var(--s6)}
+@media(min-width:1040px){
+  .shell{display:grid; grid-template-columns:186px minmax(0,1fr); gap:var(--s6); align-items:start}
+  .rail{position:sticky; top:0; padding-top:var(--s5); max-height:100vh; overflow-y:auto}
+}
+.rail{display:none}
+@media(min-width:1040px){.rail{display:block}}
+.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--s1)}
+.rail a{display:flex; gap:.5em; font-family:"IBM Plex Mono",monospace; font-size:.69rem; color:var(--ink-2); text-decoration:none; padding:.28em 0; line-height:1.35}
+.rail a:hover{color:var(--accent)}
+.rail a b{color:var(--ink-3); font-weight:500; flex:none}
+.rail .rail-hd{font-family:"IBM Plex Mono",monospace; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); padding-bottom:var(--s2); border-bottom:1px solid var(--rule); margin-bottom:var(--s2)}
+
+.mast{padding:var(--s6) 0 var(--s5); border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 var(--s3)}
+h1{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.3rem,5.5vw,3.7rem); line-height:1.03; letter-spacing:-.018em; margin:0; text-wrap:balance; max-width:15ch}
+.dek{font-family:Newsreader,Georgia,serif; font-size:clamp(1.06rem,2.1vw,1.3rem); line-height:1.5; color:var(--ink-2); max-width:60ch; margin:var(--s3) 0 0}
+.mast-meta{display:flex; flex-wrap:wrap; gap:var(--s1) var(--s4); margin-top:var(--s4); font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--ink-3)}
+.mast-meta span b{color:var(--ink-2); font-weight:500}
+
+section{padding-top:var(--s6); scroll-margin-top:var(--s3)}
+.sec-hd{display:flex; align-items:baseline; gap:var(--s2); border-bottom:1px solid var(--rule-strong); padding-bottom:var(--s2); margin-bottom:var(--s4)}
+.sec-num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--accent); font-weight:500; flex:none}
+h2{font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.48rem,3.2vw,1.98rem); line-height:1.12; letter-spacing:-.012em; margin:0; text-wrap:balance}
+h3{font-family:"Public Sans",sans-serif; font-weight:700; font-size:.95rem; margin:var(--s5) 0 var(--s2)}
+h4{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:.68rem; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin:var(--s4) 0 var(--s2)}
+p{margin:0 0 var(--s3); max-width:var(--measure)}
+ul,ol{max-width:var(--measure); padding-left:1.15em; margin:0 0 var(--s3)}
+li{margin-bottom:var(--s1)}
+li::marker{color:var(--ink-3)}
+strong{font-weight:600}
+em{font-style:italic}
+code{font-family:"IBM Plex Mono",monospace; font-size:.86em; background:var(--surface-2); padding:.08em .32em}
+.lede{font-family:Newsreader,Georgia,serif; font-size:1.15rem; line-height:1.55; color:var(--ink-2)}
+
+pre{background:var(--surface); border:1px solid var(--rule-strong); border-left:3px solid var(--accent); padding:var(--s3) var(--s4); overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:.775rem; line-height:1.7; margin:var(--s3) 0 var(--s5); color:var(--ink-2)}
+pre code{background:none; padding:0; font-size:1em}
+pre b{color:var(--ink); font-weight:600}
+pre i{color:var(--accent); font-style:normal}
+pre u{color:var(--brass); text-decoration:none}
+pre s{color:var(--ink-3); text-decoration:none}
+
+.ledger{border-top:2px solid var(--ink); border-bottom:2px solid var(--ink); overflow-x:auto; margin:var(--s3) 0 var(--s5); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:620px; font-size:.845rem}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:left; padding:.8em .85em; border-bottom:1px solid var(--rule-strong); vertical-align:bottom; white-space:nowrap}
+tbody td{padding:.74em .85em; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.num,th.num{text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.id{font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--accent); white-space:nowrap}
+td.k{font-weight:600; color:var(--ink)}
+td small{display:block; color:var(--ink-3); font-size:.86em; line-height:1.4; margin-top:.2em}
+td .m{font-family:"IBM Plex Mono",monospace; font-size:.92em}
+caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace; font-size:.64rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3); padding:.8em .85em .45em; border-bottom:1px solid var(--rule)}
+
+.chip{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.62rem; letter-spacing:.07em; text-transform:uppercase; padding:.2em .48em; white-space:nowrap; border:1px solid currentColor; line-height:1.4}
+.chip.go{color:var(--accent)}
+.chip.no{color:var(--signal)}
+.chip.mid{color:var(--brass)}
+
+figure{margin:var(--s4) 0 var(--s5)}
+figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink-2)}
+figcaption{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.05em; color:var(--ink-3); margin-top:var(--s2); line-height:1.6; max-width:78ch}
+.svg-lb{font-family:"IBM Plex Mono",monospace; font-size:11px}
+.svg-sub{font-family:"IBM Plex Mono",monospace; font-size:9px}
+.svg-edge{font-family:"IBM Plex Mono",monospace; font-size:9.5px}
+
+.key{border-left:3px solid var(--accent); background:var(--surface); padding:var(--s3) var(--s4); margin:var(--s3) 0 var(--s4); max-width:var(--measure)}
+.key p:last-child{margin-bottom:0}
+.key .tag{font-family:"IBM Plex Mono",monospace; font-size:.63rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:var(--s2)}
+.note{border-left:2px solid var(--signal); padding:var(--s2) 0 var(--s2) var(--s3); margin:var(--s3) 0 var(--s4); max-width:var(--measure); font-size:.9rem; color:var(--ink-2)}
+.note b{color:var(--signal); font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:.3em}
+.note p:last-child{margin-bottom:0}
+
+.foot{margin-top:var(--s6); padding-top:var(--s3); border-top:2px solid var(--ink); font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--ink-3); line-height:1.9}
+.foot div{margin-bottom:var(--s2); max-width:90ch}
+@media(prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Sections">
+  <div class="rail-hd">Contents</div>
+  <ol>
+    <li><a href="#s1"><b>1</b> What we actually have</a></li>
+    <li><a href="#s2"><b>2</b> One door</a></li>
+    <li><a href="#s3"><b>3</b> Job data</a></li>
+    <li><a href="#s4"><b>4</b> Firm dataset</a></li>
+    <li><a href="#s5"><b>5</b> The portal</a></li>
+    <li><a href="#s6"><b>6</b> Supply steers demand</a></li>
+    <li><a href="#s7"><b>7</b> Plane I components</a></li>
+    <li><a href="#s8"><b>8</b> Risks</a></li>
+    <li><a href="#s9"><b>9</b> Order of work</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">Extension to the Pipeline Build Spec &middot; Plane I</p>
+  <h1>First-Party Data Plane</h1>
+  <p class="dek">Three assets already exist. None of them is what its name suggests &mdash; the job data is not a signal, the firm data is not a universe, and the portal is not just a product. Placed correctly, one of them closes a gap the build spec had left open.</p>
+  <div class="mast-meta">
+    <span><b>Adds</b> plane I &middot; 4 components</span>
+    <span><b>Changes</b> arming gate, fit score</span>
+    <span><b>Closes</b> the supply gate</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="sec-hd"><span class="sec-num">&sect;1</span><h2>What we actually have</h2></div>
+
+  <p class="lede">Each asset has an obvious use and a correct use, and for two of the three they are not the same. Getting this classification wrong is what turns useful internal data into contamination.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Asset &rarr; what it looks like &rarr; what it is</caption>
+      <thead><tr><th>Asset</th><th>Looks like</th><th>Actually is</th><th>Enters as</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Job-posting data<small>companies that posted roles &mdash; no post link, no company URL</small></td>
+          <td>An intent signal. "These firms were hiring."</td>
+          <td><strong>A seed list plus a fit attribute.</strong> Without a link there is no way to know whether the role is still open, and an unverifiable posting is not a signal &mdash; it is a lead on where to look. Its durable value is different and better: it shows which firms <em>structurally</em> hire support staff.</td>
+          <td class="m">crawl seed<br>+ fit attribute</td>
+        </tr>
+        <tr>
+          <td class="k">Firm dataset<small>firm records, size, attributes</small></td>
+          <td>A ready-made universe. "We already have the list."</td>
+          <td><strong>A universe accelerator and an attribute source &mdash; not a universe.</strong> It cannot contain the field the whole ICP turns on, because no commercial dataset carries fee model. It shortens discovery; it does not replace qualification.</td>
+          <td class="m">observation<br>+ firm_attribute</td>
+        </tr>
+        <tr>
+          <td class="k">Portal<small>talent pool + daily job postings</small></td>
+          <td>The product.</td>
+          <td><strong>Two feeds that belong at opposite ends of the funnel.</strong> The talent pool is the supply side of the arming gate &mdash; the table the build spec specified but had no source for. The role requests are first-party demand, and they must reach suppression before they reach outreach.</td>
+          <td class="m">bench_inventory<br>+ firm_track</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 880 268" role="img" aria-label="Three internal assets feed the pipeline: job data and firm data enter through the observation table alongside external sources; portal role requests also enter there and set firm track; the portal talent pool feeds bench inventory, which gates and steers the arming decision.">
+      <defs>
+        <marker id="p1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+        </marker>
+        <marker id="p2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <rect x="14" y="14" width="184" height="44" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="106" y="33" text-anchor="middle" fill="var(--ink)">Job data</text>
+      <text class="svg-sub" x="106" y="48" text-anchor="middle" fill="var(--ink-3)">seed + fit attribute</text>
+
+      <rect x="14" y="72" width="184" height="44" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="106" y="91" text-anchor="middle" fill="var(--ink)">Firm dataset</text>
+      <text class="svg-sub" x="106" y="106" text-anchor="middle" fill="var(--ink-3)">accelerator + attributes</text>
+
+      <rect x="14" y="130" width="184" height="44" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="106" y="149" text-anchor="middle" fill="var(--ink)">Portal &mdash; requests</text>
+      <text class="svg-sub" x="106" y="164" text-anchor="middle" fill="var(--ink-3)">first-party demand</text>
+
+      <rect x="14" y="196" width="184" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="106" y="215" text-anchor="middle" fill="var(--accent)">Portal &mdash; talent pool</text>
+      <text class="svg-sub" x="106" y="230" text-anchor="middle" fill="var(--ink-3)">supply</text>
+
+      <rect x="254" y="52" width="128" height="66" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="318" y="80" text-anchor="middle" fill="var(--ink)">observation</text>
+      <text class="svg-sub" x="318" y="96" text-anchor="middle" fill="var(--ink-3)">one door</text>
+
+      <line x1="198" y1="36" x2="252" y2="68" stroke="var(--ink-2)" marker-end="url(#p1)"/>
+      <line x1="198" y1="94" x2="252" y2="88" stroke="var(--ink-2)" marker-end="url(#p1)"/>
+      <line x1="198" y1="152" x2="252" y2="108" stroke="var(--ink-2)" marker-end="url(#p1)"/>
+
+      <rect x="424" y="52" width="164" height="66" fill="var(--surface)" stroke="var(--rule-strong)"/>
+      <text class="svg-lb" x="506" y="74" text-anchor="middle" fill="var(--ink)">resolve &rarr; qualify</text>
+      <text class="svg-lb" x="506" y="90" text-anchor="middle" fill="var(--ink)">&rarr; score</text>
+      <text class="svg-sub" x="506" y="106" text-anchor="middle" fill="var(--ink-3)">unchanged</text>
+      <line x1="382" y1="85" x2="422" y2="85" stroke="var(--ink-2)" marker-end="url(#p1)"/>
+
+      <rect x="254" y="196" width="128" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="318" y="222" text-anchor="middle" fill="var(--accent)">bench_inventory</text>
+      <line x1="198" y1="218" x2="252" y2="218" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#p2)"/>
+
+      <rect x="646" y="58" width="150" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-lb" x="721" y="80" text-anchor="middle" fill="var(--accent)">ARMING GATE</text>
+      <text class="svg-sub" x="721" y="96" text-anchor="middle" fill="var(--ink-3)">what goes to outreach</text>
+      <line x1="588" y1="85" x2="644" y2="85" stroke="var(--ink-2)" marker-end="url(#p1)"/>
+
+      <polyline points="382,218 721,218 721,114" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#p2)"/>
+      <text class="svg-edge" x="552" y="212" text-anchor="middle" fill="var(--accent)">gates &mdash; and steers which tier is armed</text>
+
+      <polyline points="318,196 318,160 506,160 506,120" fill="none" stroke="var(--ink-2)" stroke-dasharray="4 3" marker-end="url(#p1)"/>
+      <text class="svg-edge" x="412" y="154" text-anchor="middle" fill="var(--ink-3)">priority weighting</text>
+    </svg>
+    <figcaption>Fig 1 &mdash; Three of the four feeds enter through the same door as every external source, so nothing bypasses resolution or reconciliation. The fourth runs down a separate path to <code>bench_inventory</code> and rejoins at the arming gate &mdash; the only place in the system where supply and demand meet.</figcaption>
+  </figure>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="sec-hd"><span class="sec-num">&sect;2</span><h2>One door</h2></div>
+
+  <p>Internal data feels trustworthy, which makes it tempting to load it straight into <code>firm</code> and skip the pipeline. Do not. Every record enters through <code>observation</code> with a <code>source</code> tag, exactly like a scraped one.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Reason</th><th>What breaks without it</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Provenance</td><td>When a firm is scored into the wrong tier six weeks from now, there is no way to tell whether the cause was bad internal data, a bad match, or a bad extraction. Every debugging session becomes archaeology.</td></tr>
+        <tr><td class="k">Reconciliation</td><td>Internal data will disagree with the firm's own website about size, name and phone. Loaded directly, it silently wins or silently loses. Through <code>firm_attribute</code>, the precedence rules in the build spec decide, and the decision is inspectable.</td></tr>
+        <tr><td class="k">Reversibility</td><td>If a bulk load turns out to be mismatched, an <code>observation</code>-sourced load can be withdrawn by source tag. A direct write cannot be separated from the rest.</td></tr>
+        <tr><td class="k">Freshness</td><td>Internal data has an age, often an unknown one. Through the normal path it inherits the 90-day rules and gets re-verified. Loaded directly it looks permanently current.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">The one exception</span>
+    <p><code>bench_inventory</code> is not firm data and does not go through <code>observation</code>. It is a live mirror of internal state with its own sync, its own freshness requirement, and no identity resolution to do. It is the only feed in the system that writes to a table directly.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="sec-hd"><span class="sec-num">&sect;3</span><h2>Job data &mdash; a seed, not a signal</h2></div>
+
+  <p class="lede">A job posting with no link cannot be verified. We cannot tell whether the role is still open, and "still open after three weeks" is the entire reason that signal is the strongest one on the board. Treating unverifiable history as live intent would send outbound at firms that filled the role months ago.</p>
+
+  <p>So it does not enter as a signal. It does two other things, and the second is more valuable than the first.</p>
+
+  <h3>Use one &mdash; seed the crawl queue</h3>
+  <p>Every company name in the file is a candidate that may or may not already be in the universe. Resolve it, and if it is new, it enters discovery. If it resolves to a firm we already have, the record adds nothing to the universe but everything to use two.</p>
+
+  <h3>Use two &mdash; structural hiring behaviour</h3>
+  <p>This is the durable value. A firm that has posted support roles in the past has <strong>proved it has that work and has had budget for it.</strong> That is a fit attribute, not an intent one, and it survives indefinitely.</p>
+
+<pre><code><b>-- new fit attributes derived from historical job data</b>
+
+  <i>has_hired_support_roles</i>     bool     <s>-- ever posted a support role</s>
+  <i>support_roles_posted</i>        text[]   <s>-- which ones: paralegal, intake…</s>
+  <i>last_known_hiring_attempt</i>   date
+  <i>repeat_role_count</i>           int      <s>-- same role posted N times</s>
+
+<b>-- FIT contribution</b>
+  has_hired_support_roles                              +5
+  repeat_role_count &gt;= 2   <u>strongest of the four</u>       +8
+
+<s>-- a firm that has posted "paralegal" three times in two years has</s>
+<s>-- churn in that seat. the need is not occasional, it is chronic —</s>
+<s>-- and chronic need in a seat we can fill permanently is a better</s>
+<s>-- prospect than a firm hiring for the first time. this pattern is</s>
+<s>-- only visible with historical data. it is the single best reason</s>
+<s>-- to keep this file.</s>
+
+<b>-- what it must NOT do</b>
+  never sets intent_score          <s>-- unverifiable</s>
+  never arms a lead                <s>-- §10 arming needs a live signal</s>
+  never appears in outreach copy   <s>-- "you posted a role in March"</s>
+                                   <s>-- is a liability, not a first line</s></code></pre>
+
+  <h3>Whether it can be matched at all</h3>
+  <p>Everything above depends on resolving a company name to a firm entity. Without a URL that is the weakest match rule in the system. Run this triage on the file before planning around it &mdash; the answer determines whether the asset is usable, partly usable, or a trap.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Match ladder &middot; check which fields the file actually carries</caption>
+      <thead><tr><th>Fields present</th><th>Match confidence</th><th>Handling</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Name + any URL or email domain</td><td><span class="chip go">Decisive</span></td><td>Auto-merge on rule R1. Fully usable.</td></tr>
+        <tr><td class="k">Name + phone</td><td><span class="chip go">Decisive</span></td><td>Auto-merge on rule R2.</td></tr>
+        <tr><td class="k">Name + full street address</td><td><span class="chip go">Strong</span></td><td>Rule R3 &mdash; address hash plus name similarity. Usable.</td></tr>
+        <tr><td class="k">Name + city/state only</td><td><span class="chip mid">Probabilistic</span></td><td>Rule R4 territory. <strong>Never auto-merge.</strong> Route to the review queue, or accept it only where exactly one candidate exists in that city above the similarity threshold.</td></tr>
+        <tr><td class="k">Name only</td><td><span class="chip no">Unusable for matching</span></td><td>Do not attempt. "Smith Law" resolves to dozens of firms nationally, and a wrong merge writes a false hiring history onto a real firm permanently.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Bad internal data is worse than none</b>
+    <p>A mismatched merge does not fail loudly. It writes a plausible attribute onto the wrong firm, which then scores wrongly, routes wrongly, and gets contacted with a premise that is not true &mdash; forever, because nothing downstream will ever question it. Tag every attribute from this source and keep it withdrawable.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="sec-hd"><span class="sec-num">&sect;4</span><h2>Firm dataset &mdash; accelerator, not universe</h2></div>
+
+  <p>This is the strongest of the three assets and the one most likely to be over-trusted. It can carry a firm most of the way through discovery, but it cannot carry it through qualification, because <strong>the field the entire ICP turns on is not in any commercial dataset.</strong></p>
+
+  <div class="ledger">
+    <table>
+      <caption>What it can and cannot replace</caption>
+      <thead><tr><th>Attribute</th><th>Dataset</th><th>Still required</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Firm name, address, phone</td><td><span class="chip go">Usable</span></td><td>Reconciled against site and Places by precedence</td></tr>
+        <tr><td class="k">Domain</td><td><span class="chip go">Usable &mdash; the key field</span><small>It is the strongest match key and the entry point to the crawl</small></td><td>&mdash;</td></tr>
+        <tr><td class="k">Firm size</td><td><span class="chip go">Usable</span></td><td>Cross-check against team page. Vendor size fields are often headcount, not attorney count &mdash; a material difference here.</td></tr>
+        <tr><td class="k">Practice area</td><td><span class="chip mid">Coarse</span></td><td>Site classification still runs. Vendor taxonomies do not distinguish PI from general litigation.</td></tr>
+        <tr><td class="k">Fee model</td><td><span class="chip no">Absent</span></td><td><strong>Site crawl, always.</strong> No shortcut exists.</td></tr>
+        <tr><td class="k">Staff ratio, languages, case system</td><td><span class="chip no">Absent</span></td><td>Site crawl</td></tr>
+        <tr><td class="k">Named decision-maker</td><td><span class="chip mid">Sometimes</span></td><td>Verify against bar records and the team page. Commercial data on small firms goes stale fast.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>First task: coverage analysis</h3>
+  <p>Before deciding how much discovery work this saves, measure the overlap. This is one query and it changes the plan.</p>
+
+<pre><code><b>-- run after loading the dataset as observations and resolving</b>
+
+  in dataset only        →  firms the external harvest would miss
+  in Places only         →  the dataset is not complete
+  in both                →  the overlap
+  dataset ∩ ICP tiers    →  how much of it is even relevant
+
+<b>-- what each outcome means</b>
+  high overlap, low ICP share   → dataset is broad but off-target.
+                                  use it for attributes, keep full harvest.
+  low overlap, high ICP share   → genuinely additive. harvest still needed
+                                  for coverage, but this is a strong seed.
+  high overlap, high ICP share  → discovery can be narrowed to gap-fill.
+                                  the biggest possible saving.</code></pre>
+
+  <h3>Precedence</h3>
+  <p>Where this data sits in the reconciliation order depends on where it came from, and that determination has to be made before the first load rather than after the first conflict.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Origin</th><th>Rank it</th><th>Because</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Built by the team from real interactions</td><td>Above Places, below the firm's own site</td><td>Human-verified, but ages without anyone noticing</td></tr>
+        <tr><td class="k">Purchased from a data vendor</td><td>Directory tier &mdash; below Places</td><td>Same staleness profile as Justia or Avvo</td></tr>
+        <tr><td class="k">Unknown provenance</td><td>Lowest, and flagged</td><td>Unknown age plus unknown method is not a source, it is a hint</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="sec-hd"><span class="sec-num">&sect;5</span><h2>The portal &mdash; two feeds, opposite ends</h2></div>
+
+  <p class="lede">The portal is the only genuinely proprietary asset here. Everything else could in principle be reconstructed from public sources; this could not. It also carries the highest risk of an embarrassing failure if it is wired in late.</p>
+
+  <h3>Feed A &mdash; the talent pool</h3>
+  <p>This is <code>bench_inventory</code>. The build spec specified that table and the gate that reads it, but had no source for it. The portal is the source, which turns a hypothetical constraint into a live one.</p>
+
+<pre><code><b>-- bench_inventory, sourced from the portal talent pool</b>
+  sku            demand_writer | paralegal | intake | case_manager | …
+  language       en | es | pt | …
+  practice_exp   personal_injury | immigration | family | …   <s>← matters</s>
+  available      int
+  replenish_30d  int
+  as_of          timestamptz
+
+<s>-- the practice_exp dimension is what makes this useful rather than</s>
+<s>-- decorative. "12 case managers available" tells the arming gate</s>
+<s>-- almost nothing. "12 case managers, 4 of them Spanish-speaking with</s>
+<s>-- immigration experience" tells it exactly which tier to arm.</s></code></pre>
+
+  <h3>Feed B &mdash; the daily role requests</h3>
+  <p>Whatever these turn out to be, they resolve to firms, and firms that appear here must not be treated as cold. The handling differs by which of two things the feed actually is.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>If the feed is&hellip;</th><th>Then those firms are</th><th>Route to</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Law firms posting roles they want filled<small>the likely reading</small></td>
+          <td>Either existing customers or self-identified prospects. Either way they have raised their hand. <strong>The hottest population in the system</strong> &mdash; and the one it would be most damaging to cold-email.</td>
+          <td class="m">firm_track = 'portal'<br>suppress from cold sequences<br>route to the human who owns the account</td>
+        </tr>
+        <tr>
+          <td class="k">Externally aggregated postings collected for internal use</td>
+          <td>The same class of data as &sect;3 &mdash; and if these carry links and dates, they are a genuine live signal rather than a seed.</td>
+          <td class="m">signal kind='job_posting_open'<br>only where a URL and date exist</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Wire suppression before anything else</b>
+    <p>If the first reading is right, a cold sequence reaching a firm that already posted a role on our own portal is the worst single failure this system can produce. It is visible to the customer, it contradicts the product, and it costs an account. The portal-to-suppression path should be connected before the first outbound email is ever sent &mdash; ahead of scoring, ahead of signals, ahead of everything.</p>
+  </div>
+
+  <h3>Feed B has a third use</h3>
+  <p>The role requests are also <strong>ground truth for the tier &rarr; wedge-SKU table</strong>. That mapping in the build spec is a set of reasoned guesses. Portal data replaces it with fact: what kind of firm actually asks for what role, first, in their own words. No amount of outbound testing produces that as cleanly.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="sec-hd"><span class="sec-num">&sect;6</span><h2>Supply steers demand</h2></div>
+
+  <p class="lede">The build spec used the bench as a brake &mdash; do not arm a lead for a role we cannot fill. With a live feed it can do something more useful: decide <em>what to go looking for this week.</em></p>
+
+  <p>The standard model generates demand and then hopes delivery can match it. Inverted, the bench becomes an input to targeting rather than a constraint discovered at the end:</p>
+
+  <ul>
+    <li>Fourteen Spanish-speaking legal assistants with immigration experience sitting available &rarr; <strong>this week's outbound weights Tier 1B up</strong>.</li>
+    <li>Six demand writers with PI experience &rarr; Tier 1A on the demand-writer wedge gets priority.</li>
+    <li>Zero lien negotiators, none replenishing &rarr; that wedge is paused in messaging, not merely gated at the end.</li>
+  </ul>
+
+<pre><code><b>-- arming threshold becomes a function of supply</b>
+
+  threshold(tier, sku) =
+      BASE                                  <s>-- 60</s>
+    − bench_bonus(available, replenish_30d) <s>-- deep bench: arm earlier</s>
+    + starvation_block(available)           <s>-- empty: do not arm at all</s>
+
+  bench_bonus     = LEAST(15, available × 1.5)
+  starvation_block= CASE WHEN available = 0
+                         AND replenish_30d = 0 THEN 999 ELSE 0 END
+
+<s>-- a deep bench lowers the bar, so borderline leads for a role we can</s>
+<s>-- comfortably fill still get worked. an empty bench with no pipeline</s>
+<s>-- raises it out of reach. the gate stops being binary and starts</s>
+<s>-- behaving like inventory pressure.</s></code></pre>
+
+  <div class="key">
+    <span class="tag">The bench is also a message</span>
+    <p>Because the talent pool is first-party and current, outreach can name real inventory. <em>"We have a paralegal with three years of personal injury experience available this week"</em> is a materially different opening from <em>"we place paralegals"</em> &mdash; it is specific, it is checkable, and it implies immediacy that a generic pitch cannot.</p>
+    <p>No competitor working from public job-posting data can write that line, because none of them knows what is on their bench at the moment they send. This is the one place where an internal asset produces an advantage that is not merely operational.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="sec-hd"><span class="sec-num">&sect;7</span><h2>Plane I components</h2></div>
+
+  <p>Four new components, added alongside D, P, W and R in the build spec's register.</p>
+
+  <div class="ledger">
+    <table>
+      <caption>Plane I &mdash; first-party sources</caption>
+      <thead><tr><th>ID</th><th>Component</th><th>Input &rarr; Output</th><th>Cadence</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="id">I1</td>
+          <td class="k">Firm dataset loader</td>
+          <td><span class="m">export</span> &rarr; <span class="m">observation</span></td>
+          <td>One-shot, re-runnable</td>
+          <td>Source tag <code>internal_firms</code>. Runs the coverage analysis as part of the load and reports it.</td>
+        </tr>
+        <tr>
+          <td class="id">I2</td>
+          <td class="k">Job history loader</td>
+          <td><span class="m">export</span> &rarr; <span class="m">observation</span> + <span class="m">firm_attribute</span></td>
+          <td>One-shot, re-runnable</td>
+          <td>Applies the match ladder. Anything at name-only confidence is rejected, not merged. Writes fit attributes only &mdash; never signals.</td>
+        </tr>
+        <tr>
+          <td class="id">I3</td>
+          <td class="k">Portal demand feed</td>
+          <td><span class="m">portal</span> &rarr; <span class="m">firm_track</span> + <span class="m">suppression</span></td>
+          <td>Hourly</td>
+          <td><strong>Build first.</strong> Suppression correctness matters more than latency anywhere else in the system.</td>
+        </tr>
+        <tr>
+          <td class="id">I4</td>
+          <td class="k">Talent pool sync</td>
+          <td><span class="m">portal</span> &rarr; <span class="m">bench_inventory</span></td>
+          <td>Hourly</td>
+          <td>Writes directly &mdash; the one feed that does not pass through <code>observation</code>. Stale bench data is worse than none: it re-opens the exact failure the gate exists to prevent.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Changes to existing components</h4>
+  <ul>
+    <li><strong>Fit score</strong> gains <code>has_hired_support_roles</code> (+5) and <code>repeat_role_count &ge; 2</code> (+8).</li>
+    <li><strong>Arming gate</strong> takes a supply-derived threshold instead of a fixed 60.</li>
+    <li><strong>Suppression check</strong> gains the portal track &mdash; and is checked at send time, not at arm time.</li>
+    <li><strong>Tier &rarr; wedge SKU</strong> becomes a table fed by portal request data rather than by seeded guesses.</li>
+  </ul>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="sec-hd"><span class="sec-num">&sect;8</span><h2>Risks</h2></div>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th>Risk</th><th>How it shows up</th><th>Guard</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Cold-emailing a portal firm <span class="chip no">Severe</span></td>
+          <td>A customer receives a prospecting email from the company they already buy from. Contradicts the product, in writing, to the person paying.</td>
+          <td>I3 before any outbound. Suppression at domain scope, checked at send.</td>
+        </tr>
+        <tr>
+          <td class="k">Name-only merges from job data</td>
+          <td>Silent. A false hiring history lands on a real firm and is never questioned again.</td>
+          <td>Match ladder. Reject at name-only confidence rather than guessing.</td>
+        </tr>
+        <tr>
+          <td class="k">Historical postings treated as live</td>
+          <td>Outbound opens with a role the firm filled eight months ago. Reads as careless and kills the reply.</td>
+          <td>Job history writes fit attributes only. Intent requires a verifiable live source.</td>
+        </tr>
+        <tr>
+          <td class="k">Over-trusting the firm dataset</td>
+          <td>Discovery is narrowed on the assumption the dataset is complete, and a segment quietly never gets collected.</td>
+          <td>Coverage analysis before any scope reduction. Numbers, not assumption.</td>
+        </tr>
+        <tr>
+          <td class="k">Stale bench data</td>
+          <td>Leads arm against inventory that is already placed. The three-day promise breaks on exactly the leads the system worked hardest to find.</td>
+          <td>Hourly sync, and an alert when <code>as_of</code> falls behind. Treat a stale bench as empty.</td>
+        </tr>
+        <tr>
+          <td class="k">Vendor size fields misread</td>
+          <td>Total headcount taken as attorney count. Firms land in the wrong band and the 26&ndash;50 penalty misfires.</td>
+          <td>Cross-check against team page on a sample before trusting the field.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <div class="sec-hd"><span class="sec-num">&sect;9</span><h2>Order of work</h2></div>
+
+  <p>Ordered by risk retired per unit of effort, not by data volume.</p>
+
+  <div class="ledger">
+    <table>
+      <thead><tr><th class="num">#</th><th>Do</th><th>Why first</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="k">I3 &mdash; portal demand &rarr; suppression</td><td>Retires the only failure here that damages an existing customer. Small job, and nothing outbound should run before it exists.</td></tr>
+        <tr><td class="num">2</td><td class="k">I4 &mdash; talent pool &rarr; bench_inventory</td><td>Closes the supply gate the build spec left open, and unlocks &sect;6. Also small.</td></tr>
+        <tr><td class="num">3</td><td class="k">Triage the job data against the match ladder</td><td>One inspection that determines whether the asset is usable at all. Cheap, and it prevents planning around data that cannot be matched.</td></tr>
+        <tr><td class="num">4</td><td class="k">I1 &mdash; firm dataset load + coverage analysis</td><td>Tells us how much discovery work is actually needed. Changes the scope of the largest stage in the build.</td></tr>
+        <tr><td class="num">5</td><td class="k">I2 &mdash; job history load</td><td>Last, because its value is a fit-score refinement rather than a gate, and it depends on step 3's verdict.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">What this changes about the build</span>
+    <p>Steps 1 and 2 are both small and both should land before the first outbound send. Step 4 may materially shrink the discovery plane &mdash; which is the largest and most expensive stage in the whole system &mdash; so it is worth doing early enough to influence that scope rather than after it has been built to full size.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>Extension to the Pipeline Build Spec. Adds plane I (four components), changes the arming gate from a fixed threshold to a supply-derived one, and adds two fit attributes.</div>
+  <div>Handling of the portal role-request feed depends on which of the two readings in &sect;5 is correct; the suppression path is required under either. Weights and thresholds are seeded values to be replaced by measurement.</div>
+</footer>
+
+</main>
+</div>
