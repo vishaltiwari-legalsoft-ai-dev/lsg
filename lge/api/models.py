@@ -387,6 +387,33 @@ class PainAnalysis(BaseModel):
     at: datetime
 
 
+# The Google Business Profile and its reviews (r_listing, D-062): shown as a
+# section of their own on the lead and the firm, never as a wall of JSON.
+
+
+class ListingSummary(BaseModel):
+    name: str
+    category: str | None
+    address: str | None
+    phone: str | None
+    website: str | None
+    rating: float | None
+    review_count: int | None
+    url: str | None  # the Maps listing
+    status: str | None
+    source_label: str  # which API it came from
+    notes: list[str]  # where the listing disagrees with the firm's own record
+    at: datetime
+
+
+class ReviewRow(BaseModel):
+    author: str | None
+    rating: int | None
+    date: str | None
+    text: str  # the reviewer's own words, one line
+    url: str | None
+
+
 class LeadDetail(LeadRow):
     contacts: list[ContactSummary]
     missing_roles: list[Literal["owner", "admin"]]
@@ -397,6 +424,9 @@ class LeadDetail(LeadRow):
     notes: list[LeadNote]
     job: ActionJob | None
     pain: PainAnalysis | None
+    listing: ListingSummary | None
+    listing_note: str | None  # why there is none, when there is none
+    reviews: list[ReviewRow]
 
 
 # =============================================================================
@@ -701,6 +731,9 @@ class FirmDetail(BaseModel):
     aliases: list[AliasRow]
     lead: FirmLeadRef | None
     pain: PainAnalysis | None
+    listing: ListingSummary | None
+    listing_note: str | None  # why there is none, when there is none
+    reviews: list[ReviewRow]
 
 
 # =============================================================================
@@ -791,8 +824,109 @@ class CapabilitiesResponse(BaseModel):
 class ProvidersResponse(BaseModel):
     ai_extraction: bool
     email_verification: bool  # a verifier is chosen and its key is set (r4_verify)
-    places: bool  # the Google Business Profile is looked up directly (the search engine's)
+    places: bool  # the Google Business Profile and its reviews: a listings provider with its key
+    search: bool  # a keyed search engine (Serper or Brave), not DuckDuckGo
+    sign_in: bool  # Google sign-in configured: the screens ask who you are (D-067)
     crawler_identity: str
+
+
+# =============================================================================
+# Sign-in, the signed-in person, the Users screen (D-067)
+# =============================================================================
+
+AccessLevel = Literal["admin", "operator", "viewer", "pending", "disabled"]
+Standing = Literal[
+    "off", "signed_out", "needs_onboarding", "awaiting_access", "disabled", "active"
+]
+
+
+class AuthUser(BaseModel):
+    id: str
+    email: str
+    name: str | None
+    picture_url: str | None
+    access: AccessLevel
+    access_display: str | None = None
+    standing: Literal["needs_onboarding", "awaiting_access", "disabled", "active"]
+    standing_display: str | None = None
+    admin_by_settings: bool = False  # an admin by .env, whatever the table says
+    kind: Literal["staff", "vendor"] = "staff"  # Legal Soft, or an email vendor's team (D-068)
+    vendor_name: str | None = None  # the vendor the allow list named, for a vendor
+    onboarded_at: datetime | None
+    onboarding: dict[str, Any] | None  # the form's answers, whole
+    created_at: datetime
+    last_sign_in_at: datetime | None
+    access_set_by: str | None
+    access_set_at: datetime | None
+
+
+class OnboardingField(BaseModel):
+    name: str
+    label: str
+    kind: Literal["text", "long_text", "choice"]
+    required: bool
+    hint: str | None = None
+    options: list[str] | None = None
+
+
+class AuthStatus(BaseModel):
+    configured: bool  # Google sign-in is set up on this engine
+    standing: Standing  # what the screen should show
+    user: AuthUser | None
+    sign_in_path: str  # where the "Sign in with Google" button goes (Legal Soft staff)
+    vendor_sign_in_path: str  # the same door for an email vendor's team (D-068)
+    onboarding_fields: list[OnboardingField]
+    allowed_domains: list[str]
+
+
+class OnboardingRequest(BaseModel):
+    answers: dict[str, Any]
+
+
+class UserAccessRequest(BaseModel):
+    access: Literal["admin", "operator", "viewer", "disabled"]
+
+
+class UserOption(BaseModel):
+    value: str
+    label: str
+
+
+class UsersResponse(BaseModel):
+    items: list[AuthUser]
+    waiting: int  # onboarded people the admin has not decided on
+    levels: list[UserOption]  # the access levels an admin can set
+
+
+class UserEvent(BaseModel):
+    kind: str
+    detail: dict[str, Any] | None
+    actor: str
+    at: datetime
+
+
+class UserDetail(BaseModel):
+    user: AuthUser
+    events: list[UserEvent]
+
+
+class VendorAllow(BaseModel):
+    id: str
+    pattern: str  # a whole address, or a whole domain written "@sendco.com"
+    vendor_name: str
+    note: str | None
+    added_by: str
+    added_at: datetime
+
+
+class VendorAllowRequest(BaseModel):
+    pattern: str
+    vendor_name: str
+    note: str | None = None
+
+
+class VendorAllowsResponse(BaseModel):
+    items: list[VendorAllow]
 
 
 class AlertItem(BaseModel):

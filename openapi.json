@@ -439,6 +439,251 @@
         "title": "AttributeRow",
         "type": "object"
       },
+      "AuthStatus": {
+        "properties": {
+          "allowed_domains": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Domains",
+            "type": "array"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "onboarding_fields": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingField"
+            },
+            "title": "Onboarding Fields",
+            "type": "array"
+          },
+          "sign_in_path": {
+            "title": "Sign In Path",
+            "type": "string"
+          },
+          "standing": {
+            "enum": [
+              "off",
+              "signed_out",
+              "needs_onboarding",
+              "awaiting_access",
+              "disabled",
+              "active"
+            ],
+            "title": "Standing",
+            "type": "string"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuthUser"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vendor_sign_in_path": {
+            "title": "Vendor Sign In Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "configured",
+          "standing",
+          "user",
+          "sign_in_path",
+          "vendor_sign_in_path",
+          "onboarding_fields",
+          "allowed_domains"
+        ],
+        "title": "AuthStatus",
+        "type": "object"
+      },
+      "AuthUser": {
+        "properties": {
+          "access": {
+            "enum": [
+              "admin",
+              "operator",
+              "viewer",
+              "pending",
+              "disabled"
+            ],
+            "title": "Access",
+            "type": "string"
+          },
+          "access_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Display"
+          },
+          "access_set_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Set At"
+          },
+          "access_set_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Set By"
+          },
+          "admin_by_settings": {
+            "default": false,
+            "title": "Admin By Settings",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "staff",
+            "enum": [
+              "staff",
+              "vendor"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_sign_in_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sign In At"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "onboarded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarded At"
+          },
+          "onboarding": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding"
+          },
+          "picture_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picture Url"
+          },
+          "standing": {
+            "enum": [
+              "needs_onboarding",
+              "awaiting_access",
+              "disabled",
+              "active"
+            ],
+            "title": "Standing",
+            "type": "string"
+          },
+          "standing_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standing Display"
+          },
+          "vendor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor Name"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "picture_url",
+          "access",
+          "standing",
+          "onboarded_at",
+          "onboarding",
+          "created_at",
+          "last_sign_in_at",
+          "access_set_by",
+          "access_set_at"
+        ],
+        "title": "AuthUser",
+        "type": "object"
+      },
       "BatchRequest": {
         "properties": {
           "action": {
@@ -1300,6 +1545,27 @@
               }
             ]
           },
+          "listing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListingSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listing_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Note"
+          },
           "pain": {
             "anyOf": [
               {
@@ -1309,6 +1575,13 @@
                 "type": "null"
               }
             ]
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewRow"
+            },
+            "title": "Reviews",
+            "type": "array"
           },
           "signals": {
             "items": {
@@ -1331,7 +1604,10 @@
           "contacts",
           "aliases",
           "lead",
-          "pain"
+          "pain",
+          "listing",
+          "listing_note",
+          "reviews"
         ],
         "title": "FirmDetail",
         "type": "object"
@@ -2928,6 +3204,27 @@
               }
             ]
           },
+          "listing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListingSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listing_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Note"
+          },
           "missing_roles": {
             "items": {
               "enum": [
@@ -2987,6 +3284,13 @@
                 "type": "null"
               }
             ]
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewRow"
+            },
+            "title": "Reviews",
+            "type": "array"
           },
           "score": {
             "$ref": "#/components/schemas/ScoreBreakdown"
@@ -3069,7 +3373,10 @@
           "timeline",
           "notes",
           "job",
-          "pain"
+          "pain",
+          "listing",
+          "listing_note",
+          "reviews"
         ],
         "title": "LeadDetail",
         "type": "object"
@@ -3438,6 +3745,134 @@
         "title": "LeadsResponse",
         "type": "object"
       },
+      "ListingSummary": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "review_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Count"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "address",
+          "phone",
+          "website",
+          "rating",
+          "review_count",
+          "url",
+          "status",
+          "source_label",
+          "notes",
+          "at"
+        ],
+        "title": "ListingSummary",
+        "type": "object"
+      },
       "ListsSummary": {
         "properties": {
           "count": {
@@ -3527,6 +3962,78 @@
           "text"
         ],
         "title": "NoteRequest",
+        "type": "object"
+      },
+      "OnboardingField": {
+        "properties": {
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "kind": {
+            "enum": [
+              "text",
+              "long_text",
+              "choice"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "kind",
+          "required"
+        ],
+        "title": "OnboardingField",
+        "type": "object"
+      },
+      "OnboardingRequest": {
+        "properties": {
+          "answers": {
+            "additionalProperties": true,
+            "title": "Answers",
+            "type": "object"
+          }
+        },
+        "required": [
+          "answers"
+        ],
+        "title": "OnboardingRequest",
         "type": "object"
       },
       "OutcomeRequest": {
@@ -3997,12 +4504,22 @@
           "places": {
             "title": "Places",
             "type": "boolean"
+          },
+          "search": {
+            "title": "Search",
+            "type": "boolean"
+          },
+          "sign_in": {
+            "title": "Sign In",
+            "type": "boolean"
           }
         },
         "required": [
           "ai_extraction",
           "email_verification",
           "places",
+          "search",
+          "sign_in",
           "crawler_identity"
         ],
         "title": "ProvidersResponse",
@@ -4404,6 +4921,67 @@
         "title": "ResearchRequest",
         "type": "object"
       },
+      "ReviewRow": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "author",
+          "rating",
+          "date",
+          "text",
+          "url"
+        ],
+        "title": "ReviewRow",
+        "type": "object"
+      },
       "RunningJob": {
         "properties": {
           "done_steps": {
@@ -4725,6 +5303,129 @@
         "title": "Touch",
         "type": "object"
       },
+      "UserAccessRequest": {
+        "properties": {
+          "access": {
+            "enum": [
+              "admin",
+              "operator",
+              "viewer",
+              "disabled"
+            ],
+            "title": "Access",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access"
+        ],
+        "title": "UserAccessRequest",
+        "type": "object"
+      },
+      "UserDetail": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/UserEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        },
+        "required": [
+          "user",
+          "events"
+        ],
+        "title": "UserDetail",
+        "type": "object"
+      },
+      "UserEvent": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "detail",
+          "actor",
+          "at"
+        ],
+        "title": "UserEvent",
+        "type": "object"
+      },
+      "UserOption": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "UserOption",
+        "type": "object"
+      },
+      "UsersResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuthUser"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/UserOption"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "waiting": {
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "waiting",
+          "levels"
+        ],
+        "title": "UsersResponse",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -4764,6 +5465,97 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VendorAllow": {
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "added_by": {
+            "title": "Added By",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "vendor_name": {
+            "title": "Vendor Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pattern",
+          "vendor_name",
+          "note",
+          "added_by",
+          "added_at"
+        ],
+        "title": "VendorAllow",
+        "type": "object"
+      },
+      "VendorAllowRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "vendor_name": {
+            "title": "Vendor Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern",
+          "vendor_name"
+        ],
+        "title": "VendorAllowRequest",
+        "type": "object"
+      },
+      "VendorAllowsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAllow"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "VendorAllowsResponse",
+        "type": "object"
       }
     }
   },
@@ -4773,6 +5565,213 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/auth/google/callback": {
+      "get": {
+        "operationId": "google_callback_api_auth_google_callback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Google Callback",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/google/start": {
+      "get": {
+        "description": "Two doors (D-068): `kind=staff` (the default) is a Legal Soft account\nand Google is asked to show only that domain; `kind=vendor` is a person\nfrom an email vendor's team, any Google account, admitted only when the\nallow list names them.",
+        "operationId": "google_start_api_auth_google_start_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "next",
+            "required": false,
+            "schema": {
+              "default": "/",
+              "title": "Next",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "staff",
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Google Start",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "get_me_api_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/onboarding": {
+      "post": {
+        "operationId": "post_onboarding_api_auth_onboarding_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Onboarding",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/signout": {
+      "post": {
+        "operationId": "post_signout_api_auth_signout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Post Signout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/contacts/{contact_id}": {
       "patch": {
         "operationId": "patch_contact_api_contacts__contact_id__patch",
@@ -6672,6 +7671,214 @@
         "summary": "Get Today",
         "tags": [
           "today"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "list_users_api_users_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Users",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/vendors": {
+      "get": {
+        "operationId": "list_vendors_api_users_vendors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAllowsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Vendors",
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "add_vendor_api_users_vendors_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendorAllowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAllow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Vendor",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/vendors/{allow_id}": {
+      "delete": {
+        "operationId": "remove_vendor_api_users_vendors__allow_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "allow_id",
+            "required": true,
+            "schema": {
+              "title": "Allow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Vendor",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "operationId": "get_user_api_users__user_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get User",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "set_user_access_api_users__user_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set User Access",
+        "tags": [
+          "users"
         ]
       }
     }

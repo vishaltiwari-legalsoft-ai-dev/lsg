@@ -29,6 +29,7 @@ from lge.journey.tokens import (
     role_from_evidence,
     tort_from_evidence,
 )
+from lge.journey.usp import cta_block, usp_paragraph
 
 _CMS_FALLBACK = {"cms": "your systems"}
 
@@ -90,6 +91,10 @@ def _build_tokens(lead: JourneyLead) -> dict[str, str | None]:
         "tort": None,
         "repost_month": None,
         "days_open": None,
+        # Not for the copy files (no template names them): what `_finish`
+        # needs to choose the offer paragraph for this lead (D-070).
+        "_pain": signal.kind if signal else None,
+        "_tier": lead.firm.tier,
     }
 
     # {role}/{role_2}/{tort} are only extracted for the signal kinds whose
@@ -134,12 +139,18 @@ def _finish(
     missing = miss1 + miss2
     if missing:
         return None, f"unresolved_token:{missing[0]}"
+    # Under the copy, the offer in Legal Soft's own numbers -- chosen by the
+    # pain, rotated by the email, never repeating the copy -- and the one
+    # thing the email asks for, as a link (D-070).
+    usp = usp_paragraph(step, body, pain=tokens.get("_pain"), tier=tokens.get("_tier"))
+    cta = cta_block()
+    full = "\n\n".join(part for part in (body, usp, cta) if part)
     # Every email is signed. An unsigned cold email reads as a circular, and a
     # commercial one owes the reader a postal address and a way to stop
     # (D-060). What is not configured is left out, never invented.
     signature_block = signature()
-    signed = f"{body}\n\n{signature_block}" if signature_block.strip("-\n ") else body
-    return RenderedTouch(step, _day(step, edits), subject, signed, files), None
+    signed = f"{full}\n\n{signature_block}" if signature_block.strip("-\n ") else full
+    return RenderedTouch(step, _day(step, edits), subject, signed, files, usp, cta), None
 
 
 def _render_touch1(
@@ -328,7 +339,8 @@ def build_journey(lead: JourneyLead, edits: JourneyEdits = NO_EDITS) -> JourneyR
             continue
         if day_multiplier != 1:
             touch = RenderedTouch(
-                touch.step, touch.day * day_multiplier, touch.subject, touch.body, touch.templates
+                touch.step, touch.day * day_multiplier, touch.subject, touch.body,
+                touch.templates, touch.usp, touch.cta,
             )
         touches.append(touch)
 

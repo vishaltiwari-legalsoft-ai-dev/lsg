@@ -88,6 +88,7 @@ def _select(conn: Any, opts: dict[str, Any]) -> list[dict]:
         "f.domain IS NOT NULL",
         "f.tier IS NOT NULL",
         "f.tier NOT LIKE 'DQ%%'",
+        "f.tier <> 'UNCLASSIFIED'",  # never pay for a firm that cannot become ready
         "NOT EXISTS (SELECT 1 FROM contact_email e WHERE e.contact_id = c.id)",
         "NOT EXISTS (SELECT 1 FROM contact_email e JOIN contact c2 ON c2.id = e.contact_id "
         "WHERE c2.firm_id = f.id AND e.email LIKE '%%@' || f.domain)",
@@ -220,8 +221,11 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
                         outcome = "failed"
                         break
                     consecutive_failures = 0
-                    spent += price
-                    _record_attempt(conn, address, provider, verdict.status, verdict.raw, price)
+                    # An "unknown" is not billed by the provider and not a
+                    # verdict: recorded at no cost, and the next scheme is tried.
+                    charged = 0.0 if verdict.status == "unknown" else price
+                    spent += charged
+                    _record_attempt(conn, address, provider, verdict.status, verdict.raw, charged)
                     prior = verdict.status
                 if prior == "valid":
                     _attach(conn, person["contact_id"], address, "valid", scheme)

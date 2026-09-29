@@ -17,6 +17,19 @@ from:
   website: legalsoft.com
   reply_to: ""
 
+# What every email asks the reader to do (D-070): one clear next step, as a
+# link. In plain text it is a line with the address; a sending tool that
+# writes HTML turns the same label and address into a button
+# (lge.journey.usp.cta_html). A blank `url` is reported as missing on the
+# Email journey screen, and no call to action is drafted without one.
+cta:
+  label: Book a 15-minute call with our team
+  # Legal Soft's own "Talk To Our Team" page, read off legalsoft.com on
+  # 30 Sep 2026. Replace with a calendar link when there is one.
+  url: https://www.legalsoft.com/contact-us
+  # The second way in, for the reader who would rather write back.
+  reply: Or just reply to this email and I'll set it up.
+
 footer:
   # Required by CAN-SPAM: a valid physical postal address for the sender.
   postal_address: ""

@@ -49,6 +49,7 @@ _DEFAULT_LIMIT = 100
 _CLAIM_ATTRS = (
     "site_gaps", "site_people", "staff_listed", "staff_ratio", "testimonials",
     "site_review_summary", "search_review_snippets", "review_count", "review_profiles",
+    "business_listing", "google_reviews", "google_rating",
     "growth_news", "recent_posts", "latest_post_date", "copyright_year", "online_intake_form",
     "live_chat_vendor", "spanish_intake", "languages", "office_count", "office_locations",
     "attorney_count", "attorney_count_detail", "vendor_headcount_range", "google_maps_url",
@@ -92,6 +93,52 @@ def _lines(value: Any, keys: tuple[str, ...] = (), label: str = "") -> list[str]
                  for k in wanted]
         return [f"{said}{'; '.join(parts)}"] if parts else []
     return []
+
+
+def _review_lines(claims: dict[str, Any]) -> list[str]:
+    """Each Google review as one line the model can quote (r_listing,
+    D-062): the stars and the date first, so a five-star line reads as praise
+    before the model reaches the words."""
+    out: list[str] = []
+    for r in claims.get("google_reviews") or []:
+        if not isinstance(r, dict) or not r.get("text"):
+            continue
+        stars = f"{r['rating']} stars" if r.get("rating") is not None else "unrated"
+        who = f", {r['author']}" if r.get("author") else ""
+        when = f", {r['date']}" if r.get("date") else ""
+        out.append(f"Google review ({stars}{when}{who}): {' '.join(str(r['text']).split())}")
+    return out
+
+
+def _listing_lines(claims: dict[str, Any], firm: dict) -> list[str]:
+    """The Google Business Profile as short lines, plus the one disagreement
+    the engine can see for itself: a listing whose website is not the
+    firm's domain."""
+    v = claims.get("business_listing")
+    if not isinstance(v, dict) or not v.get("name"):
+        return []
+    out = [f"Listed on Google as: {v['name']}"
+           + (f" ({v['category']})" if v.get("category") else "") + "."]
+    if v.get("status") and v["status"] != "operational":
+        out.append(f"Google marks the listing: {v['status']}.")
+    if v.get("address"):
+        out.append(f"Listing address: {v['address']}.")
+    if v.get("phone"):
+        out.append(f"Listing phone: {v['phone']}.")
+    if v.get("website"):
+        out.append(f"Listing website: {v['website']}.")
+    if v.get("rating") is not None:
+        n = v.get("review_count")
+        count = n if n is not None else "an unknown number of"
+        out.append(f"Google rating: {v['rating']} from {count} reviews.")
+    elif v.get("review_count") is not None:
+        out.append(f"Google reviews: {v['review_count']}.")
+    from lge.planes.r.r_listing import website_host
+
+    host, domain = website_host(v.get("website")), (firm.get("domain") or "").lower()
+    if host and domain and host != domain and not host.endswith("." + domain):
+        out.append(f"The listing's website ({host}) is not the firm's domain ({domain}).")
+    return out
 
 
 def _record(ctx: RunContext, firm: dict, claims: dict[str, Any]) -> list[Block]:
@@ -148,9 +195,11 @@ def _record(ctx: RunContext, firm: dict, claims: dict[str, Any]) -> list[Block]:
             _lines(claims.get("review_count"), label="review count")
             + _lines(claims.get("site_review_summary"), ("count", "rating", "evidence"))
             + _lines(claims.get("search_review_snippets"), ("body", "url"))
+            + _review_lines(claims)
         )),
         ("the business listing", "\n".join(
-            _lines(claims.get("google_maps_url"), label="maps link")
+            _listing_lines(claims, firm)
+            + _lines(claims.get("google_maps_url"), label="maps link")
             + _lines(claims.get("review_profiles"))
         )),
         ("open roles", "\n".join(openings)),
@@ -242,8 +291,8 @@ def ja8_pain(ctx: RunContext, **opts: Any) -> RunResult:
     for firm_id in firm_ids:
         with ctx.conn.cursor() as cur:
             cur.execute(
-                "SELECT id, canonical_name, city, state, tier, fee_model, primary_practice, "
-                "cms_detected FROM firm WHERE id = %s",
+                "SELECT id, canonical_name, city, state, domain, tier, fee_model, "
+                "primary_practice, cms_detected FROM firm WHERE id = %s",
                 (firm_id,),
             )
             firm = cur.fetchone()

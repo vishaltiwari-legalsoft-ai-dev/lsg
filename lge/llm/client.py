@@ -5,6 +5,12 @@ OpenAI-compatible Chat Completions API rather than the Anthropic SDK.
 Never logs the API key. Retries 429/5xx with exponential backoff plus
 jitter, honouring `Retry-After` when the server sends one, up to
 `max_retries` attempts total.
+
+Every failure leaves here as an `LLMCallError` — including a 200 whose body
+carries an `error` object rather than `choices`, which OpenRouter does send
+(free-tier throttling, upstream provider faults). `lge/llm/run.py` catches
+only `LLMCallError`, so anything else escaping this module takes down a
+whole run instead of one firm.
 """
 
 from __future__ import annotations
@@ -118,7 +124,22 @@ async def call_openrouter(
         payload = resp.json()
         break
 
-    choice = payload["choices"][0]
-    content = choice["message"]["content"]
+    # OpenRouter answers 200 with a bare {"error": {...}} body for some
+    # upstream-provider failures and for free-tier throttling -- there is no
+    # `choices` key at all. Indexing it blind raised KeyError, which is not
+    # an LLMCallError, so it escaped every handler in lge/llm/run.py and
+    # killed the whole run instead of failing one firm. Same for a choice
+    # whose message carries no content (a provider-side cut-off).
+    choices = payload.get("choices")
+    if not choices:
+        err = payload.get("error")
+        detail = err.get("message") if isinstance(err, dict) else err
+        raise LLMCallError(f"no choices in response: {str(detail or payload)[:500]}")
+
+    content = choices[0].get("message", {}).get("content")
+    if content is None:
+        finish = choices[0].get("finish_reason") or choices[0].get("native_finish_reason")
+        raise LLMCallError(f"empty content in response (finish_reason={finish!r})")
+
     usage = payload.get("usage")
     return LLMResponse(content=content, usage=usage, raw=payload)

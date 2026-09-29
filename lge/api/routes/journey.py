@@ -19,10 +19,11 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 
 import psycopg
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
 from lge.api.deps import ConnDep
 from lge.api.errors import api_error, not_found
+from lge.api.gate import actor_of
 from lge.api.models import (
     JourneyCopyEdit,
     JourneyDaysEdit,
@@ -173,7 +174,9 @@ def _catalogued(template_id: str) -> catalogue.CatalogueTemplate:
 
 
 @router.put("/journey/templates/{template_id}", response_model=JourneyTemplate)
-def put_template(template_id: str, body: JourneyCopyEdit, conn: ConnDep) -> JourneyTemplate:
+def put_template(
+    template_id: str, body: JourneyCopyEdit, conn: ConnDep, request: Request
+) -> JourneyTemplate:
     """New wording for one template, for every lead from now on. Saving the
     original wording back is the same as restoring it."""
     template = _catalogued(template_id)
@@ -193,11 +196,11 @@ def put_template(template_id: str, body: JourneyCopyEdit, conn: ConnDep) -> Jour
         else:
             cur.execute(
                 "INSERT INTO journey_copy_edit (template, subject, body, edited_at, edited_by) "
-                "VALUES (%s, %s, %s, now(), 'ui') "
+                "VALUES (%s, %s, %s, now(), %s) "
                 "ON CONFLICT (template) DO UPDATE SET subject = EXCLUDED.subject, "
                 "body = EXCLUDED.body, edited_at = EXCLUDED.edited_at, "
                 "edited_by = EXCLUDED.edited_by",
-                (template.path, subject, text),
+                (template.path, subject, text, actor_of(request)),
             )
     return _template_out(template, fetch_journey_edits(conn), _edited_at(conn))
 
@@ -212,7 +215,7 @@ def restore_template(template_id: str, conn: ConnDep) -> JourneyTemplate:
 
 
 @router.put("/journey/days", response_model=JourneyResponse)
-def put_days(body: JourneyDaysEdit, conn: ConnDep) -> JourneyResponse:
+def put_days(body: JourneyDaysEdit, conn: ConnDep, request: Request) -> JourneyResponse:
     """The whole schedule at once: an email left out of `days` goes back to
     its original day, so the screen always sends every email it shows."""
     days = {d.step: d.day for d in body.days}
@@ -231,8 +234,8 @@ def put_days(body: JourneyDaysEdit, conn: ConnDep) -> JourneyResponse:
             if step != 1 and day != original[step]:
                 cur.execute(
                     "INSERT INTO journey_day_edit (step, day, edited_at, edited_by) "
-                    "VALUES (%s, %s, now(), 'ui')",
-                    (step, day),
+                    "VALUES (%s, %s, now(), %s)",
+                    (step, day, actor_of(request)),
                 )
     return _journey(conn)
 

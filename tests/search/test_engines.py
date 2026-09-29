@@ -52,8 +52,9 @@ def test_serper_rate_limit_is_a_block_and_a_bad_key_is_an_error():
     respx.post(SEARCH_URL).mock(return_value=httpx.Response(429, text="slow down"))
     with pytest.raises(SearchBlocked):
         SerperEngine("k").search("x", 8, 1)
+    # A refused key is a block that never clears by waiting (SearchRefused).
     respx.post(SEARCH_URL).mock(return_value=httpx.Response(403, text="nope"))
-    with pytest.raises(RuntimeError, match="refused the key"):
+    with pytest.raises(SearchBlocked, match="refused the key"):
         SerperEngine("k").search("x", 8, 1)
     with pytest.raises(ValueError):
         SerperEngine("")

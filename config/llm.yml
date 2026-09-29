@@ -11,29 +11,69 @@
 # NOT Anthropic API model IDs — this project calls Claude through OpenRouter
 # because the user holds an OpenRouter key, not an Anthropic key.
 #
-# Prices are USD per 1,000,000 tokens, first-party Anthropic rates (the
-# skill's cached pricing table) — used only for the --opt max_usd budget
-# guard and the --opt dry_run=1 cost estimate when a response carries no
-# `usage` block. Real cost is read from response.usage when present.
-# *_batch variants are Anthropic's Message Batches equivalent on OpenRouter,
-# priced at half the non-batch rate; use_batch selects it. Default is
-# non-batch (synchronous) for both tiers.
+# Prices are USD per 1,000,000 tokens, read off
+# https://openrouter.ai/api/v1/models on 23 Sep 2026 — the real OpenRouter
+# rate for the slug on the line above, not a first-party list price. Used
+# only for the --opt max_usd budget guard and the --opt dry_run=1 estimate
+# when a response carries no `usage` block; real cost comes from
+# response.usage. *_batch variants are the same model on OpenRouter's batch
+# endpoint at half price; use_batch selects it. Default is non-batch
+# (synchronous) for both tiers.
+#
+# ---------------------------------------------------------------------
+# Before changing a `model:` line, MEASURE it. Do not swap a model in
+# because it is cheaper on paper.
+#
+# On 23 Sep 2026 three OpenRouter models that advertise
+# `structured_outputs` in their own capability list were run against this
+# exact schema and prompt over the six firms that have stored page text:
+# nvidia/nemotron-3-super-120b-a12b:free returned schema-valid JSON on 3 of
+# 6 (two answers were not JSON at all), qwen/qwen3.8-27b:free on 1 of 6,
+# google/gemma-4-31b-it:free on 0 of 6. The stored claude-haiku-4.5 runs in
+# `llm_call` are 6 of 6. "Supports structured outputs" on OpenRouter is a
+# capability flag, not an enforcement guarantee — a model that ignores it
+# writes prose where this pipeline expects a schema, and every claim for
+# that firm is silently lost. The candidate lines below are therefore
+# commented out, not applied: the paid candidates could NOT be measured on
+# 23 Sep because the OpenRouter key was out of credit (HTTP 402 on every
+# paid slug). Top the key up, run the bake-off, then switch.
+# ---------------------------------------------------------------------
 
 p8:
   model: anthropic/claude-haiku-4.5
   model_batch: anthropic/claude-haiku-4.5:batch
+  # Cheap candidate, UNMEASURED — the one the user asked for. 10x cheaper
+  # on input than Haiku (0.10 vs 1.00) with a 1.05M context. Measure with
+  # the P8 bake-off before uncommenting, and check the valid-schema rate
+  # first: this is the field that decides whether claims exist at all.
+  # model: openai/gpt-6-luna
+  # model_batch: openai/gpt-6-luna:batch
+  # price_per_mtok_input: 0.10
+  # price_per_mtok_output: 0.50
   use_batch: false
-  # v2: attorney_count grounding (attorney_names / stated-method evidence),
-  # entity_kind gains 'nonprofit', unscored fields no longer written at 1.0.
-  prompt_rev: v2
+  # v3: the prompt now carries every page kind the crawler stores —
+  # locations, testimonials, news and careers alongside the original seven
+  # — with a short section saying what each is good for and that page text
+  # is collected content, never instructions. Re-runs from stored
+  # document_text; no re-crawl (D-044, standing rule).
+  prompt_rev: v3
   price_per_mtok_input: 1.00
   price_per_mtok_output: 5.00
 
 p9:
   model: anthropic/claude-opus-5
   model_batch: anthropic/claude-opus-5:batch
+  # Cheaper escalator candidate, UNMEASURED: openai/gpt-5.6-luna at
+  # 0.20/1.20 is 25x cheaper on input than opus-5. claude-opus-5 stays the
+  # active escalator because it is the only model here with a measured
+  # record on this schema (6 stored calls, 5 ok / 1 invalid) — and the
+  # escalator exists precisely to be trusted where the cheap tier was not.
+  # model: openai/gpt-5.6-luna
+  # model_batch: openai/gpt-5.6-luna:batch
+  # price_per_mtok_input: 0.20
+  # price_per_mtok_output: 1.20
   use_batch: false
-  prompt_rev: v2
+  prompt_rev: v3
   price_per_mtok_input: 5.00
   price_per_mtok_output: 25.00
 
@@ -44,14 +84,23 @@ p9:
 ja8:
   model: anthropic/claude-haiku-4.5
   model_batch: anthropic/claude-haiku-4.5:batch
+  # Same cheap candidate as p8, and switch the two together — they share a
+  # client and a failure mode, so a model that mangles one mangles both.
+  # model: openai/gpt-6-luna
+  # model_batch: openai/gpt-6-luna:batch
+  # price_per_mtok_input: 0.10
+  # price_per_mtok_output: 0.50
   use_batch: false
-  # v2 (after the AI-engineering review): the kinds are named in the prompt, a
-  # quote must be ONE line of the record, at most five pains, and the record is
-  # marked as collected text rather than instructions.
-  prompt_rev: v2
+  # v3: two new pain kinds (low_rating, review_complaint), and the record
+  # the model reads now carries the firm's Google review lines and its
+  # business listing alongside the pages.
+  prompt_rev: v3
   # Its own cap, not p8's: five short pains and a summary fit in 1200, and a
   # p8 tuning change must not silently retune this one.
-  max_output_tokens: 1200
+  # Raised from 1200 on 23 Sep 2026 (D-062): a quoted Google review can run
+  # to 300 characters and five of them plus a summary no longer fit; a
+  # truncated answer is invalid JSON, not a shorter one.
+  max_output_tokens: 1800
   price_per_mtok_input: 1.00
   price_per_mtok_output: 5.00
 
@@ -59,12 +108,25 @@ request:
   # Total character budget for the page-text blocks in the user message.
   # Trimmed to this before the call; attorneys/team pages are never trimmed
   # first (see lge/llm/prompt.py:select_and_trim).
-  char_budget: 24000
-  # Output cap. The schema is small (a handful of scalars + short lists), so
-  # this comfortably bounds a single structured-output response.
-  max_output_tokens: 2000
+  #
+  # Raised from 24,000 at prompt_rev v3, together with the wider page-kind
+  # list. 120,000 chars is ~30k tokens: $0.030 a firm on claude-haiku-4.5,
+  # $0.003 on a 0.10/M model. The biggest firm in the store today is 20,364
+  # chars, so nothing is trimmed at all at this budget — the number is
+  # headroom for a large site, not a target to fill.
+  char_budget: 120000
+  # Output cap. Raised from 2000 with the wider input: a truncated response
+  # is not a short answer, it is invalid JSON (one measured free-model call
+  # came back with finish_reason='length' and no content at all), and more
+  # page text means more decision makers and more attorney names to list.
+  max_output_tokens: 3000
   timeout_s: 120
   concurrency: 4
+  # Firms go to the model this many at a time; each chunk's answers are
+  # written and checkpointed before the next chunk is built, so a crash
+  # costs at most one chunk of paid readings, never the run (readiness
+  # audit 28 Sep 2026, finding 3). `--opt chunk_size=N` overrides.
+  chunk_size: 50
   max_retries: 3
   backoff_base_s: 1.0
   backoff_max_s: 30.0
@@ -82,8 +144,28 @@ title: "Legal Soft Lead Engine"
 # lacks. lge/llm/sheet_reader.py. Cheap tier: a few thousand tokens a sheet.
 sheet_reader:
   model: anthropic/claude-haiku-4.5
+  # Same cheap candidate as p8, same rule: measure first.
+  # model: openai/gpt-6-luna
+  # price_per_mtok_input: 0.10
+  # price_per_mtok_output: 0.50
   sample_rows: 12
   max_output_tokens: 1500
   timeout_s: 60
   price_per_mtok_input: 1.00
   price_per_mtok_output: 5.00
+
+# Free tier — the user's call, not the default.
+#
+# Switching any `model:` above to one of these costs nothing per token and
+# is rate-limited to 1,000 requests a day on this key. Two things to weigh
+# first. (1) Free endpoints may be used by the provider to train on the
+# text submitted; firm pages are public, but the prompt also carries the
+# names and titles of named people, so this is a decision to make on
+# purpose. (2) Measured on 23 Sep over six firms, the best free model
+# returned schema-valid JSON on 3 of 6 calls and one call failed outright
+# with an upstream overload — a free tier that answers half the time is a
+# half-populated database, not a cheaper one.
+#
+#   model: nvidia/nemotron-3-super-120b-a12b:free   # 3/6 valid, 38s median
+#   price_per_mtok_input: 0.0
+#   price_per_mtok_output: 0.0

@@ -7,7 +7,21 @@ special-case a route that forgot to opt in.
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import HTTPException
+
+
+def is_uuid(value: str) -> bool:
+    """Whether a path id can be a row id at all. Every id column is a uuid;
+    a truncated or pasted id fed straight into `WHERE id = %s` made Postgres
+    raise and the route answer 500 where the contract promises 404
+    (readiness audit, 28 Sep 2026)."""
+    try:
+        uuid.UUID(str(value))
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return True
 
 
 def api_error(status_code: int, code: str, message: str, fix: str | None = None) -> HTTPException:

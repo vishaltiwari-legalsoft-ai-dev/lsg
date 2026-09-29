@@ -23,7 +23,7 @@ from psycopg.types.json import Jsonb
 
 from lge import db as lge_db
 from lge.api.deps import ConnDep
-from lge.api.errors import api_error, not_found
+from lge.api.errors import api_error, is_uuid, not_found
 from lge.api.models import (
     FieldOption,
     ImportBatch,
@@ -112,11 +112,32 @@ def _detail(row: dict[str, Any], batches: list[dict[str, Any]]) -> ImportDetail:
     )
 
 
-def _load_detail(conn: psycopg.Connection, import_id: str) -> ImportDetail:
-    row = get_import(conn, import_id)
+def _import_row(conn: psycopg.Connection, import_id: str) -> dict[str, Any]:
+    """The import, or 404 -- for a malformed id as much as an unknown one."""
+    row = get_import(conn, import_id) if is_uuid(import_id) else None
     if row is None:
         raise not_found("Import not found.", "Check the id.")
+    return row
+
+
+def _load_detail(conn: psycopg.Connection, import_id: str) -> ImportDetail:
+    row = _import_row(conn, import_id)
     return _detail(row, list_batches(conn, import_id))
+
+
+def sweep_orphaned_imports(conn: psycopg.Connection) -> int:
+    """At startup: an import still 'loading' belonged to a process that is
+    gone -- the load ran inside it. Mark it failed so the screen stops
+    waiting and the load can be asked for again (its finished batches are
+    kept and skipped on the next run)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE import_file SET status = 'failed', notes = notes || %s "
+            "WHERE status = 'loading'",
+            (Jsonb([f"{datetime.now(UTC).isoformat(timespec='seconds')} interrupted: the "
+                    "engine restarted while this sheet was loading -- load it again"]),),
+        )
+        return cur.rowcount
 
 
 def _append_notes(conn: psycopg.Connection, import_id: str, notes: list[str]) -> None:
@@ -239,8 +260,7 @@ def get_import_detail(import_id: str, conn: ConnDep) -> ImportDetail:
 
 @router.put("/imports/{import_id}/mapping", response_model=ImportDetail)
 def put_mapping(import_id: str, body: MappingRequest, conn: ConnDep) -> ImportDetail:
-    if get_import(conn, import_id) is None:
-        raise not_found("Import not found.", "Check the id.")
+    _import_row(conn, import_id)
     try:
         update_mapping(conn, import_id, body.overrides)
     except ValueError as exc:
@@ -254,9 +274,7 @@ def put_mapping(import_id: str, body: MappingRequest, conn: ConnDep) -> ImportDe
 def start_load(
     import_id: str, conn: ConnDep, background: BackgroundTasks, sync: bool = False
 ) -> ImportLoadResponse:
-    row = get_import(conn, import_id)
-    if row is None:
-        raise not_found("Import not found.", "Check the id.")
+    row = _import_row(conn, import_id)
     if row["status"] == "loading":
         raise api_error(
             409, "conflict", "This import is already loading.", "Wait for it to finish."
@@ -273,8 +291,17 @@ def start_load(
     # stays open until the request tears down, which is after the background
     # task runs -- and the task's first write on this row would wait on the
     # lock forever. A short autocommit connection makes it visible at once.
+    # Conditional on the status it read, so two clicks in the same instant
+    # start one load, not two.
     with lge_db.connect(get_settings().dsn, autocommit=True) as flip, flip.cursor() as cur:
-        cur.execute("UPDATE import_file SET status = 'loading' WHERE id = %s", (import_id,))
+        cur.execute(
+            "UPDATE import_file SET status = 'loading' WHERE id = %s AND status = %s",
+            (import_id, row["status"]),
+        )
+        if cur.rowcount != 1:
+            raise api_error(
+                409, "conflict", "This import is already loading.", "Wait for it to finish."
+            )
     background.add_task(_pipeline_in_background, import_id)
     return ImportLoadResponse(
         id=import_id, status="loading",

@@ -16,6 +16,11 @@ os.environ.setdefault("LGE_COLUMN_READER", "rules")
 os.environ.setdefault("LGE_SEARCH_ENGINE", "ddg")
 os.environ.setdefault("LGE_EMAIL_FINDER", "none")
 os.environ.setdefault("LGE_EMAIL_VERIFIER", "none")
+os.environ.setdefault("LGE_LISTINGS", "none")
+# Sign-in is off under test unless a test switches it on (tests/api/test_auth.py):
+# the real OAuth client in .env would otherwise shut the door on every route.
+os.environ.setdefault("GOOGLE_OAUTH_CLIENT_ID", "")
+os.environ.setdefault("GOOGLE_OAUTH_CLIENT_SECRET", "")
 
 
 from lge import db as lge_db

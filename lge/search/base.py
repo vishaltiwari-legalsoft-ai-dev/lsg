@@ -10,6 +10,7 @@ check, a rate limit. It is never worked around (D-039).
 
 from __future__ import annotations
 
+import re
 from typing import Any, Protocol
 
 Result = dict[str, str]  # title, href, body
@@ -17,9 +18,39 @@ Place = dict[str, Any]  # name, address, rating, review_count, phone, website, u
 
 FAILURE_PREFIX = "search failed"
 
+# A term from a sheet or a scraped page goes into a query inside quotes: a
+# quote or a control character in it would break the phrase, and a search
+# operator (site:, inurl:, a leading minus) would change what is asked. The
+# engine's own query builders add the operators; the term itself carries none.
+_TERM_JUNK_RE = re.compile(r'["\x00-\x1f\x7f]+')
+# A leading sign on a word (-word, +word, ~word) and a whole operator token
+# (site:x.com, inurl:foo) -- the token goes, since its argument was never
+# part of the name.
+_TERM_OPERATOR_RE = re.compile(r"(?<!\S)[-+~](?=\S)|(?<!\S)\w+:\S+")
+MAX_TERM_CHARS = 120
+
+
+def clean_term(text: str | None, limit: int = MAX_TERM_CHARS) -> str:
+    """A firm, person or place name as it may appear inside a query: no
+    quotes, no control characters, no leading operators, whitespace folded,
+    at most `limit` characters. Empty in, empty out."""
+    if not text:
+        return ""
+    cleaned = _TERM_JUNK_RE.sub(" ", str(text))
+    cleaned = _TERM_OPERATOR_RE.sub("", cleaned)
+    cleaned = " ".join(cleaned.split())
+    return cleaned[:limit].strip()
+
 
 class SearchBlocked(Exception):
     """The engine answered with a bot check or a rate limit instead of results."""
+
+
+class SearchRefused(SearchBlocked):
+    """The engine refused us for good, not for a moment: a bad key, no credit
+    left, a plan that lacks the endpoint. Retrying spends time and, once the
+    key is fixed, nothing else -- but a run must stop on the first one, never
+    walk five firms into the same wall (28 Sep 2026)."""
 
 
 class SearchEngine(Protocol):

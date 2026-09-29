@@ -65,9 +65,10 @@ precedence:
 
   phone_e164:
     - site:jsonld
+    - listing:google_places   # the Google Business Profile (r_listing, D-062)
+    - listing:serper
     - rules:site
     - site:page
-    - places
     - bar
 
   # Fans out to street_norm / addr_unit / addr_hash / zip5 / state / city.
@@ -79,7 +80,8 @@ precedence:
   # claim (confirmed in lge/planes/i/i1_firms.py) -- address's own
   # precedence has no internal_firms entry to fall back to.
   address:
-    - places
+    - listing:google_places   # the Google Business Profile (r_listing, D-062)
+    - listing:serper
     - site:jsonld
     - rules:site
     - site:page
@@ -88,8 +90,9 @@ precedence:
   # Standalone, not merely address's city sub-field: site:jsonld and
   # internal_firms both emit bare `city` claims (no full postal address).
   city:
+    - listing:google_places   # the Google Business Profile (r_listing, D-062)
+    - listing:serper
     - site:jsonld
-    - places
     - site:page
     - internal_firms
 
@@ -165,11 +168,12 @@ precedence:
   repeat_role_count:
     - internal_jobs
 
-  # review_count: read off the snippets a web search returns for the firm's
-  # Google listing (r_search_links, D-032). A Places integration, when there
-  # is one, goes above it.
+  # review_count: the Google Business Profile through the listings seam
+  # (r_listing, D-062) first; then the search engine's own listing endpoint
+  # (D-045); then what the snippets of a web search say (D-032).
   review_count:
-    - places
+    - listing:google_places
+    - listing:serper
     - search:serper           # the listing itself, through the engine's API (D-045)
     - search:brave
     - search:ddg

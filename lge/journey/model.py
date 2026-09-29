@@ -68,6 +68,12 @@ class RenderedTouch:
     # The copy files this email was built from (journey/copy/-relative), the
     # email's own first -- so a screen can say which wording to change.
     templates: tuple[str, ...] = ()
+    # The two blocks the renderer adds under the copy, above the signature
+    # (D-070): Legal Soft's offer in its own numbers, and the call to action.
+    # Both are already inside `body`; they are kept here as well so a screen
+    # or a test can tell the copy from what was added to it.
+    usp: str = ""
+    cta: str = ""
 
 
 @dataclass(frozen=True, slots=True)

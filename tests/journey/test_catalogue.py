@@ -91,8 +91,12 @@ def test_edited_wording_and_days_reach_the_rendered_emails():
     )
     touches = {t.step: t for t in build_journey(_lead(), edits).touches}
     assert touches[3].subject == "the hours, Dana"
-    # the signature the renderer appends to every email sits after it (D-060)
-    assert "\n\nAlso this.\n\nBest regards,\n" in touches[3].body
+    # under the edited copy come the offer and the call to action (D-070),
+    # then the signature the renderer appends to every email (D-060)
+    body3 = touches[3].body
+    assert "\n\nAlso this.\n\n" in body3
+    assert body3.index("Also this.") < body3.index(touches[3].usp) < body3.index(touches[3].cta)
+    assert body3.index(touches[3].cta) < body3.index("\n\nBest regards,\n")
     assert (touches[2].day, touches[3].day, touches[4].day) == (1, 2, 10)
     assert subject != touches[3].subject  # the file itself is untouched
     assert load_template("touch3/contingency.md") == (subject, body)

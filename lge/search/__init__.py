@@ -18,6 +18,7 @@ from __future__ import annotations
 import functools
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -27,6 +28,8 @@ from lge.search.base import (
     Result,
     SearchBlocked,
     SearchEngine,
+    SearchRefused,
+    clean_term,
     failure,
     is_failure,
 )
@@ -35,9 +38,61 @@ from lge.settings import Settings, get_settings
 
 __all__ = [
     "FAILURE_PREFIX", "Place", "Result", "SearchBlocked", "SearchEngine", "SearchFn",
-    "engine_name", "failure", "get_engine", "has_listings", "is_failure", "places", "reset",
-    "search", "source",
+    "SearchRefused", "clean_term", "daily_cap_refusal", "engine_name", "failure", "get_engine",
+    "has_listings", "is_failure", "paid_run_refusal", "places", "reset", "search", "source",
 ]
+
+
+PAID_RUN_MAX_FIRMS = 250  # one sub-batch (plan-v3): more than this by accident is a bill
+DAILY_CREDIT_CAP_DEFAULT = 5000
+
+
+def daily_cap_refusal(conn: Any, opts: dict, settings: Settings | None = None) -> str | None:
+    """Why no more paid searches may go out today, or None. The ceiling is
+    `daily_credit_cap` for the engine in config/search.yml (or `--opt
+    daily_cap`), measured against the day's search_log rows for that engine
+    -- a persisted count no thread or restart resets, unlike the meter. One
+    row is one call or more, so the count is a floor on what was spent."""
+    engine = engine_name(settings)
+    raw = opts.get("daily_cap")
+    cfg = (load_search_config().get("engines") or {}).get(engine) or {}
+    cap = int(raw) if raw not in (None, "") else int(
+        cfg.get("daily_credit_cap", DAILY_CREDIT_CAP_DEFAULT)
+    )
+    if cap <= 0:
+        return None
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) AS n FROM search_log WHERE engine = %s "
+            "AND searched_at >= date_trunc('day', now())",
+            (engine,),
+        )
+        spent = int(cur.fetchone()["n"])
+    if spent < cap:
+        return None
+    return (
+        f"refused: {engine} has answered {spent} logged searches today, at or over the "
+        f"daily cap of {cap} -- raise daily_credit_cap in config/search.yml or pass "
+        "--opt daily_cap=N to mean it"
+    )
+
+
+def paid_run_refusal(opts: dict, *, what: str, firms: int) -> str | None:
+    """Why a paid step must not run as asked, or None when it may. A step
+    that searches takes its firms from `firm_ids_file` (the screen's jobs,
+    the batch runner) or a `limit`; asked with neither over more than one
+    sub-batch's worth it would walk the whole store -- 100k firms, a credit
+    or more each, by accident. `all=1` says that is meant."""
+    if firms <= PAID_RUN_MAX_FIRMS:
+        return None
+    if opts.get("firm_ids_file") or opts.get("limit") not in (None, ""):
+        return None
+    if str(opts.get("all", "")) in ("1", "true", "True"):
+        return None
+    return (
+        f"refused: {what} over {firms} firms spends a credit or more per firm -- "
+        "give --opt limit=N or --opt firm_ids_file=..., or --opt all=1 to mean it"
+    )
 
 SearchFn = Callable[..., list[Result]]  # (query, max_results, *, page=1)
 
@@ -130,17 +185,16 @@ def search(query: str, max_results: int = 8, *, page: int = 1) -> list[Result]:
 def places(query: str) -> list[Place] | None:
     """The engine's business-listing lookup, paced like a query; None when
     the engine has none, or when the lookup failed (the caller then reads
-    snippets)."""
+    snippets). Under the same pacer rules as a query, so a refused key or
+    an empty balance cools the engine off instead of answering "no listing"
+    for every firm in turn."""
     engine = get_engine()
-    pacer = _pacer(engine.name)
-    if pacer.blocked_reason():
+    if not getattr(engine, "has_listings", False):
         return None
-    try:
-        pacer.wait()
-        pacer.mark()
-        return engine.places(query)
-    except Exception:  # noqa: BLE001 -- a listing lookup that fails is "no listing", never a crash
-        return None
+    rows = _pacer(engine.name).call(
+        lambda: engine.places(query) or [], engine=engine.name  # type: ignore[arg-type]
+    )
+    return None if is_failure(rows) else rows  # type: ignore[return-value]
 
 
 def reset() -> None:

@@ -30,7 +30,23 @@ from lge.llm.schema import FirmExtraction, response_format_for
 from lge.registry import RunContext, RunResult
 
 _CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "llm.yml"
-_PAGE_KINDS = ("home", "about", "attorneys", "team", "practice", "fees", "contact")
+# Every page kind the crawler stores (config/crawl.yml page_kinds), in the
+# prompt's display order. `only_wanted` narrows this to the kinds the crawl
+# config actually reads (caps > 0), so a kind capped at zero is free to list
+# here and costs one line in config/crawl.yml to switch back on.
+_PAGE_KINDS = (
+    "home",
+    "about",
+    "attorneys",
+    "team",
+    "practice",
+    "fees",
+    "contact",
+    "locations",
+    "testimonials",
+    "news",
+    "careers",
+)
 _RESPONSE_FORMAT = response_format_for(FirmExtraction, "firm_extraction")
 
 FirmSelector = Callable[["RunContext", dict[str, Any]], list[str]]
@@ -319,10 +335,42 @@ def run_extraction(
     max_usd = float(raw_max_usd) if raw_max_usd not in (None, "") else None
 
     system_prompt = build_system_prompt()
+    # Firms go to the model a chunk at a time, and every chunk's answers are
+    # written and checkpointed before the next chunk is built: a crash after
+    # sixty thousand paid readings used to keep none of them, and the memory
+    # held every message at once (readiness audit 28 Sep 2026, finding 3).
+    chunk_size = max(1, int(opts.get("chunk_size", req_cfg.get("chunk_size", 50))))
 
     result = RunResult()
     jobs: list[dict[str, Any]] = []
     spent_estimate = 0.0
+    sized = 0
+
+    def flush() -> None:
+        if not jobs:
+            return
+        outcomes = asyncio.run(
+            _gather(
+                jobs,
+                concurrency,
+                api_key=api_key,
+                model=model,
+                system_prompt=system_prompt,
+                max_output_tokens=max_output_tokens,
+                timeout_s=timeout_s,
+                max_retries=max_retries,
+                backoff_base_s=backoff_base_s,
+                backoff_max_s=backoff_max_s,
+                referer=referer,
+                title=title,
+            )
+        )
+        _persist(
+            ctx, result, jobs, outcomes, component_name=component_name, model=model,
+            prompt_rev=prompt_rev, source=source, price_in=price_in, price_out=price_out,
+            default_field_confidence=default_field_confidence,
+        )
+        jobs.clear()
 
     for firm_id in firm_ids:
         pages = load_pages(ctx, firm_id)
@@ -343,6 +391,7 @@ def run_extraction(
         if dry_run:
             result.notes.append(f"{firm_id}: {len(user_message)} chars, est ${est_cost:.4f}")
             result.skipped += 1
+            sized += 1
             spent_estimate += est_cost
             continue
 
@@ -360,35 +409,36 @@ def run_extraction(
             }
         )
         spent_estimate += est_cost
+        if len(jobs) >= chunk_size:
+            flush()
 
     if dry_run:
         result.notes.insert(
             0,
-            f"dry_run: {len(result.notes)} firm(s) sized, "
-            f"estimated total cost ${spent_estimate:.4f}",
+            f"dry_run: {sized} firm(s) sized, estimated total cost ${spent_estimate:.4f}",
         )
         return result
 
-    if not jobs:
-        return result
+    flush()
+    return result
 
-    outcomes = asyncio.run(
-        _gather(
-            jobs,
-            concurrency,
-            api_key=api_key,
-            model=model,
-            system_prompt=system_prompt,
-            max_output_tokens=max_output_tokens,
-            timeout_s=timeout_s,
-            max_retries=max_retries,
-            backoff_base_s=backoff_base_s,
-            backoff_max_s=backoff_max_s,
-            referer=referer,
-            title=title,
-        )
-    )
 
+def _persist(
+    ctx: RunContext,
+    result: RunResult,
+    jobs: list[dict[str, Any]],
+    outcomes: list[Any],
+    *,
+    component_name: str,
+    model: str,
+    prompt_rev: str,
+    source: str,
+    price_in: float,
+    price_out: float,
+    default_field_confidence: float,
+) -> None:
+    """One chunk's answers on record: the call log, the grounded claims and
+    the task marker per firm, each checkpointed on its own."""
     now = datetime.now(UTC)
 
     for job, outcome in zip(jobs, outcomes, strict=True):
@@ -412,6 +462,11 @@ def run_extraction(
                     cost_usd = (input_tokens / 1_000_000) * price_in + (
                         output_tokens / 1_000_000
                     ) * price_out
+                elif outcome.kind == "failed":
+                    # No usage came back and the call failed (a 402, a
+                    # provider fault): nothing was bought. Booking the
+                    # estimate here showed money spent that never was.
+                    cost_usd = 0.0
                 else:
                     cost_usd = job["est_cost"]
 

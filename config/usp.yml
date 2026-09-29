@@ -1,0 +1,101 @@
+# What Legal Soft offers, in its own numbers, and which of it answers which
+# pain (D-070). The renderer adds one short paragraph of these to every
+# email it drafts, chosen by the pain that armed the lead and rotated across
+# the nine emails so no two emails make the same case.
+#
+# Every number here is one Legal Soft publishes itself (legalsoft.com, read
+# 30 Sep 2026) or states in the emails its team has sent before. Nothing is
+# estimated and nothing is invented: change a figure here only when the
+# company's own claim changes.
+#
+# `covers` lists the words that mean an email already says this -- a fact
+# whose words are in the email's own text is not said a second time.
+# `form` is how the fact reads: `verb` continues "Legal Soft's <people> ...",
+# `clause` is a sentence of its own.
+
+enabled: true
+
+facts:
+  speed:
+    form: verb
+    text: can start in under 3 days
+    covers: ["3 days", "three days"]
+    source: legalsoft.com -- "start working with one in under 3 days"
+  exclusive:
+    form: verb
+    text: work full-time and only for your firm
+    covers: ["full-time", "only for your firm", "exclusively"]
+    source: the team's sent emails -- "work full-time exclusively for your firm"
+  saving:
+    form: verb
+    text: cost about 60% less than hiring locally
+    covers: ["60%"]
+    source: legalsoft.com -- "60% Savings compared to hiring locally"
+  vetted:
+    form: verb
+    text: are pre-vetted and trained by U.S. attorneys
+    covers: ["pre-vetted", "trained by"]
+    source: legalsoft.com -- "Pre-vetted candidates", "Trained by U.S. Attorneys"
+  interview:
+    form: verb
+    text: are free to interview before you decide
+    covers: ["free to interview", "interviewing costs nothing"]
+    source: the engine's copy (D-060)
+  no_contract:
+    form: verb
+    text: come with no long-term contract
+    covers: ["long-term contract"]
+    source: the team's sent emails -- "with no long-term contract"
+  profit:
+    form: clause
+    text: Law firms working with us report a 40% increase in profits
+    covers: ["40%"]
+    source: legalsoft.com -- "40% Increase in profits reported by law firms"
+  scale:
+    form: clause
+    text: More than 1,000 law firms already work with 2,500 of our staff
+    covers: ["1,000"]
+    source: legalsoft.com -- "2,500 virtual staff across 1,000+ law firms"
+  price:
+    form: clause
+    text: A legal assistant starts at $2,227 a month
+    covers: ["$2,227"]
+    source: legalsoft.com -- 'Legal Assistant starts at "$2,227/mo"'
+
+# Who we are offering, by the pain that armed the lead; a tier can name its own.
+people:
+  default: legal staff
+  job_posting_open: legal staff
+  multi_opening: legal staff
+  mass_tort_campaign: case staff
+  cms_implemented: legal staff
+  review_unreturned_call:
+    default: intake specialists
+    "1B": bilingual intake specialists
+
+# The sentence that ties the offer to the pain. Never names a review, a
+# rating or a complaint: the pain is why we write, not what we say.
+answers:
+  default: The work gets done without another local search.
+  job_posting_open: The seat is filled in days, not after another month of the same search.
+  multi_opening: Both seats are filled in days, not after another month of the same search.
+  mass_tort_campaign: The intake surge is handled the week it arrives, not after it has passed.
+  cms_implemented: Your team keeps its hours for cases while the new system is fed.
+  # What the person is there for, not a guarantee: "every call is answered"
+  # is a promise nobody published (AI-engineering review, 30 Sep 2026).
+  review_unreturned_call: Someone is on your phones while you are in court or with a client.
+
+# Which facts each email leads with, in order; the first ones the email does
+# not already say are used, three at most (two `verb` facts read best).
+by_touch:
+  1: [speed, exclusive, saving, vetted]
+  2: [vetted, interview, exclusive, speed]
+  3: [saving, profit, price, no_contract]
+  4: [scale, profit, saving]
+  5: [vetted, no_contract, exclusive]
+  6: [speed, saving, interview]
+  7: [scale, interview, no_contract]
+  8: [speed, no_contract, saving]
+  9: [profit, no_contract, speed]
+
+max_facts: 3

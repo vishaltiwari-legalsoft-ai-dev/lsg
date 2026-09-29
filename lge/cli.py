@@ -13,6 +13,11 @@ from lge.settings import get_settings
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+# httpx logs every request URL at INFO. A verifier's key rides in a query
+# string, so that line would print the key and a person's address into the
+# terminal and every log file (security review, 28 Sep 2026). Warnings only.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 _STATUS_TABLES = [
     "firm",

@@ -17,14 +17,16 @@ _AT = datetime(2026, 9, 11, tzinfo=UTC)
 
 
 def _email(touch) -> str:
-    """The email itself. Every rendered email carries the signature block
-    (D-060); test_every_email_is_signed owns that part."""
+    """The copy itself. Every rendered email also carries the offer, the call
+    to action (D-070) and the signature block (D-060) under it; those have
+    their own tests (test_every_email_is_signed, tests/journey/test_usp.py)."""
     from lge.journey.render import signature
 
-    block = signature()
-    if block and block in touch.body:
-        return touch.body[: touch.body.index(block)].rstrip("\n")
-    return touch.body
+    body = touch.body
+    for block in (signature(), touch.cta, touch.usp):
+        if block and block in body:
+            body = body[: body.index(block)].rstrip("\n")
+    return body
 
 
 def _firm(**kw) -> Firm:

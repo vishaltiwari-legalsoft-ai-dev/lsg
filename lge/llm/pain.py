@@ -62,6 +62,8 @@ class PainKind(StrEnum):
     growth_strain = "growth_strain"
     stale_site = "stale_site"
     thin_reviews = "thin_reviews"
+    low_rating = "low_rating"
+    review_complaint = "review_complaint"
     other = "other"
 
 
@@ -146,6 +148,9 @@ news and its tools. Each block carries a label in square brackets.
 - growth_strain -- the firm says it is growing, opening offices, or taking on more.
 - stale_site -- the site has not been touched in a long time.
 - thin_reviews -- few or no reviews where the record shows them.
+- low_rating -- the Google rating is under 4.0 with enough reviews to mean it.
+- review_complaint -- a client's review says the firm did not call back, was \
+slow, lost track of them or was hard to reach. Quote that review's line.
 - other -- the line proves something real that none of the above names. Use it \
 rarely, and never to smuggle in a pain you cannot quote.
 
@@ -165,7 +170,8 @@ role has been open eleven weeks"), never a category name.
 outright, 0.6 when it only implies it. Below 0.5 you are guessing -- leave it out.
 6. If the record proves nothing, set `nothing_found` to true, return no pains, \
 and say so plainly in `summary`. That is a good answer, not a failure.
-7. A review complaining about a different firm is not this firm's pain. A \
+7. A review complaining about a different firm is not this firm's pain, and a \
+five-star review is praise, not a pain. A \
 testimonial is praise: read it for what the firm competes on, never as a pain. \
 A customer's own words are evidence for us, never words to repeat back to them.
 8. At most five pains, strongest first, and at most one of each `kind`. \

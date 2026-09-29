@@ -103,6 +103,7 @@ flows:
     steps:
       - component: r_site_contacts
       - component: r_site_emails
+      - component: r_listing
       - component: r_search_links
       - component: r_search_emails
       - component: r3_email_pattern

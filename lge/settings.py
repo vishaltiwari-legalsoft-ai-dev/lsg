@@ -28,6 +28,7 @@ COLUMN_READERS = ("auto", "llm", "rules")
 SEARCH_ENGINES = ("auto", "serper", "brave", "ddg")
 EMAIL_FINDERS = ("auto", "hunter", "none")
 EMAIL_VERIFIERS = ("auto", "hunter", "neverbounce", "zerobounce", "none")
+LISTINGS_PROVIDERS = ("auto", "google_places", "serper", "none")
 
 
 def _read_dotenv(path: Path) -> dict[str, str]:
@@ -81,6 +82,39 @@ class Settings:
     hunter_api_key: str = ""
     neverbounce_api_key: str = ""
     zerobounce_api_key: str = ""
+    # The Google Business Profile and its reviews (D-062): Google's own
+    # Places API when its key exists, else Serper on the search key.
+    listings: str = "auto"  # auto | google_places | serper | none
+    google_places_api_key: str = ""
+    # -- who may use the screens (D-067) ------------------------------------
+    # Google sign-in is on when the OAuth client id and secret are set; until
+    # then the engine answers its one local operator as it always has.
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+    # The people who are admins the moment they sign in, whatever the table
+    # says: the owner's address, so the first sign-in needs nobody's approval.
+    admin_emails: tuple[str, ...] = ("vishal.tiwari@legalsoft.com",)
+    # Only addresses at these domains may sign in at all; empty = any Google
+    # account may sign in (and then wait for the admin).
+    allowed_email_domains: tuple[str, ...] = ("legalsoft.com",)
+    # Where the screens are, for Google's redirect back: the screens' origin,
+    # which proxies /api to the engine.
+    public_origin: str = "http://127.0.0.1:5000"
+    # Signs the short-lived state cookie of a sign-in in flight. Random per
+    # process when unset (a sign-in must then finish on the process it began).
+    auth_secret: str = ""
+
+    def sign_in_configured(self) -> bool:
+        return bool(self.google_oauth_client_id and self.google_oauth_client_secret)
+
+    def is_admin_email(self, email: str) -> bool:
+        return email.strip().lower() in {e.lower() for e in self.admin_emails}
+
+    def email_allowed(self, email: str) -> bool:
+        if not self.allowed_email_domains:
+            return True
+        domain = email.rsplit("@", 1)[-1].lower()
+        return domain in {d.lower().lstrip("@") for d in self.allowed_email_domains}
 
     # Resolved choices: `auto` becomes the first provider with a key. A
     # component calls these, never the raw fields, so the fallback order is
@@ -117,6 +151,15 @@ class Settings:
             return "zerobounce"
         return "none"
 
+    def listings_provider_name(self) -> str:
+        if self.listings != "auto":
+            return self.listings
+        if self.google_places_api_key:
+            return "google_places"
+        if self.serper_api_key:
+            return "serper"
+        return "none"
+
 
 def _load_settings() -> Settings:
     dotenv = _read_dotenv(PROJECT_ROOT / ".env")
@@ -150,7 +193,20 @@ def _load_settings() -> Settings:
         hunter_api_key=get("HUNTER_API_KEY", ""),
         neverbounce_api_key=get("NEVERBOUNCE_API_KEY", ""),
         zerobounce_api_key=get("ZEROBOUNCE_API_KEY", ""),
+        listings=_choice(get("LGE_LISTINGS"), LISTINGS_PROVIDERS, "LGE_LISTINGS"),
+        google_places_api_key=get("GOOGLE_PLACES_API_KEY", ""),
+        google_oauth_client_id=get("GOOGLE_OAUTH_CLIENT_ID", ""),
+        google_oauth_client_secret=get("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+        admin_emails=_list(get("LGE_ADMIN_EMAILS", "vishal.tiwari@legalsoft.com")),
+        allowed_email_domains=_list(get("LGE_ALLOWED_EMAIL_DOMAINS", "legalsoft.com")),
+        public_origin=get("LGE_PUBLIC_ORIGIN", "http://127.0.0.1:5000").rstrip("/"),
+        auth_secret=get("LGE_AUTH_SECRET", ""),
     )
+
+
+def _list(value: str) -> tuple[str, ...]:
+    """A comma-separated setting as a tuple, blanks dropped."""
+    return tuple(v.strip() for v in value.split(",") if v.strip())
 
 
 @lru_cache(maxsize=1)

@@ -11,11 +11,13 @@ def _keys(monkeypatch, **values):
     # Set empty rather than delete: settings fall back to the project's .env
     # when a variable is absent, so deleting only passed until a real key was added.
     for name in ("OPENROUTER_API_KEY", "ZEROBOUNCE_API_KEY", "NEVERBOUNCE_API_KEY",
-                 "HUNTER_API_KEY", "SERPER_API_KEY", "BRAVE_API_KEY"):
+                 "HUNTER_API_KEY", "SERPER_API_KEY", "BRAVE_API_KEY",
+                 "GOOGLE_PLACES_API_KEY"):
         monkeypatch.setenv(name, values.get(name, ""))
     # conftest pins the seams keyless; here they choose by key, as a real machine does
     monkeypatch.setenv("LGE_EMAIL_VERIFIER", "auto")
     monkeypatch.setenv("LGE_SEARCH_ENGINE", "auto")
+    monkeypatch.setenv("LGE_LISTINGS", "auto")
 
 
 def test_providers_never_leak_key_material(client, monkeypatch):
@@ -53,17 +55,23 @@ def test_providers_report_inert_when_unconfigured(client, monkeypatch):
         get_settings.cache_clear()
 
 
-def test_the_listing_light_follows_the_search_engine_not_a_key_nobody_reads(client, monkeypatch):
-    # GOOGLE_PLACES_API_KEY was the old light's key: nothing in the engine reads it.
-    monkeypatch.setenv("GOOGLE_PLACES_API_KEY", "places-key")
-    _keys(monkeypatch, BRAVE_API_KEY="brave-key")  # an engine, but one with no listings
+def test_the_listing_light_follows_the_listings_seam(client, monkeypatch):
+    """Google's own key lights it (D-062); Serper's does too, through the
+    same seam; Brave has no listings and DuckDuckGo none either."""
     from lge.settings import get_settings
 
-    get_settings.cache_clear()
-    try:
-        assert client.get("/api/meta/providers").json()["places"] is False
-    finally:
+    def places_on(**keys):
+        _keys(monkeypatch, **keys)
         get_settings.cache_clear()
+        try:
+            return client.get("/api/meta/providers").json()["places"]
+        finally:
+            get_settings.cache_clear()
+
+    assert places_on(GOOGLE_PLACES_API_KEY="places-key") is True
+    assert places_on(SERPER_API_KEY="serper-key") is True
+    assert places_on(BRAVE_API_KEY="brave-key") is False
+    assert places_on() is False
 
 
 def test_cors_allows_our_own_screens(client):

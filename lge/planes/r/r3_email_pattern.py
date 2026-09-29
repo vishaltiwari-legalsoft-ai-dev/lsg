@@ -60,6 +60,12 @@ _PATTERN_CHOICES = (
     "firstlast", "first_last", "lastf", "f.last", "last.first", "lastfirst",
 )
 _NAME_TOKEN_RE = re.compile(r"[^A-Za-z]")
+# Generational and professional suffixes that are never part of an address:
+# "John A. Smith Jr." must give john/smith, not john/jr (28 Sep 2026 live run).
+_NAME_SUFFIXES = frozenset({
+    "jr", "sr", "ii", "iii", "iv", "v", "esq", "esquire", "jd", "llm", "phd", "cpa",
+    "pc", "pa", "llc", "llp", "mba", "md",
+})
 
 
 @lru_cache(maxsize=1)
@@ -71,8 +77,13 @@ def _config() -> dict[str, Any]:
 def _name_parts(full_name: str | None) -> tuple[str, str] | None:
     if not full_name:
         return None
-    tokens = [_NAME_TOKEN_RE.sub("", t) for t in full_name.strip().split()]
-    tokens = [t for t in tokens if t]
+    name = full_name.strip()
+    # "Smith, John A." -- the comma form puts the surname first.
+    if "," in name:
+        last_part, _, first_part = name.partition(",")
+        name = f"{first_part.strip()} {last_part.strip()}"
+    tokens = [_NAME_TOKEN_RE.sub("", t) for t in name.split()]
+    tokens = [t for t in tokens if t and t.lower() not in _NAME_SUFFIXES]
     if len(tokens) < 2:
         return None
     return tokens[0].lower(), tokens[-1].lower()

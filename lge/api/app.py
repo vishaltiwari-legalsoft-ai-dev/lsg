@@ -9,15 +9,19 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from lge import auth as auth_store
 from lge.api.deps import close_pool, get_pool
+from lge.api.gate import require_access
 from lge.api.routes import (
     actions,
+    auth,
     firms,
     handcheck,
     health,
@@ -29,9 +33,14 @@ from lge.api.routes import (
     pipeline,
     qualified,
     today,
+    users,
 )
 
 logger = logging.getLogger("lge.api")
+# The engine's own HTTP calls (verifiers, search) must never print a URL
+# that carries a key or a person's address into the API log.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 # Only our own screens. They reach the engine through their own server's
 # /api proxy, so they never need this; it is for a page calling the engine
@@ -55,14 +64,24 @@ async def _lifespan(app: FastAPI):
     # fail it, so the screen stops waiting and the firm can be asked again.
     with pool.connection() as conn:
         swept = actions.sweep_orphaned_jobs(conn)
+        stuck = imports.sweep_orphaned_imports(conn)
+        auth_store.sweep_sessions(conn)
     if swept:
         logger.warning("failed %d job(s) orphaned by the last restart", swept)
+    if stuck:
+        logger.warning("failed %d import(s) left loading by the last restart", stuck)
     yield
     close_pool()
 
 
 app = FastAPI(title="Lead Gen Engine API", lifespan=_lifespan)
 
+# Binding to 127.0.0.1 keeps other machines out; a Host check keeps out a
+# page elsewhere that re-points its own name at 127.0.0.1 (DNS rebinding)
+# and would otherwise read contacts or start paid research from the LAN.
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
@@ -71,18 +90,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health and sign-in stand outside the door; the Users screen has its own
+# (admin-only) gate; every other route is behind `require_access` (D-067),
+# which is open until Google sign-in is configured.
 app.include_router(health.router)
-app.include_router(today.router)
-app.include_router(leads.router)
-app.include_router(firms.router)
-app.include_router(handcheck.router)
-app.include_router(meta.router)
-app.include_router(pipeline.router)
-app.include_router(imports.router)
-app.include_router(actions.router)
-app.include_router(overview.router)
-app.include_router(qualified.router)
-app.include_router(journey.router)
+app.include_router(auth.router)
+app.include_router(users.router)
+_gate = [Depends(require_access)]
+for _router in (
+    today.router, leads.router, firms.router, handcheck.router, meta.router,
+    pipeline.router, imports.router, actions.router, overview.router, qualified.router,
+    journey.router,
+):
+    app.include_router(_router, dependencies=_gate)
 
 
 def _error_body(code: str, message: str, fix: str | None = None) -> dict:

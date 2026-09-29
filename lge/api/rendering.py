@@ -24,7 +24,16 @@ from lge.api.labels import (
     state_display,
     tier_display,
 )
-from lge.api.models import ContactSummary, FirmRef, LeadRow, PainAnalysis, PainPoint, Proof
+from lge.api.models import (
+    ContactSummary,
+    FirmRef,
+    LeadRow,
+    ListingSummary,
+    PainAnalysis,
+    PainPoint,
+    Proof,
+    ReviewRow,
+)
 from lge.api.stage import STAGE_DISPLAY, stage_of
 from lge.export.list import best_email
 from lge.journey.model import Signal
@@ -205,3 +214,117 @@ def fetch_pain_analysis(conn: Any, firm_id: Any) -> PainAnalysis | None:
         read=list(value.get("read") or []),
         at=row["observed_at"],
     )
+
+
+def _listing_notes(
+    conn: Any, firm_id: Any, listing: dict[str, Any], domain: str | None
+) -> list[str]:
+    """Where the listing disagrees with the firm's own record: a website that
+    is not the firm's domain, an address that is not the one the site prints.
+    Said on the screen because it is the one thing the listing adds that a
+    person cannot see by reading either alone (D-062)."""
+    from lge.planes.r.r_listing import parse_address, website_host
+
+    notes: list[str] = []
+    host, own = website_host(listing.get("website")), (domain or "").lower()
+    if host and own and host != own and not host.endswith("." + own):
+        notes.append(f"The listing's website ({host}) is not the firm's domain ({own}).")
+    theirs = parse_address(listing.get("address"))
+    if theirs:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT value, evidence FROM firm_attribute WHERE firm_id = %s "
+                "AND attr = 'address' AND source LIKE 'site:%%' "
+                "ORDER BY observed_at DESC LIMIT 1",
+                (firm_id,),
+            )
+            site = cur.fetchone()
+        if site and isinstance(site["value"], dict):
+            ours = site["value"]
+            same = (
+                (theirs.get("addr_hash") and theirs.get("addr_hash") == ours.get("addr_hash"))
+                or (theirs.get("zip5") and theirs.get("zip5") == ours.get("zip5")
+                    and (theirs.get("street_norm") or "") == (ours.get("street_norm") or ""))
+            )
+            if not same:
+                printed = " ".join(str(site.get("evidence") or "").split())
+                notes.append(
+                    f"The site prints a different address: {printed}." if printed
+                    else "The site prints a different address."
+                )
+    return notes
+
+
+def fetch_listing_note(conn: Any, firm_id: Any) -> str:
+    """Why there is no listing on this firm, in a sentence: never looked up
+    (and what that needs), looked up and not matched, or failed last time."""
+    from lge.api.deps import providers_status
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT outcome FROM search_log WHERE firm_id = %s AND kind = 'listing' "
+            "ORDER BY searched_at DESC LIMIT 1",
+            (firm_id,),
+        )
+        row = cur.fetchone()
+    if row is None:
+        if providers_status()["places"]:
+            return "Not looked up yet. Research the firm to read its Google listing."
+        return (
+            "Not looked up yet. Needs a Google Places key (free for the first 1,000 "
+            "lookups a month) or a Serper key."
+        )
+    if row["outcome"] == "not_found":
+        return "No Google listing matched this firm's name and place."
+    if row["outcome"] == "failed":
+        return "The last lookup of the Google listing failed; it will be tried again."
+    return "No Google listing on file."
+
+
+def fetch_listing(conn: Any, firm_id: Any, domain: str | None = None) -> ListingSummary | None:
+    """The Google Business Profile as the listings provider returned it
+    (r_listing, D-062), latest first, with what it disagrees on."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT value, source, observed_at FROM firm_attribute WHERE firm_id = %s "
+            "AND attr = 'business_listing' ORDER BY observed_at DESC LIMIT 1",
+            (firm_id,),
+        )
+        row = cur.fetchone()
+    if row is None or not isinstance(row["value"], dict) or not row["value"].get("name"):
+        return None
+    v = row["value"]
+    from lge.api.labels import source_label
+
+    return ListingSummary(
+        name=str(v["name"]), category=v.get("category"), address=v.get("address"),
+        phone=v.get("phone"), website=v.get("website"),
+        rating=float(v["rating"]) if v.get("rating") is not None else None,
+        review_count=int(v["review_count"]) if v.get("review_count") is not None else None,
+        url=v.get("url"), status=v.get("status"), source_label=source_label(row["source"]),
+        notes=_listing_notes(conn, firm_id, v, domain),
+        at=row["observed_at"],
+    )
+
+
+def fetch_reviews(conn: Any, firm_id: Any) -> list[ReviewRow]:
+    """The reviews kept with the listing, as the provider ranked them."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT value FROM firm_attribute WHERE firm_id = %s "
+            "AND attr = 'google_reviews' ORDER BY observed_at DESC LIMIT 1",
+            (firm_id,),
+        )
+        row = cur.fetchone()
+    if row is None or not isinstance(row["value"], list):
+        return []
+    out = []
+    for r in row["value"]:
+        if not isinstance(r, dict) or not r.get("text"):
+            continue
+        out.append(ReviewRow(
+            author=r.get("author"),
+            rating=int(r["rating"]) if r.get("rating") is not None else None,
+            date=r.get("date"), text=str(r["text"]), url=r.get("url"),
+        ))
+    return out

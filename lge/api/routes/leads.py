@@ -18,13 +18,15 @@ from tempfile import TemporaryDirectory
 from typing import Any
 
 import psycopg
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import Response
 
 from lge import db as lge_db
-from lge.api.cursor import decode_cursor, encode_cursor
+from lge.api.cursor import cursor_parts as _cursor_parts
+from lge.api.cursor import encode_cursor
 from lge.api.deps import ConnDep
-from lge.api.errors import api_error, not_found
+from lge.api.errors import api_error, is_uuid, not_found
+from lge.api.gate import actor_of
 from lge.api.labels import reason_display, state_display
 from lge.api.models import (
     DraftsResponse,
@@ -46,7 +48,10 @@ from lge.api.rendering import (
     build_contact_summary,
     build_lead_row,
     build_proof,
+    fetch_listing,
+    fetch_listing_note,
     fetch_pain_analysis,
+    fetch_reviews,
     fetch_signal_scores,
 )
 from lge.api.scoring import compute_fit_terms, signal_term_label
@@ -309,9 +314,7 @@ def list_leads(
             raise api_error(400, "bad_request", f"There is no stage {stage!r}.")
         cursor_id = None
         if cursor:
-            decoded = decode_cursor(cursor)
-            if decoded and len(decoded) == 1:
-                cursor_id = str(decoded[0])
+            cursor_id = str(_cursor_parts(cursor, 1)[0])
         rows = _fetch_stage_page(conn, stage, band, tier, city, q, owner, cursor_id, limit)
         has_more = len(rows) > limit
         page_rows = rows[:limit]
@@ -329,9 +332,7 @@ def list_leads(
     if view == "UNSCORED":
         cursor_id: str | None = None
         if cursor:
-            decoded = decode_cursor(cursor)
-            if decoded and len(decoded) == 1:
-                cursor_id = str(decoded[0])
+            cursor_id = str(_cursor_parts(cursor, 1)[0])
         rows = _fetch_unscored_page(conn, tier, city, contest, q, cursor_id, limit)
         has_more = len(rows) > limit
         page_rows = rows[:limit]
@@ -358,9 +359,7 @@ def list_leads(
 
     cursor_tuple = None
     if cursor:
-        decoded = decode_cursor(cursor)
-        if decoded and len(decoded) == 4:
-            cursor_tuple = tuple(decoded)
+        cursor_tuple = tuple(_cursor_parts(cursor, 4))
     if cursor_tuple is not None:
         built = [r for r in built if _sort_key(r) > cursor_tuple]
 
@@ -411,6 +410,8 @@ def export_csv(
 
 
 def _fetch_lead_row(conn: psycopg.Connection, lead_id: str) -> dict | None:
+    if not is_uuid(lead_id):
+        return None  # a pasted or truncated id is "not found", never a 500
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -563,6 +564,7 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
     lead_row = build_lead_row(
         row, proof, build_contact_summary(primary_contact, emails_by_contact), blockers
     )
+    listing = fetch_listing(conn, row["firm_id"], domain=row.get("domain"))
     return LeadDetail(
         **lead_row.model_dump(),
         contacts=contacts,
@@ -574,6 +576,9 @@ def _build_lead_detail(conn: psycopg.Connection, lead_id: str) -> LeadDetail | N
         notes=notes,
         job=latest_job(conn, row["firm_id"]),
         pain=fetch_pain_analysis(conn, row["firm_id"]),
+        listing=listing,
+        listing_note=None if listing else fetch_listing_note(conn, row["firm_id"]),
+        reviews=fetch_reviews(conn, row["firm_id"]),
     )
 
 
@@ -772,8 +777,9 @@ def _outcome_message(action: str, transition_applied: bool, target_state: str) -
 
 @router.post("/leads/{lead_id}/outcome", response_model=OutcomeResponse)
 def post_outcome(
-    lead_id: str, body: OutcomeRequest, conn: ConnDep
+    lead_id: str, body: OutcomeRequest, conn: ConnDep, request: Request
 ) -> OutcomeResponse:
+    actor = actor_of(request)
     row = _fetch_lead_row(conn, lead_id)
     if row is None:
         raise not_found("Lead not found.", "Check the id.")
@@ -784,7 +790,7 @@ def post_outcome(
     current_state = row["lead_state"]
     can_apply = _whitelisted(conn, current_state, target_state)
 
-    with lge_db.lifecycle(conn, "ui_outcome", actor="ui"):
+    with lge_db.lifecycle(conn, "ui_outcome", actor=actor):
         if can_apply:
             with conn.cursor() as cur:
                 cur.execute("UPDATE lead SET state = %s WHERE id = %s", (target_state, lead_id))
@@ -817,8 +823,8 @@ def post_outcome(
             cur.execute(
                 "INSERT INTO lead_outcome "
                 "(lead_id, action, until, note, actor, transition_applied) "
-                "VALUES (%s, %s, %s, %s, 'ui', %s)",
-                (lead_id, body.action, body.until, body.note, can_apply),
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (lead_id, body.action, body.until, body.note, actor, can_apply),
             )
 
     detail = _build_lead_detail(conn, lead_id)

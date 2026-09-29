@@ -14,10 +14,12 @@ pytestmark = pytest.mark.db
 
 def _keys(monkeypatch, **values):
     for name in ("OPENROUTER_API_KEY", "ZEROBOUNCE_API_KEY", "NEVERBOUNCE_API_KEY",
-                 "HUNTER_API_KEY", "SERPER_API_KEY", "BRAVE_API_KEY"):
+                 "HUNTER_API_KEY", "SERPER_API_KEY", "BRAVE_API_KEY",
+                 "GOOGLE_PLACES_API_KEY"):
         monkeypatch.setenv(name, values.get(name, ""))
     monkeypatch.setenv("LGE_EMAIL_VERIFIER", "auto")
     monkeypatch.setenv("LGE_SEARCH_ENGINE", "auto")
+    monkeypatch.setenv("LGE_LISTINGS", "auto")
 
 
 def _body(client, monkeypatch, **keys):
@@ -77,7 +79,10 @@ def test_the_outside_services_say_what_they_unlock_and_never_a_key_value(client,
     assert "sk-secret-value" not in resp_text(body)
     assert "serper-secret" not in resp_text(body)
     services = {s["id"]: s for s in body["outside"]}
-    assert set(services) == {"ai", "verification", "search"}
+    assert set(services) == {"ai", "verification", "search", "listings", "sign_in"}
+    assert services["sign_in"]["on"] is False and services["sign_in"]["key"] == (
+        "GOOGLE_OAUTH_CLIENT_ID"
+    )
     assert services["ai"]["on"] is True
     assert services["ai"]["key"] == "OPENROUTER_API_KEY"
     assert services["verification"]["on"] is False

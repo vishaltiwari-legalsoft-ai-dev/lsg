@@ -44,6 +44,7 @@ verification WOULD have covered.
 from __future__ import annotations
 
 import os
+import re
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -74,6 +75,15 @@ _NEVERBOUNCE_URL = "https://api.neverbounce.com/v4/single/check"
 _HUNTER_URL = "https://api.hunter.io/v2/email-verifier"
 
 _VALID_STATUSES = {"valid", "catch_all", "risky", "invalid"}
+# A provider's "unknown" is transient by its own definition (a mail server
+# that would not answer): it is recorded as an attempt with result 'unknown'
+# and no cost, the address stays 'unverified', and it is asked again after
+# _UNKNOWN_RETRY_DAYS, at most _UNKNOWN_MAX_TRIES times. Before this it
+# became 'risky' for good and the lead sat at "almost" forever (readiness
+# audit, 28 Sep 2026, finding 15).
+_UNKNOWN = "unknown"
+_UNKNOWN_RETRY_DAYS = 7
+_UNKNOWN_MAX_TRIES = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,9 +115,20 @@ def _sleep_backoff(attempt: int, base: float, cap: float) -> None:
     time.sleep(min(cap, base * (2 ** (attempt - 1))))
 
 
+def _without_query(text: str) -> str:
+    """An httpx error message names the URL; a verifier's URL may carry the
+    key and a person's address in its query string. Keep the message, drop
+    everything after the first '?'."""
+    return re.sub(r"\?[^\s'\"]*", "?…", text)
+
+
 def _get_with_retry(
-    client: httpx.Client, url: str, *, params: dict[str, str], cfg: dict[str, Any]
+    client: httpx.Client, url: str, *, params: dict[str, str] | None = None,
+    json: dict[str, Any] | None = None, cfg: dict[str, Any],
 ) -> dict[str, Any]:
+    """One provider call with bounded retries: GET with `params`, or POST
+    with a JSON `json` body when the provider accepts one (the key then
+    never appears in a URL)."""
     max_retries = int(cfg["max_retries"])
     timeout_s = float(cfg["timeout_s"])
     backoff_base = float(cfg["backoff_base_s"])
@@ -117,7 +138,10 @@ def _get_with_retry(
     while True:
         attempt += 1
         try:
-            resp = client.get(url, params=params, timeout=timeout_s)
+            if json is not None:
+                resp = client.post(url, json=json, timeout=timeout_s)
+            else:
+                resp = client.get(url, params=params, timeout=timeout_s)
         except httpx.TimeoutException as exc:
             if attempt >= max_retries:
                 raise VerifyError(f"timeout after {attempt} attempt(s)") from exc
@@ -125,7 +149,9 @@ def _get_with_retry(
             continue
         except httpx.HTTPError as exc:
             if attempt >= max_retries:
-                raise VerifyError(f"transport error after {attempt} attempt(s): {exc}") from exc
+                raise VerifyError(
+                    f"transport error after {attempt} attempt(s): {_without_query(str(exc))}"
+                ) from exc
             _sleep_backoff(attempt, backoff_base, backoff_max)
             continue
 
@@ -149,7 +175,7 @@ def verify_none(
 _ZEROBOUNCE_STATUS_MAP: dict[str, str] = {
     "valid": "valid",
     "catch-all": "catch_all",
-    "unknown": "risky",
+    "unknown": _UNKNOWN,
     "invalid": "invalid",
     "spamtrap": "invalid",
     "abuse": "invalid",
@@ -171,7 +197,7 @@ def verify_zerobounce(
 _NEVERBOUNCE_RESULT_MAP: dict[str, str] = {
     "valid": "valid",
     "catchall": "catch_all",
-    "unknown": "risky",
+    "unknown": _UNKNOWN,
     "invalid": "invalid",
     "disposable": "invalid",
 }
@@ -180,12 +206,26 @@ _NEVERBOUNCE_RESULT_MAP: dict[str, str] = {
 def verify_neverbounce(
     email: str, *, client: httpx.Client, api_key: str, cfg: dict[str, Any]
 ) -> VerifyResult:
+    # POST with the key in the body: NeverBounce accepts it, and a URL that
+    # gets logged or quoted in an error then carries nothing secret.
     raw = _get_with_retry(
-        client, _NEVERBOUNCE_URL, params={"key": api_key, "email": email}, cfg=cfg
+        client, _NEVERBOUNCE_URL, json={"key": api_key, "email": email}, cfg=cfg
     )
+    # NeverBounce answers HTTP 200 for every problem too -- `status` is then
+    # auth_failure, throttle_triggered, temp_unavail or general_failure and
+    # there is no `result`. That is not a verdict on the address: raise, so no
+    # attempt row is written and the address is asked again later (readiness
+    # audit 28 Sep 2026, finding 2). Before this check an empty `result`
+    # became 'risky' for good.
+    envelope = str(raw.get("status", "")).lower()
+    if envelope != "success":
+        raise VerifyError(
+            f"neverbounce {envelope or 'no status'}: {str(raw.get('message', ''))[:200]}"
+        )
     result = str(raw.get("result", "")).lower()
-    status = _NEVERBOUNCE_RESULT_MAP.get(result, "risky")
-    return VerifyResult(status, raw)
+    if result not in _NEVERBOUNCE_RESULT_MAP:
+        raise VerifyError(f"neverbounce: unexpected result {result!r}")
+    return VerifyResult(_NEVERBOUNCE_RESULT_MAP[result], raw)
 
 
 # Hunter /v2/email-verifier documented `status` values. `accept_all` is a
@@ -263,6 +303,9 @@ def _select_candidates(conn, opts: dict[str, Any]) -> list[dict]:
         "c.role IN ('owner', 'admin')",
         "f.tier IS NOT NULL",
         "f.tier NOT LIKE 'DQ%%'",  # same convention as sql/001_schema.sql's firm index
+        # A firm the classifier could not place can never pass the readiness
+        # checks, so its addresses are not worth a paid call (audit finding 9).
+        "f.tier <> 'UNCLASSIFIED'",
     ]
     params: list[Any] = []
 
@@ -292,13 +335,38 @@ def _select_candidates(conn, opts: dict[str, Any]) -> list[dict]:
         return cur.fetchall()
 
 
-def _already_attempted(conn, email: str, provider: str) -> bool:
+def _catch_all_domains(conn, provider: str) -> set[str]:
+    """Every domain this provider has already called catch-all."""
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT 1 FROM verify_attempt WHERE email = %s AND provider = %s LIMIT 1",
-            (email, provider),
+            "SELECT DISTINCT lower(split_part(email, '@', 2)) AS domain "
+            "FROM verify_attempt WHERE provider = %s AND result = 'catch_all'",
+            (provider,),
         )
-        return cur.fetchone() is not None
+        return {row["domain"] for row in cur.fetchall()}
+
+
+def _already_attempted(conn, email: str, provider: str) -> bool:
+    """Whether this (email, provider) is settled: any real verdict settles
+    it; an 'unknown' settles it only for _UNKNOWN_RETRY_DAYS, and for good
+    after _UNKNOWN_MAX_TRIES of them."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FILTER (WHERE result <> %s) AS settled, "
+            "count(*) FILTER (WHERE result = %s) AS unknowns, "
+            "max(created_at) FILTER (WHERE result = %s) AS last_unknown "
+            "FROM verify_attempt WHERE email = %s AND provider = %s",
+            (_UNKNOWN, _UNKNOWN, _UNKNOWN, email, provider),
+        )
+        row = cur.fetchone()
+    if row["settled"]:
+        return True
+    if not row["unknowns"]:
+        return False
+    if row["unknowns"] >= _UNKNOWN_MAX_TRIES:
+        return True
+    age = datetime.now(UTC) - row["last_unknown"]
+    return age.days < _UNKNOWN_RETRY_DAYS
 
 
 @component(
@@ -328,6 +396,12 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
     result = RunResult()
     spent = 0.0
     current_firm: Any = object()  # sentinel -- never equals a real firm_id
+    # A domain that answered catch-all accepts every address: a further call
+    # there tells nothing and costs the same. The first catch-all answer marks
+    # the rest of that domain's candidates catch-all without paying (the
+    # guesser already does this; the 28 Sep 2026 live run paid twice on one
+    # domain before this was added). Prior runs' answers count too.
+    catch_all_domains: set[str] = _catch_all_domains(conn, provider)
 
     with httpx.Client() as client:
         for row in candidates:
@@ -339,6 +413,18 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
 
             if _already_attempted(conn, email, provider):
                 result.skipped += 1
+                continue
+
+            domain = email.rsplit("@", 1)[-1].lower()
+            if domain in catch_all_domains:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE contact_email SET status = 'catch_all', verified_at = %s "
+                        "WHERE contact_id = %s AND email = %s",
+                        (datetime.now(UTC), row["contact_id"], email),
+                    )
+                result.processed += 1
+                result.notes.append(f"{email}: catch-all domain, not paid for")
                 continue
 
             if max_usd is not None and spent + price > max_usd:
@@ -353,8 +439,24 @@ def run(ctx: RunContext, **opts: Any) -> RunResult:
                 result.notes.append(f"{email}: {exc}")
                 continue
 
-            spent += price
             now = datetime.now(UTC)
+            if verify_result.status == _UNKNOWN:
+                # Not a verdict: the address stays unverified and is asked
+                # again later; the provider does not bill an unknown.
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO verify_attempt (email, provider, result, raw, cost_usd) "
+                        "VALUES (%s, %s, %s, %s, 0)",
+                        (email, provider, _UNKNOWN, Jsonb(verify_result.raw)),
+                    )
+                result.notes.append(
+                    f"{email}: unknown -- asked again in {_UNKNOWN_RETRY_DAYS} days"
+                )
+                result.processed += 1
+                continue
+            spent += price
+            if verify_result.status == "catch_all":
+                catch_all_domains.add(domain)
             with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE contact_email SET status = %s, verified_at = %s "

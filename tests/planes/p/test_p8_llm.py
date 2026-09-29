@@ -189,7 +189,7 @@ def test_successful_call_writes_claims_and_ok_llm_call(db):
 
     claims = _claims(db, firm_id)
     assert claims["fee_model"]["value"] == "contingency"
-    assert claims["fee_model"]["source"] == "llm:p8:v2"
+    assert claims["fee_model"]["source"] == "llm:p8:v3"
     assert claims["primary_practice"]["value"] == "personal_injury"
     assert claims["attorney_count"]["value"] == 2
     assert "method" not in claims  # lives on the sibling attr, not attorney_count
@@ -218,7 +218,7 @@ def test_successful_call_writes_claims_and_ok_llm_call(db):
     assert len(calls) == 1
     assert calls[0]["status"] == "ok"
     assert calls[0]["model"] == "anthropic/claude-haiku-4.5"
-    assert calls[0]["prompt_rev"] == "v2"
+    assert calls[0]["prompt_rev"] == "v3"
     assert calls[0]["input_tokens"] == 200
     assert calls[0]["output_tokens"] == 80
     assert calls[0]["ungrounded_fields"] is None
@@ -410,6 +410,32 @@ def test_budget_stop_skips_remaining_firms_without_calling_them(db):
     assert any("budget stop" in note for note in result.notes)
     assert _claims(db, firm_a) == {}
     assert _claims(db, firm_b) == {}
+
+
+def test_each_chunk_is_on_record_before_the_next_is_asked(db):
+    """Three firms, chunks of two: when the third firm's call goes out, the
+    first two firms' readings are already written -- a crash there would
+    keep them (readiness audit 28 Sep 2026, finding 3)."""
+    firms = [_seed_firm_with_pages(db) for _ in range(3)]
+    ctx = _ctx(db)
+    seen_before_third: dict[str, int] = {}
+
+    def answer(request):
+        n = len(seen_before_third) + 1
+        if n == 3:
+            with db.cursor() as cur:
+                cur.execute("SELECT count(*) AS n FROM llm_call")
+                seen_before_third["llm_calls"] = cur.fetchone()["n"]
+        seen_before_third[f"call{n}"] = n
+        return httpx.Response(200, json=_chat_response(_valid_extraction_json()))
+
+    with respx.mock(assert_all_called=True) as mock:
+        route = mock.post(OPENROUTER_URL).mock(side_effect=answer)
+        result = p8_llm(ctx, limit=10, chunk_size="2")
+        assert route.call_count == 3
+    assert result.processed == 3
+    assert seen_before_third["llm_calls"] == 2  # chunk one persisted before chunk two
+    assert all(_claims(db, f) for f in firms)
 
 
 # =============================================================================

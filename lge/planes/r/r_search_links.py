@@ -43,11 +43,13 @@ from urllib.parse import urlsplit, urlunsplit
 
 from psycopg.types.json import Jsonb
 
+from lge import listings as listing_seam
 from lge.classify.roles import classify_role
+from lge.listings.match import pick_listing as _pick_listing
 from lge.planes.p._claims import write_claim
 from lge.planes.p._site_facts import looks_like_title, name_like
 from lge.registry import RunContext, RunResult, component
-from lge.search import engine_name
+from lge.search import clean_term, daily_cap_refusal, engine_name, meter, paid_run_refusal
 from lge.search import places as web_places
 from lge.search import search as web_search
 from lge.search import source as search_source
@@ -89,11 +91,21 @@ _COUNT_RE = re.compile(
     r"(?:five|5)[- ]star\s+)?(?:reviews|ratings)\b",
     re.I,
 )
-_MAPS_RE = re.compile(
-    r"google\.com/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl/maps|g\.page/|"
-    r"search\.google\.com/local|google\.com/search\?.*(?:ludocid|lrd=)",
-    re.I,
-)
+_MAPS_PATH_RE = re.compile(r"^/maps|^/local|^/search\?.*(?:ludocid|lrd=)", re.I)
+
+
+def is_maps_url(href: str) -> bool:
+    """A Google Maps / Business Profile link, judged by its host, never by
+    a substring anywhere in the URL (a result at x.example/?u=google.com/maps
+    is not a listing)."""
+    parts = urlsplit(href or "")
+    host = (parts.hostname or "").lower()
+    if host in ("g.page", "maps.app.goo.gl", "goo.gl"):
+        return True
+    if host == "google.com" or host.endswith(".google.com"):
+        target = parts.path + (f"?{parts.query}" if parts.query else "")
+        return host.startswith("maps.") or bool(_MAPS_PATH_RE.match(target))
+    return False
 _LAW_WORDS_RE = re.compile(
     r"\b(?:law|legal|attorney|attorneys|lawyer|lawyers|llp|llc|pllc|pc|p\.c\.|firm|group|"
     r"associates|office|offices|the|of|and|&)\b",
@@ -106,58 +118,39 @@ _LAW_WORDS_RE = re.compile(
 # ---------------------------------------------------------------------------
 
 
+def _q(*parts: str | None) -> str:
+    return " ".join(p for p in parts if p)
+
+
+def _phrase(term: str | None) -> str:
+    """A sheet or page value as a quoted phrase: cleaned first, so a quote
+    or an operator inside the name cannot change the query."""
+    cleaned = clean_term(term)
+    return f'"{cleaned}"' if cleaned else ""
+
+
 def linkedin_query(firm_name: str, person: str, city: str | None = None) -> str:
     # The city keeps namesakes apart (D-042): a "John Smith" at "Smith Law" in Atlanta
-    return " ".join(p for p in (f'"{firm_name}"', f'"{person}"', city, "linkedin") if p)
+    return _q(_phrase(firm_name), _phrase(person), clean_term(city), "linkedin")
 
 
 def sweep_query(firm_name: str, city: str | None = None) -> str:
     # The site: operator keeps the data brokers (RocketReach, ZoomInfo) out;
     # the whole domain, so the company page comes back with the people.
-    return " ".join(p for p in (f'site:linkedin.com "{firm_name}"', city) if p)
+    return _q(f"site:linkedin.com {_phrase(firm_name)}", clean_term(city))
 
 
 def reviews_query(firm_name: str, city: str | None, state: str | None) -> str:
-    return " ".join(p for p in (f'"{firm_name}"', city, state, "google business reviews") if p)
+    return _q(_phrase(firm_name), clean_term(city), clean_term(state), "google business reviews")
 
 
 def places_query(firm_name: str, city: str | None, state: str | None) -> str:
-    return " ".join(p for p in (firm_name, city, state) if p)
+    return _q(clean_term(firm_name), clean_term(city), clean_term(state))
 
 
-_LISTING_MIN_OVERLAP = 0.34
-_LAW_CATEGORY_RE = re.compile(r"law|legal|attorney|lawyer", re.I)
-
-
-def _listing_tokens(text: str) -> set[str]:
-    return {
-        t for t in re.findall(r"[a-z0-9]+", _LAW_WORDS_RE.sub(" ", text.casefold())) if len(t) > 1
-    }
-
-
-def pick_listing(firm_name: str, listings: list[dict[str, Any]] | None) -> dict[str, Any] | None:
-    """The business listing that is this firm: the best name overlap once the
-    law words are set aside ("Hartley Injury Law" is "Hartley Injury Law, P.C.",
-    not "Hartley Dental"), and never a listing whose category is not a law
-    practice."""
-    if not listings:
-        return None
-    firm = _listing_tokens(firm_name)
-    if not firm:
-        return None
-    best: dict[str, Any] | None = None
-    best_score = 0.0
-    for p in listings:
-        category = str(p.get("category") or "")
-        if category and not _LAW_CATEGORY_RE.search(category):
-            continue
-        name = _listing_tokens(str(p.get("name") or ""))
-        if not name:
-            continue
-        score = len(firm & name) / len(firm | name)
-        if score > best_score:
-            best, best_score = p, score
-    return best if best_score >= _LISTING_MIN_OVERLAP else None
+# The listing matcher lives with the listings seam (D-062) and is shared
+# with r_listing; kept importable from here for its callers and tests.
+pick_listing = _pick_listing
 
 
 def _name_tokens(name: str) -> list[str]:
@@ -335,7 +328,7 @@ def read_reviews(results: list[dict[str, str]]) -> dict[str, Any]:
             continue
         snippets.append({"url": href, "title": r.get("title") or "", "body": r.get("body") or ""})
         found_rating, found_count = read(text)
-        is_maps = bool(_MAPS_RE.search(href))
+        is_maps = is_maps_url(href)
         if is_maps and maps_url is None:
             maps_url = href
             if found_rating or found_count:
@@ -374,17 +367,24 @@ def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
         ]
     person = _not_searched("linkedin", "contact_id").format(ref="c.id")
     sweep = _not_searched("sweep", "firm_id").format(ref="f.id")
-    reviews = _not_searched("reviews", "firm_id").format(ref="f.id")
+    # The snippet query for reviews is asked only while no listing was
+    # read through the listings seam either (r_listing, D-062).
+    reviews = (
+        "(" + _not_searched("reviews", "firm_id").format(ref="f.id") + " AND "
+        + _not_searched("listing", "firm_id").format(ref="f.id") + ")"
+    )
     # A firm is due when someone still has no profile and either the firm
     # has not been swept lately or that someone is a decision-maker who has
     # not had a query of their own.
+    # A disqualified firm is never searched for: every query is paid.
     query = f"""
         SELECT DISTINCT f.id AS firm_id
         FROM firm f
         LEFT JOIN contact c ON c.firm_id = f.id AND c.removed_at IS NULL
-        WHERE (c.id IS NOT NULL AND c.linkedin_url IS NULL AND {person}
-               AND ({sweep} OR c.role IN ('owner', 'admin')))
-           OR {reviews}
+        WHERE (f.tier IS NULL OR f.tier NOT LIKE 'DQ%%')
+          AND ((c.id IS NOT NULL AND c.linkedin_url IS NULL AND {person}
+                AND ({sweep} OR c.role IN ('owner', 'admin')))
+               OR {reviews})
         ORDER BY f.id
     """  # noqa: S608 -- fixed fragments; the day count is a bound parameter
     params: dict[str, Any] = {"days": recheck_days}
@@ -515,8 +515,21 @@ def run(
         result.notes.append("live=0: web search is network work -- nothing searched")
         return result
     recheck_days = int(opts.get("recheck_days") or _RECHECK_DAYS_DEFAULT)
+    firm_ids = _firm_ids(conn, opts, recheck_days)
+    refusal = paid_run_refusal(opts, what="the LinkedIn search", firms=len(firm_ids)) or (
+        daily_cap_refusal(conn, opts, ctx.settings) if search is web_search else None
+    )
+    if refusal:
+        result.notes.append(refusal)
+        return result
     max_people = int(opts.get("max_people") or _MAX_PEOPLE_PER_FIRM)
     max_queries = int(opts.get("max_queries") or _MAX_QUERIES_PER_RUN)
+    # The Google Business Profile has one owner: r_listing, through the
+    # listings seam, whenever a provider is configured. This step's own
+    # places call and snippet query are the fallback for a machine with no
+    # listings provider at all -- never a second lookup of the same listing.
+    listing_owned_elsewhere = listing_seam.has_provider(ctx.settings)
+    spend_before = meter.snapshot()
     now = datetime.now(UTC)
     counts = {"swept": 0, "found": 0, "not_found": 0, "titles": 0, "companies": 0,
               "reviews": 0}
@@ -537,7 +550,7 @@ def run(
     def budget_left() -> bool:
         return queries < max_queries and consecutive_failures < _MAX_CONSECUTIVE_FAILURES
 
-    for firm_id in _firm_ids(conn, opts, recheck_days):
+    for firm_id in firm_ids:
         if not budget_left():
             break
         try:
@@ -633,7 +646,9 @@ def run(
                         counts["companies"] += 1
                         company_known = True
 
-            if budget_left() and not _searched_recently(conn, firm_id, "reviews", recheck_days):
+            if (budget_left() and not listing_owned_elsewhere
+                    and not _searched_recently(conn, firm_id, "reviews", recheck_days)
+                    and not _searched_recently(conn, firm_id, "listing", recheck_days)):
                 # The listing itself when the engine has a listings endpoint
                 # (Google Business Profile through the API, D-045); the
                 # snippets of an ordinary query otherwise.
@@ -703,4 +718,7 @@ def run(
         f"company pages {counts['companies']}; review listings read {counts['reviews']}; "
         f"{queries} queries"
     )
+    spent = meter.note(spend_before)
+    if spent:
+        result.notes.append(f"provider charged: {spent}")
     return result

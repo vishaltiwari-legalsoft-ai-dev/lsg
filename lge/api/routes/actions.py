@@ -32,12 +32,13 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 from psycopg.types.json import Jsonb
 
 from lge import db as lge_db
 from lge.api.deps import ConnDep
-from lge.api.errors import api_error, not_found
+from lge.api.errors import api_error, is_uuid, not_found
+from lge.api.gate import actor_of
 from lge.api.labels import step_label
 from lge.api.models import (
     ActionJob,
@@ -104,6 +105,8 @@ def _job_from_row(row: dict) -> ActionJob:
 
 
 def _fetch_job(conn: psycopg.Connection, job_id: str) -> ActionJob | None:
+    if not is_uuid(job_id):
+        return None
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM action_job WHERE id = %s", (job_id,))
         row = cur.fetchone()
@@ -275,6 +278,8 @@ def sweep_orphaned_jobs(conn: psycopg.Connection) -> int:
 
 
 def _firm_and_lead(conn: psycopg.Connection, firm_id: str) -> tuple[dict, dict | None]:
+    if not is_uuid(firm_id):
+        raise not_found("Firm not found.", "Check the id.")
     with conn.cursor() as cur:
         cur.execute("SELECT id, canonical_name, domain FROM firm WHERE id = %s", (firm_id,))
         firm = cur.fetchone()
@@ -324,6 +329,8 @@ def get_job(job_id: str, conn: ConnDep) -> JobResponse:
 
 @router.get("/firms/{firm_id}/jobs", response_model=JobsResponse)
 def get_firm_jobs(firm_id: str, conn: ConnDep, limit: int = 5) -> JobsResponse:
+    if not is_uuid(firm_id):
+        raise not_found("Firm not found.", "Check the id.")
     with conn.cursor() as cur:
         cur.execute(
             "SELECT * FROM action_job WHERE firm_id = %s ORDER BY created_at DESC LIMIT %s",
@@ -338,6 +345,8 @@ def get_firm_jobs(firm_id: str, conn: ConnDep, limit: int = 5) -> JobsResponse:
 
 
 def _contact_row(conn: psycopg.Connection, contact_id: str) -> dict | None:
+    if not is_uuid(contact_id):
+        return None
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, firm_id, full_name, title, role, phone_direct, linkedin_url, "
@@ -486,11 +495,13 @@ def _note(conn: psycopg.Connection, lead_id: Any, text: str, actor: str = "ui") 
 
 
 def apply_decision(
-    conn: psycopg.Connection, lead: dict, action: str, reason: str | None, until: Any
+    conn: psycopg.Connection, lead: dict, action: str, reason: str | None, until: Any,
+    actor: str = "ui",
 ) -> str:
     """Move the lead as the decision asks, within the whitelist; always leave
     a note. Returns the message for the screen; raises api_error when the
-    decision cannot apply from the lead's state."""
+    decision cannot apply from the lead's state. `actor` is the signed-in
+    person's address once sign-in is on (D-067), else 'ui'."""
     state = lead["lead_state"]
     lead_id = lead["lead_id"]
     why = f" -- {reason.strip()}" if reason and reason.strip() else ""
@@ -502,7 +513,7 @@ def apply_decision(
             raise api_error(400, "bad_request", "`until` is required to hold a lead.")
         with conn.cursor() as cur:
             cur.execute("UPDATE lead SET cooldown_until = %s WHERE id = %s", (until, lead_id))
-        _note(conn, lead_id, f"Held until {until.isoformat()}{why}")
+        _note(conn, lead_id, f"Held until {until.isoformat()}{why}", actor)
         return f"Parked until {until.isoformat()}."
 
     if action == "disqualify":
@@ -536,7 +547,7 @@ def apply_decision(
             f"A lead that is '{state}' cannot be moved to '{target}' from the screen.",
             "Let the engine finish its step, or disqualify and reopen.",
         )
-    with lge_db.lifecycle(conn, "ui_decision", actor="ui"), conn.cursor() as cur:
+    with lge_db.lifecycle(conn, "ui_decision", actor=actor), conn.cursor() as cur:
         cur.execute("UPDATE lead SET state = %s WHERE id = %s", (target, lead_id))
         if action == "disqualify":
             cur.execute(
@@ -552,35 +563,39 @@ def apply_decision(
             cur.execute("UPDATE lead SET grade = 'B' WHERE id = %s", (lead_id,))
         if action == "qualify" and target == "QUALIFIED_A":
             cur.execute("UPDATE lead SET grade = 'A' WHERE id = %s", (lead_id,))
-    _note(conn, lead_id, f"{message.rstrip('.')}{why}")
+    _note(conn, lead_id, f"{message.rstrip('.')}{why}", actor)
     return message
 
 
 @router.post("/leads/{lead_id}/decision", response_model=DecisionResponse)
-def post_decision(lead_id: str, body: DecisionRequest, conn: ConnDep) -> DecisionResponse:
+def post_decision(
+    lead_id: str, body: DecisionRequest, conn: ConnDep, request: Request
+) -> DecisionResponse:
     from lge.api.routes.leads import _build_lead_detail, _fetch_lead_row
 
     lead = _fetch_lead_row(conn, lead_id)
     if lead is None:
         raise not_found("Lead not found.", "Check the id.")
-    message = apply_decision(conn, lead, body.action, body.reason, body.until)
+    message = apply_decision(
+        conn, lead, body.action, body.reason, body.until, actor_of(request)
+    )
     return DecisionResponse(lead=_build_lead_detail(conn, lead_id), message=message)
 
 
 @router.post("/leads/{lead_id}/notes", response_model=LeadDetail, status_code=201)
-def post_note(lead_id: str, body: NoteRequest, conn: ConnDep) -> LeadDetail:
+def post_note(lead_id: str, body: NoteRequest, conn: ConnDep, request: Request) -> LeadDetail:
     from lge.api.routes.leads import _build_lead_detail, _fetch_lead_row
 
     if _fetch_lead_row(conn, lead_id) is None:
         raise not_found("Lead not found.", "Check the id.")
     if not body.text.strip():
         raise api_error(400, "bad_request", "A note needs some text.")
-    _note(conn, lead_id, body.text.strip())
+    _note(conn, lead_id, body.text.strip(), actor_of(request))
     return _build_lead_detail(conn, lead_id)
 
 
 @router.put("/leads/{lead_id}/owner", response_model=LeadDetail)
-def put_owner(lead_id: str, body: OwnerRequest, conn: ConnDep) -> LeadDetail:
+def put_owner(lead_id: str, body: OwnerRequest, conn: ConnDep, request: Request) -> LeadDetail:
     from lge.api.routes.leads import _build_lead_detail, _fetch_lead_row
 
     if _fetch_lead_row(conn, lead_id) is None:
@@ -588,7 +603,7 @@ def put_owner(lead_id: str, body: OwnerRequest, conn: ConnDep) -> LeadDetail:
     owner = (body.owner or "").strip() or None
     with conn.cursor() as cur:
         cur.execute("UPDATE lead SET owner = %s WHERE id = %s", (owner, lead_id))
-    _note(conn, lead_id, f"Assigned to {owner}" if owner else "Unassigned")
+    _note(conn, lead_id, f"Assigned to {owner}" if owner else "Unassigned", actor_of(request))
     return _build_lead_detail(conn, lead_id)
 
 
@@ -598,9 +613,10 @@ def put_owner(lead_id: str, body: OwnerRequest, conn: ConnDep) -> LeadDetail:
 
 
 @router.post("/leads/batch", response_model=BatchResponse)
-def post_batch(body: BatchRequest, conn: ConnDep) -> BatchResponse:
+def post_batch(body: BatchRequest, conn: ConnDep, request: Request) -> BatchResponse:
     from lge.api.routes.leads import _fetch_lead_row
 
+    actor = actor_of(request)
     if not body.lead_ids:
         raise api_error(400, "bad_request", "No leads selected.")
     if len(body.lead_ids) > _MAX_BATCH:
@@ -612,6 +628,11 @@ def post_batch(body: BatchRequest, conn: ConnDep) -> BatchResponse:
         if lead is None:
             results.append(BatchResult(lead_id=lead_id, ok=False, message="Lead not found."))
             continue
+        # One lead's writes stand or fall on their own: a savepoint per lead,
+        # so a failure mid-batch neither aborts the transaction for the leads
+        # after it nor rolls back the ones already reported ok.
+        with conn.cursor() as cur:
+            cur.execute("SAVEPOINT batch_lead")
         try:
             if body.action in ("research", "find_contacts"):
                 scope = "full" if body.action == "research" else "contacts"
@@ -623,16 +644,26 @@ def post_batch(body: BatchRequest, conn: ConnDep) -> BatchResponse:
                 owner = (body.owner or "").strip() or None
                 with conn.cursor() as cur:
                     cur.execute("UPDATE lead SET owner = %s WHERE id = %s", (owner, lead_id))
-                _note(conn, lead_id, f"Assigned to {owner}" if owner else "Unassigned")
+                _note(conn, lead_id, f"Assigned to {owner}" if owner else "Unassigned", actor)
                 results.append(BatchResult(lead_id=lead_id, ok=True, message="Assigned."))
             else:
-                message = apply_decision(conn, lead, body.action, body.reason, body.until)
+                message = apply_decision(
+                    conn, lead, body.action, body.reason, body.until, actor
+                )
                 results.append(BatchResult(lead_id=lead_id, ok=True, message=message))
+            with conn.cursor() as cur:
+                cur.execute("RELEASE SAVEPOINT batch_lead")
         except Exception as exc:  # noqa: BLE001 -- one lead's refusal must not stop the rest
+            with conn.cursor() as cur:
+                cur.execute("ROLLBACK TO SAVEPOINT batch_lead")
+            # api_error puts {"code","message","fix"} straight in `detail`.
             detail = getattr(exc, "detail", None)
-            text = (
-                detail.get("error", {}).get("message") if isinstance(detail, dict) else str(exc)
-            )
-            results.append(BatchResult(lead_id=lead_id, ok=False, message=text or str(exc)))
+            text = detail.get("message") if isinstance(detail, dict) else None
+            if not text:
+                text = "Something went wrong for this lead." if not isinstance(
+                    exc, HTTPException
+                ) else str(detail)
+                logger.exception("batch %s on lead %s failed", body.action, lead_id)
+            results.append(BatchResult(lead_id=lead_id, ok=False, message=text))
     _launch_jobs(conn, launches)
     return BatchResponse(results=results)

@@ -23,3 +23,19 @@ def decode_cursor(cursor: str) -> list[Any] | None:
     except Exception:
         return None
     return value if isinstance(value, list) else None
+
+
+def cursor_parts(cursor: str, n: int) -> list[Any]:
+    """The `n` parts a cursor for this list must carry, or a 400. A cursor
+    that does not decode, or one from another list, used to be ignored and
+    the caller quietly restarted at page one -- a client looping on a stale
+    cursor never noticed (readiness audit, 28 Sep 2026)."""
+    from lge.api.errors import api_error
+
+    decoded = decode_cursor(cursor)
+    if decoded is None or len(decoded) != n:
+        raise api_error(
+            400, "bad_cursor", "That cursor is not one this list gave out.",
+            "Start again from the first page.",
+        )
+    return decoded

@@ -14,9 +14,9 @@ from typing import Any
 from fastapi import APIRouter, Query
 
 from lge.api.attributes import build_attributes_for_firm
-from lge.api.cursor import decode_cursor, encode_cursor
+from lge.api.cursor import cursor_parts, encode_cursor
 from lge.api.deps import ConnDep
-from lge.api.errors import not_found
+from lge.api.errors import api_error, is_uuid, not_found
 from lge.api.labels import source_label, state_display, tier_display, tier_reason
 from lge.api.models import (
     AliasRow,
@@ -30,7 +30,10 @@ from lge.api.rendering import (
     build_contact_summary,
     build_firm_ref,
     build_proof,
+    fetch_listing,
+    fetch_listing_note,
     fetch_pain_analysis,
+    fetch_reviews,
     fetch_signal_scores,
 )
 from lge.export.list import fetch_contacts, fetch_emails, fetch_repost_first_seen
@@ -69,10 +72,14 @@ def list_firms(
 
     cursor_clause = ""
     if cursor:
-        decoded = decode_cursor(cursor)
-        if decoded and len(decoded) == 2:
-            cursor_clause = " AND (f.canonical_name, f.id) > (%(cn)s, %(cid)s::uuid)"
-            params["cn"], params["cid"] = decoded[0], decoded[1]
+        decoded = cursor_parts(cursor, 2)
+        if not is_uuid(str(decoded[1])):
+            raise api_error(
+                400, "bad_cursor", "That cursor is not one this list gave out.",
+                "Start again from the first page.",
+            )
+        cursor_clause = " AND (f.canonical_name, f.id) > (%(cn)s, %(cid)s::uuid)"
+        params["cn"], params["cid"] = decoded[0], decoded[1]
 
     where_sql = " AND ".join(where) + cursor_clause
     with conn.cursor() as cur:
@@ -122,9 +129,11 @@ def list_firms(
 
 @router.get("/firms/{firm_id}", response_model=FirmDetail)
 def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM firm WHERE id = %s", (firm_id,))
-        firm = cur.fetchone()
+    firm = None
+    if is_uuid(firm_id):
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM firm WHERE id = %s", (firm_id,))
+            firm = cur.fetchone()
     if firm is None:
         raise not_found("Firm not found.", "Check the id.")
     firm = dict(firm)
@@ -201,6 +210,7 @@ def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
         else None
     )
 
+    listing = fetch_listing(conn, firm_id, domain=firm.get("domain"))
     return FirmDetail(
         firm=build_firm_ref(firm),
         tier_reason=tier_reason(firm),
@@ -210,5 +220,8 @@ def get_firm(firm_id: str, conn: ConnDep) -> FirmDetail:
         contacts=contacts,
         aliases=aliases,
         pain=fetch_pain_analysis(conn, firm_id),
+        listing=listing,
+        listing_note=None if listing else fetch_listing_note(conn, firm_id),
+        reviews=fetch_reviews(conn, firm_id),
         lead=lead_ref,
     )

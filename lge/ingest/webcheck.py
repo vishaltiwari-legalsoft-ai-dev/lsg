@@ -52,12 +52,20 @@ from lge.fetch.ratelimit import HostRateLimiter
 from lge.fetch.robots import RobotsCache
 from lge.norm import norm_domain, norm_name
 from lge.registry import RunContext, RunResult, component
-from lge.search import SearchFn
+from lge.search import (
+    SearchFn,
+    clean_term,
+    daily_cap_refusal,
+    is_failure,
+    meter,
+    paid_run_refusal,
+)
 from lge.search import search as web_search
 from lge.search import source as search_source
 
 DEFAULT_RECHECK_DAYS = 30
 NAME_MATCH_OK = 0.5
+_MAX_CONSECUTIVE_SEARCH_FAILURES = 5
 
 # Results that are never the firm's own site.
 _NOT_A_FIRM_SITE = (
@@ -187,7 +195,11 @@ async def check_site(
 
 
 def build_query(firm_name: str, city: str | None, state: str | None) -> str:
-    return " ".join(p for p in (f'"{firm_name}"', city, state, "law firm") if p)
+    # The name is a phrase: cleaned so a quote or an operator in a sheet's
+    # cell cannot change what is asked.
+    name = clean_term(firm_name)
+    parts = (f'"{name}"' if name else "", clean_term(city), clean_term(state), "law firm")
+    return " ".join(p for p in parts if p)
 
 
 @dataclass
@@ -196,6 +208,10 @@ class SearchVerdict:
     domain: str | None
     score: float
     results: list[dict[str, Any]] = field(default_factory=list)
+    # The engine did not answer (refused, blocked, transport): not "nothing
+    # found". A firm with a failed search gets no website_check row, so the
+    # next run asks again instead of waiting out recheck_days.
+    failed: str | None = None
 
 
 def pick_site(
@@ -234,6 +250,8 @@ def search_site(
 ) -> SearchVerdict:
     query = build_query(firm_name, city, state)
     results = search(query, 8)
+    if is_failure(results):
+        return SearchVerdict(query, None, 0.0, [], failed=results[0].get("body") or "failed")
     domain, score, considered = pick_site(firm_name, results)
     return SearchVerdict(query, domain, score, considered)
 
@@ -376,6 +394,7 @@ def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: An
         return RunResult(notes=[f"live=0: would check {len(firms)} firm(s); no requests made"])
     if not ctx.settings.user_agent.strip():
         raise EmptyUserAgentError("refusing to fetch: settings.user_agent is empty")
+    spend_before = meter.snapshot()
 
     verdicts = asyncio.run(
         _check_all(
@@ -392,6 +411,7 @@ def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: An
     # the firm too -- the first live run "corrected" eight firms to directories
     # whose snippets mentioned them (w9ein.com, lawyerguide.com). Phase 4: write.
     decided: list[tuple[dict, str, SiteVerdict | None, SearchVerdict | None]] = []
+    to_search = 0
     for firm in firms:
         fid = str(firm["id"])
         if not firm["domain"]:
@@ -400,10 +420,38 @@ def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: An
         else:
             site = verdicts.get(fid) or SiteVerdict("dead", note="not checked")
             outcome = site.outcome
+        if outcome in ("missing", "malformed", "dead", "mismatch") and firm["canonical_name"]:
+            to_search += 1
+        decided.append((firm, outcome, site, None))
+
+    # Every search is paid: the same guards as the other search steps, and
+    # five refusals in a row end the searching for this run (the rows for
+    # the firms not searched are not written, so the next run asks again).
+    refusal = paid_run_refusal(opts, what="the website search", firms=to_search) or (
+        daily_cap_refusal(conn, opts, ctx.settings) if search is web_search and to_search else None
+    )
+    if refusal:
+        result.notes.append(refusal)
+        return result
+    search_failures = 0
+    searched: list[tuple[dict, str, SiteVerdict | None, SearchVerdict | None]] = []
+    for firm, outcome, site, _ in decided:
         sv: SearchVerdict | None = None
         if outcome in ("missing", "malformed", "dead", "mismatch") and firm["canonical_name"]:
-            sv = search_site(firm["canonical_name"], firm.get("city"), firm.get("state"), search)
-        decided.append((firm, outcome, site, sv))
+            if search_failures >= _MAX_CONSECUTIVE_SEARCH_FAILURES:
+                sv = SearchVerdict("", None, 0.0, [], failed="not asked: the engine kept failing")
+            else:
+                sv = search_site(
+                    firm["canonical_name"], firm.get("city"), firm.get("state"), search
+                )
+                search_failures = search_failures + 1 if sv.failed else 0
+        searched.append((firm, outcome, site, sv))
+    decided = searched
+    if search_failures >= _MAX_CONSECUTIVE_SEARCH_FAILURES:
+        result.notes.append(
+            f"stopped searching: {search_failures} searches failed in a row -- "
+            "the firms not searched wait for the next run"
+        )
 
     candidates = [
         {"id": str(firm["id"]), "domain": sv.domain, "canonical_name": firm["canonical_name"]}
@@ -420,6 +468,12 @@ def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: An
 
     for firm, outcome, site, sv in decided:
         fid = str(firm["id"])
+        if sv is not None and sv.failed:
+            # No row: a failed search is not an answer, and a row would keep
+            # this firm from being searched again for recheck_days.
+            result.failed += 1
+            result.notes.append(f"{fid}: search failed -- {sv.failed}"[:200])
+            continue
         try:
             final = outcome
             corrected_to: str | None = None
@@ -464,4 +518,7 @@ def website_check(ctx: RunContext, *, search: SearchFn | None = None, **opts: An
         ctx.checkpoint()
 
     result.notes.insert(0, "outcomes: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    spent = meter.note(spend_before)
+    if spent:
+        result.notes.append(f"provider charged: {spent}")
     return result

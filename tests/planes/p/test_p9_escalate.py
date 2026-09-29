@@ -312,5 +312,5 @@ def test_tier_1a_firm_is_escalated_with_opus_model_and_p9_source(db):
             (firm_id,),
         )
         row = cur.fetchone()
-    assert row["source"] == "llm:p9:v2"
+    assert row["source"] == "llm:p9:v3"
     assert row["model"] == "anthropic/claude-opus-5"

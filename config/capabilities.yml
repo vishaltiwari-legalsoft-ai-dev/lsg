@@ -29,15 +29,37 @@ outside:
       work out the addresses it could not find on a site.
     cost: Paid per address checked.
     provider: email_verification
+  - id: listings
+    label: The Google Business Profile and its reviews
+    key: GOOGLE_PLACES_API_KEY
+    what: >-
+      Finds each firm's Google listing through Google's own API -- phone,
+      address, category, website, rating and review count -- and keeps its
+      reviews, which the AI quotes when it names a pain. Serper's key does
+      the same job when this one is blank. Nothing is ever scraped off a
+      Google page.
+    cost: Free for the first 1,000 lookups a month on Google's own API; then paid per lookup.
+    provider: places
   - id: search
-    label: Search and business listings
+    label: Web search
     key: SERPER_API_KEY
     what: >-
-      Google search at volume, the Google Business Profile (phone, address,
-      category, rating, review count), and reviews. Without it the engine falls
-      back to DuckDuckGo, which stops us after a few hundred queries.
+      Google search at volume, for LinkedIn profiles, company pages and
+      addresses in snippets, and a second way to the business listing and
+      its reviews. Without it the engine falls back to DuckDuckGo, which
+      stops us after a few hundred queries.
     cost: Paid per search.
-    provider: places
+    provider: search
+  - id: sign_in
+    label: Sign-in with Google
+    key: GOOGLE_OAUTH_CLIENT_ID
+    what: >-
+      Everyone signs in with their Legal Soft Google account. A new person
+      fills a short form and waits; the admin decides on the Users screen
+      what each person may do. Until the client id and secret are set, the
+      engine answers its one local operator as before.
+    cost: Free. A Google Cloud OAuth client, made once.
+    provider: sign_in
 
 steps:
   - step: 1
@@ -92,23 +114,33 @@ steps:
         what: From search results only. LinkedIn itself is never opened.
         needs: search
       - label: The Google Business Profile read
-        state: partial
-        what: Only the link, rating and count are kept; the phone, address and category are thrown away.
-        needs: search
+        state: built
+        what: >-
+          Name, category, address, phone, website, rating and review count,
+          kept whole and shown on the lead; the phone and address go onto the
+          firm's record.
+        needs: listings
       - label: Reviews read for what they say
-        state: planned
-        what: Counts and links today. No review site is ever scraped.
-        needs: search
+        state: built
+        what: >-
+          The listing's reviews are kept word for word and shown on the lead;
+          the AI quotes one when it names a pain. No review site is ever
+          scraped.
+        needs: listings
       - label: The firm's phone number
         state: partial
-        what: The main line only; nobody's direct line yet.
+        what: The main line, from the site or the Google listing; nobody's direct line yet.
       - label: The AI names what hurts, quoting the record
         state: built
         what: Every pain must quote one line of the firm's record; anything it cannot quote is thrown away.
         needs: ai
       - label: An enrichment report for each lead
-        state: planned
-        what: The firm, the people, the reviews, the listing and the pain analysis as one document.
+        state: partial
+        what: >-
+          One PDF per firm: what came in, what the engine did, every fact with
+          its source, every review, the pain analysis, the cost and the full
+          email journey. Built from the command line today; a button on the
+          lead comes next.
       - label: Firms enriched in batches of 250, Batch 1 first, starting by itself
         state: planned
         what: Today a person selects leads and presses Research.

@@ -1,0 +1,48 @@
+# config/listings.yml -- the business-listing seam (D-062): which provider
+# answers is .env's choice (LGE_LISTINGS / the keys, lge/settings.py); how
+# each is paced is here, in the same terms as config/search.yml
+# (lge/search/pace.py reads both).
+#
+# Both providers are licensed APIs. Nothing here, and nothing anywhere in
+# the engine, reads a Google Maps page.
+
+providers:
+  # Google's own Places API (New). The listing and up to five reviews come
+  # back in one call; Google's pricing page lists 1,000 free calls a month
+  # on the SKU the field mask names, so a 250-firm batch is free four times
+  # over. 429 is a quota or rate limit: wait once, then leave it alone.
+  google_places:
+    interval_s: 0.2
+    jitter_s: 0.1
+    window_queries: 0
+    window_s: 0.0
+    backoff_s: [5.0, 15.0]
+    block_backoff_s: 30.0
+    block_cooldown_s: 600.0
+  # serper.dev /places + /reviews on the search key. `review_pages` is how
+  # many pages of ten reviews to ask for per firm (each page is a query).
+  serper:
+    interval_s: 0.25
+    jitter_s: 0.1
+    window_queries: 0
+    window_s: 0.0
+    backoff_s: [5.0, 15.0]
+    block_backoff_s: 30.0
+    block_cooldown_s: 300.0
+    review_pages: 1
+
+request:
+  timeout_s: 15.0
+  # Reviews kept per firm, whichever provider answers. The pain analyser
+  # reads every one of them as a line of the record.
+  max_reviews: 20
+  # The poor reviews are the ones that name a pain (D-069): Serper is asked
+  # for the lowest-rated first and every review at or below `low_star_max`
+  # stars is kept, then the cap is filled from the most relevant page. Two
+  # credits a firm for reviews instead of one; on a 54-review listing the
+  # relevant page alone showed one 1-star review, the lowest page eight.
+  low_stars_first: true
+  low_star_max: 3
+  # A listing is asked for again after this many days: ratings and reviews
+  # move, and the lookup is cheap.
+  recheck_days: 30

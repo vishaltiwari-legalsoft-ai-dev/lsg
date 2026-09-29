@@ -46,6 +46,8 @@ _SOURCE_LABELS: dict[str, str] = {
     "search:ddg": "Web search (DuckDuckGo)",
     "search:serper": "Web search (Google)",
     "search:brave": "Web search (Brave)",
+    "listing:google_places": "Google Business Profile (Google Places API)",
+    "listing:serper": "Google Business Profile (via Serper)",
     "hunter": "Hunter.io",
     "internal_firms": "Purchased firm list",
     "internal_jobs": "Job history file",
@@ -219,6 +221,7 @@ _STEP_LABELS: dict[str, str] = {
     "reconcile": "Reconcile the record",
     "r_site_contacts": "People into contacts",
     "r_site_emails": "Addresses printed on the site",
+    "r_listing": "Read the Google Business Profile and its reviews",
     "r_search_links": "Search for LinkedIn profiles and reviews",
     "r_search_emails": "Search for addresses",
     "r3_email_pattern": "Learn the address pattern, mint the rest",
@@ -463,6 +466,9 @@ _ATTR_LABELS: dict[str, str] = {
     # r_search_links (D-032): what a web search says.
     "google_business_url": "Google Business listing",
     "google_rating": "Google rating",
+    # r_listing (D-062): the profile whole, and what its reviews say.
+    "business_listing": "Google Business Profile",
+    "google_reviews": "Google reviews (not used for tier)",
     "search_review_snippets": "Review snippets from search (not used for tier)",
     "search_emails": "Addresses found by search (not used for tier)",
     "linkedin_company_url": "LinkedIn company page",
@@ -550,6 +556,19 @@ def _format_site_fact(attr: str, value: Any) -> str | None:
         # A Maps/search URL runs to hundreds of characters; the host and the
         # start of the query say what it is.
         return value.split("://", 1)[-1][:72] + ("…" if len(value) > 75 else "")
+    if attr == "business_listing" and isinstance(value, dict):
+        bits = [str(value.get(k)) for k in ("name", "category", "address", "phone")
+                if value.get(k)]
+        if value.get("rating") is not None:
+            bits.append(f"{value['rating']} stars from {value.get('review_count') or 0} reviews")
+        return "; ".join(bits) or None
+    if attr == "google_reviews" and isinstance(value, list):
+        if not value:
+            return "No reviews on the listing"
+        first = value[0] if isinstance(value[0], dict) else {}
+        head = f"{len(value)} review(s)"
+        text = str(first.get("text") or "")[:100]
+        return f"{head}; latest: {text}" if text else head
     if attr == "search_review_snippets" and isinstance(value, list):
         parts = [str(s.get("body") or s.get("title") or "")[:100] for s in value[:2]
                  if isinstance(s, dict)]

@@ -138,3 +138,80 @@ def test_firm_informational_attribute_included_with_clear_label(client, db):
     body = resp.json()
     row = next(a for a in body["attributes"] if a["attr"] == "vendor_practice_hint")
     assert "not used for tier" in row["label"].lower()
+
+
+def test_the_google_listing_and_its_reviews_are_their_own_section_on_the_firm(client, db):
+    """r_listing (D-062): the profile and the reviews come back typed, never
+    as a wall of JSON, and a firm without a listing says so with null."""
+    firm_id = make_firm(db, canonical_name="Hartley Injury Law", domain="hartleylaw.com")
+    before = client.get(f"/api/firms/{firm_id}").json()
+    assert before["listing"] is None
+    assert before["listing_note"].startswith("Not looked up yet.")
+    assert "Google Places key" in before["listing_note"]  # no provider on a keyless machine
+    make_firm_attribute(
+        db, firm_id, "business_listing",
+        {"name": "Hartley Injury Law, P.C.", "category": "Personal Injury Attorney",
+         "address": "1 Peachtree St NE, Atlanta, GA 30303, USA", "phone": "(404) 555-0100",
+         "website": "https://hartleylaw.com/", "rating": 4.8, "review_count": 212,
+         "url": "https://maps.google.com/?cid=42", "status": "operational"},
+        "listing:google_places", confidence=0.9,
+    )
+    make_firm_attribute(
+        db, firm_id, "google_reviews",
+        [{"author": "R. Diaz", "rating": 2, "date": "2026-07-10",
+          "text": "Nobody called me back for three weeks.", "url": None},
+         {"author": "x", "rating": 4, "date": None, "text": "", "url": None}],
+        "listing:google_places", confidence=0.9,
+    )
+    body = client.get(f"/api/firms/{firm_id}").json()
+    listing = body["listing"]
+    assert body["listing_note"] is None
+    assert listing["name"] == "Hartley Injury Law, P.C."
+    assert listing["notes"] == []
+    assert listing["rating"] == 4.8 and listing["review_count"] == 212
+    assert listing["phone"] == "(404) 555-0100"
+    assert listing["source_label"] == "Google Business Profile (Google Places API)"
+    assert body["reviews"] == [{
+        "author": "R. Diaz", "rating": 2, "date": "2026-07-10",
+        "text": "Nobody called me back for three weeks.", "url": None,
+    }]
+    # and the claims table shows the profile in words, not JSON
+    row = next(a for a in body["attributes"] if a["attr"] == "business_listing")
+    assert row["label"] == "Google Business Profile"
+    assert row["display"].startswith("Hartley Injury Law, P.C.; Personal Injury Attorney")
+    reviews_row = next(a for a in body["attributes"] if a["attr"] == "google_reviews")
+    assert reviews_row["display"].startswith("2 review(s); latest: Nobody called")
+
+
+def test_the_listing_says_where_it_disagrees_with_the_firm_and_why_there_is_none(client, db):
+    """A website that is not the firm's domain and an address the site does
+    not print are said on the screen (D-062); a looked-up firm with no match
+    says so instead of showing nothing."""
+    firm_id = make_firm(db, canonical_name="Duron Law", domain="duronlaw.com")
+    make_firm_attribute(
+        db, firm_id, "address",
+        {"street_norm": "100 W MADISON ST", "unit": None, "city": "CHICAGO", "state": "IL",
+         "zip5": "60602", "addr_hash": "abc"},
+        "site:page", confidence=0.8, evidence="100 W Madison St, Chicago, IL 60602",
+    )
+    make_firm_attribute(
+        db, firm_id, "business_listing",
+        {"name": "Duron Law", "address": "1 Wall St, New York, NY 10005, USA",
+         "website": "https://www.duron-legal.com/", "rating": 4.0, "review_count": 3},
+        "listing:serper", confidence=0.9,
+    )
+    listing = client.get(f"/api/firms/{firm_id}").json()["listing"]
+    assert listing["notes"] == [
+        "The listing's website (duron-legal.com) is not the firm's domain (duronlaw.com).",
+        "The site prints a different address: 100 W Madison St, Chicago, IL 60602.",
+    ]
+
+    other = make_firm(db, canonical_name="Nobody Law", domain="nobodylaw.com")
+    with db.cursor() as cur:
+        cur.execute(
+            "INSERT INTO search_log (firm_id, kind, query, outcome, results, engine) "
+            "VALUES (%s, 'listing', 'Nobody Law', 'not_found', '[]', 'serper')", (other,),
+        )
+    body = client.get(f"/api/firms/{other}").json()
+    assert body["listing"] is None
+    assert body["listing_note"] == "No Google listing matched this firm's name and place."

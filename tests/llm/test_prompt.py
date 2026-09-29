@@ -83,3 +83,76 @@ def test_build_user_message_formats_blocks_with_kind_and_url():
     message = build_user_message(pages)
     assert message.startswith("### home — http://example.com/")
     assert "hello world" in message
+
+
+# --- prompt_rev v3: every page kind the crawler stores -----------------
+
+
+def test_all_crawled_page_kinds_survive_when_within_budget():
+    """v3 widened the reader from seven kinds to eleven. A kind the crawler
+    stores but the prompt does not list is text that was fetched, paid for
+    and then thrown away."""
+    kinds = (
+        "home",
+        "about",
+        "attorneys",
+        "team",
+        "practice",
+        "fees",
+        "contact",
+        "locations",
+        "testimonials",
+        "news",
+        "careers",
+    )
+    pages = [_page(k, f"http://x/{k}", k, 5) for k in kinds]
+    selected = select_and_trim(pages, char_budget=100_000)
+    assert [p.page_kind for p in selected] == list(kinds)
+
+
+def test_news_and_testimonials_are_trimmed_before_the_original_seven():
+    pages = [
+        _page("news", "http://x/news", "n", 1000),
+        _page("testimonials", "http://x/t", "t", 1000),
+        _page("about", "http://x/about", "a", 1000),
+        _page("contact", "http://x/contact", "c", 1000),
+    ]
+    # Four equal ~2000-char pages; a 5000-char budget leaves room for two.
+    selected = select_and_trim(pages, char_budget=5_000)
+    kinds = [p.page_kind for p in selected]
+    assert kinds == ["about", "contact"]
+
+
+def test_careers_is_the_last_trimmable_kind_to_go():
+    """careers is the only page has_inhouse_recruiter can ever be read
+    from, so it outranks home/about/contact in the trim order."""
+    pages = [
+        _page("careers", "http://x/careers", "car", 500),
+        _page("home", "http://x/", "h", 500),
+        _page("about", "http://x/about", "ab", 500),
+        _page("contact", "http://x/contact", "c", 500),
+        _page("locations", "http://x/loc", "l", 500),
+    ]
+    selected = select_and_trim(pages, char_budget=2_500)
+    kinds = [p.page_kind for p in selected]
+    assert kinds == ["careers"]
+
+
+def test_attorneys_and_team_still_outrank_careers():
+    pages = [
+        _page("careers", "http://x/careers", "car", 2000),
+        _page("attorneys", "http://x/attorneys", "a", 2000),
+        _page("team", "http://x/team", "t", 2000),
+    ]
+    selected = select_and_trim(pages, char_budget=100)
+    kinds = {p.page_kind for p in selected}
+    assert kinds == {"attorneys", "team"}
+
+
+def test_system_prompt_names_the_new_page_kinds_and_their_use():
+    prompt = build_system_prompt().lower()
+    for kind in ("careers", "testimonials", "news"):
+        assert kind in prompt
+    # collected content, never instructions -- these pages carry text the
+    # firm did not write for us.
+    assert "never instructions" in prompt or "not instructions" in prompt

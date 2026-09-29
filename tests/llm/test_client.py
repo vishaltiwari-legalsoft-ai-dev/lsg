@@ -169,3 +169,59 @@ async def test_400_is_not_retried():
                     max_retries=3,
                 )
         assert route.call_count == 1
+
+
+async def test_200_with_error_body_and_no_choices_raises_llm_call_error():
+    """OpenRouter answers 200 with a bare {"error": ...} for some upstream
+    provider failures and for free-tier throttling. That used to raise
+    KeyError out of the client, which lge/llm/run.py does not catch, so one
+    bad firm killed the whole run."""
+    body = {"error": {"message": "Upstream error from Nvidia: Service temporarily overloaded"}}
+    with respx.mock(assert_all_called=True) as mock:
+        mock.post(OPENROUTER_URL).mock(return_value=httpx.Response(200, json=body))
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(LLMCallError) as exc:
+                await call_openrouter(
+                    client,
+                    api_key="sk-or-secret-value",
+                    model="m",
+                    system="s",
+                    user="u",
+                    response_format=_RESPONSE_FORMAT,
+                    max_tokens=10,
+                    timeout_s=5,
+                    referer="r",
+                    title="t",
+                )
+    assert "no choices" in str(exc.value)
+    assert "temporarily overloaded" in str(exc.value)
+    assert "sk-or-secret-value" not in str(exc.value)
+
+
+async def test_choice_with_null_content_raises_llm_call_error():
+    """A provider-side cut-off returns a choice whose message content is
+    null. Handing None to model_validate_json raises TypeError, not
+    ValidationError, so it escapes the parse-retry path in run.py."""
+    body = {
+        "id": "gen-1",
+        "choices": [{"index": 0, "finish_reason": "length", "message": {"content": None}}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 3000},
+    }
+    with respx.mock(assert_all_called=True) as mock:
+        mock.post(OPENROUTER_URL).mock(return_value=httpx.Response(200, json=body))
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(LLMCallError) as exc:
+                await call_openrouter(
+                    client,
+                    api_key="sk-or-secret-value",
+                    model="m",
+                    system="s",
+                    user="u",
+                    response_format=_RESPONSE_FORMAT,
+                    max_tokens=10,
+                    timeout_s=5,
+                    referer="r",
+                    title="t",
+                )
+    assert "empty content" in str(exc.value)
+    assert "length" in str(exc.value)

@@ -1,4 +1,4 @@
-# local runtime - portable postgres, object store, caches
+﻿# local runtime - portable postgres, object store, caches
 .local/
 __pycache__/
 *.pyc
@@ -17,3 +17,8 @@ data/out/
 # the other two repos live inside this folder but keep their own git history
 /brain/
 /frontend/
+
+# measurement scratch: holds people's names and review text, never committed
+scratch/
+reports/
+.claude/

@@ -35,6 +35,12 @@ engines:
     backoff_s: [5.0, 15.0]
     block_backoff_s: 30.0
     block_cooldown_s: 300.0
+    # The most logged searches any one day may reach before every paid
+    # search step refuses to start (lge.search.daily_cap_refusal). Counted
+    # from search_log, so it survives restarts and spans every job thread.
+    # 5,000 is twenty sub-batches of 250 firms at one listing each; raise
+    # it on purpose for a bulk run, never by accident.
+    daily_credit_cap: 5000
   # Brave's own index; one query a second on the base plan.
   brave:
     interval_s: 1.0

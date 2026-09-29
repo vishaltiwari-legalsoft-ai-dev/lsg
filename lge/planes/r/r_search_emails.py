@@ -46,7 +46,7 @@ from lge.planes.r.r_site_emails import (
     match_contact,
 )
 from lge.registry import RunContext, RunResult, component
-from lge.search import engine_name
+from lge.search import clean_term, daily_cap_refusal, engine_name, meter, paid_run_refusal
 from lge.search import search as web_search
 from lge.search import source as search_source
 
@@ -56,6 +56,7 @@ _RECHECK_DAYS_DEFAULT = 90
 _MAX_PEOPLE_PER_FIRM = 4
 _MAX_RESULTS = 8
 _MAX_CONSECUTIVE_FAILURES = 5
+_MAX_QUERIES_PER_RUN = 600  # the same ceiling r_search_links has: a run, not a store
 _ROLE_ORDER = {"owner": 0, "admin": 1, "attorney": 2, "unknown": 3}
 _DECISION_MAKERS = ("owner", "admin")
 _CONFIDENCE = 0.7
@@ -67,11 +68,18 @@ _FILE_LIKE_RE = re.compile(r"\.(?:png|jpe?g|gif|svg|webp|js|css|pdf)$", re.I)
 
 
 def firm_query(domain: str) -> str:
-    return f'"@{domain}"'
+    return f'"@{clean_term(domain)}"'
 
 
 def person_query(firm_name: str, person: str, city: str | None = None) -> str:
-    return " ".join(p for p in (f'"{person}"', f'"{firm_name}"', city, "email") if p)
+    # Cleaned first: a quote or an operator inside a name from a sheet or a
+    # page must not change what is asked.
+    parts = (
+        f'"{clean_term(person)}"' if clean_term(person) else "",
+        f'"{clean_term(firm_name)}"' if clean_term(firm_name) else "",
+        clean_term(city), "email",
+    )
+    return " ".join(p for p in parts if p)
 
 
 def _result_text(r: dict[str, str]) -> str:
@@ -161,9 +169,11 @@ def _firm_ids(conn: Any, opts: dict[str, Any], recheck_days: int) -> list[Any]:
             for line in Path(str(firm_ids_file)).read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+    # A disqualified firm is never searched for: every query is paid.
     query = """
         SELECT DISTINCT f.id AS firm_id FROM firm f
         WHERE f.domain IS NOT NULL
+          AND (f.tier IS NULL OR f.tier NOT LIKE 'DQ%%')
           AND (NOT EXISTS (SELECT 1 FROM search_log s WHERE s.firm_id = f.id AND s.kind = 'emails'
                            AND s.outcome <> 'failed'
                            AND s.searched_at > now() - make_interval(days => %s))
@@ -236,24 +246,40 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
         result.notes.append("live=0: web search is network work -- nothing searched")
         return result
     recheck_days = int(opts.get("recheck_days") or _RECHECK_DAYS_DEFAULT)
+    firm_ids = _firm_ids(conn, opts, recheck_days)
+    refusal = paid_run_refusal(opts, what="the address search", firms=len(firm_ids)) or (
+        daily_cap_refusal(conn, opts, ctx.settings) if search is web_search else None
+    )
+    if refusal:
+        result.notes.append(refusal)
+        return result
+    max_queries = int(opts.get("max_queries") or _MAX_QUERIES_PER_RUN)
+    spend_before = meter.snapshot()
     now = datetime.now(UTC)
     attached_total = found_total = 0
+    queries = 0
     consecutive_failures = 0  # five in a row: the network, not the queries -- stop
     last_failure = ""
 
     def ask(query: str) -> list[dict[str, str]]:
-        nonlocal last_failure
+        nonlocal last_failure, queries
+        queries += 1
         results = search(query, _MAX_RESULTS)
         if _failed(results):
             last_failure = results[0].get("body") or ""
         return results
 
-    for firm_id in _firm_ids(conn, opts, recheck_days):
-        if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
-            result.notes.append(
-                f"stopped early: {consecutive_failures} searches failed in a row "
-                f"({last_failure}) -- the rest wait for the next run"
+    def budget_left() -> bool:
+        return queries < max_queries and consecutive_failures < _MAX_CONSECUTIVE_FAILURES
+
+    for firm_id in firm_ids:
+        if not budget_left():
+            reason = (
+                f"{consecutive_failures} searches failed in a row ({last_failure})"
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES
+                else f"the run's budget of {max_queries} queries"
             )
+            result.notes.append(f"stopped early: {reason} -- the rest wait for the next run")
             break
         try:
             with conn.cursor() as cur:
@@ -295,7 +321,7 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
             people.sort(key=lambda c: (_ROLE_ORDER.get(c["role"] or "unknown", 3),
                                        -float(c["confidence"] or 0)))
             for person in people[:_MAX_PEOPLE_PER_FIRM]:
-                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                if not budget_left():
                     break
                 query = person_query(firm["canonical_name"], person["full_name"], firm["city"])
                 results = ask(query)
@@ -347,6 +373,10 @@ def run(ctx: RunContext, *, search: SearchFn | None = None, **opts: Any) -> RunR
         ctx.checkpoint()
 
     result.notes.append(
-        f"addresses found on firm domains {found_total}, attached to named people {attached_total}"
+        f"addresses found on firm domains {found_total}, attached to named people "
+        f"{attached_total}; {queries} queries"
     )
+    spent = meter.note(spend_before)
+    if spent:
+        result.notes.append(f"provider charged: {spent}")
     return result

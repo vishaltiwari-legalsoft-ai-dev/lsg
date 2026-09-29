@@ -1,4 +1,4 @@
-"""r4_verify tests: provider status mapping (catch_all/risky are failures,
+﻿"""r4_verify tests: provider status mapping (catch_all/risky are failures,
 only 'valid' is a pass), tier gate, budget stop, per-(email,provider)
 idempotency, inert without a configured key. respx mocks every provider
 call -- these tests never touch the network. Run isolated:
@@ -176,7 +176,9 @@ def test_zerobounce_risky_is_a_failure_not_a_pass(db, monkeypatch):
     result = r4_verify.run(_ctx(db), provider="zerobounce")
     assert result.processed == 1
     status = _email_status(db, contact_id, email)
-    assert status == "risky"
+    # An "unknown" is no verdict: never a pass, and (since 28 Sep 2026) not a
+    # permanent failure either -- it stays unverified and is asked again later.
+    assert status == "unverified"
     assert status != "valid"
 
 
@@ -187,13 +189,40 @@ def test_neverbounce_status_mapping(db, monkeypatch):
     contact_id, email = _insert_contact_with_email(
         db, firm_id, role="owner", email="owner@nb.com"
     )
-    respx.get(r4_verify._NEVERBOUNCE_URL).mock(
+    respx.post(r4_verify._NEVERBOUNCE_URL).mock(
         return_value=httpx.Response(200, json={"status": "success", "result": "catchall"})
     )
 
     result = r4_verify.run(_ctx(db), provider="neverbounce")
     assert result.processed == 1
     assert _email_status(db, contact_id, email) == "catch_all"
+
+
+@respx.mock
+def test_neverbounce_error_envelope_is_not_a_verdict(db, monkeypatch):
+    """NeverBounce answers HTTP 200 with status auth_failure / throttle_triggered
+    / temp_unavail and no `result` on any problem. That is a failed call: the
+    address stays unverified, no attempt row is written (nothing was billed),
+    and a later run asks again. Before the fix it became 'risky' for good."""
+    monkeypatch.setenv("NEVERBOUNCE_API_KEY", "test-key")
+    firm_id = make_firm(db, tier="1B")
+    contact_id, email = _insert_contact_with_email(
+        db, firm_id, role="owner", email="throttled@nb.com"
+    )
+    respx.post(r4_verify._NEVERBOUNCE_URL).mock(
+        return_value=httpx.Response(
+            200, json={"status": "throttle_triggered", "message": "Too many requests"}
+        )
+    )
+
+    result = r4_verify.run(_ctx(db), provider="neverbounce")
+    assert result.processed == 0
+    assert result.failed == 1
+    assert any("throttle_triggered" in n for n in result.notes)
+    assert _email_status(db, contact_id, email) == "unverified"
+    with db.cursor() as cur:
+        cur.execute("SELECT count(*) AS n FROM verify_attempt WHERE email = %s", (email,))
+        assert cur.fetchone()["n"] == 0
 
 
 @respx.mock
@@ -263,9 +292,11 @@ def test_hunter_status_mapping_and_a_pending_check_is_not_billed(db, monkeypatch
     attempt row, so the next run asks again (D-046)."""
     monkeypatch.setenv("HUNTER_API_KEY", "k")
     firm_id = make_firm(db, tier="1A")
-    c1, e1 = _insert_contact_with_email(db, firm_id, role="owner", email="a@firm.example")
-    c2, e2 = _insert_contact_with_email(db, firm_id, role="admin", email="b@firm.example")
-    c3, e3 = _insert_contact_with_email(db, firm_id, role="owner", email="c@firm.example")
+    # Three domains: one catch-all answer settles its whole domain without a
+    # further call (test_r4_catch_all_domain), which is not what this tests.
+    c1, e1 = _insert_contact_with_email(db, firm_id, role="owner", email="a@one.example")
+    c2, e2 = _insert_contact_with_email(db, firm_id, role="admin", email="b@two.example")
+    c3, e3 = _insert_contact_with_email(db, firm_id, role="owner", email="c@three.example")
 
     def answer(request):
         email = request.url.params["email"]

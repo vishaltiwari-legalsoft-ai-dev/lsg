@@ -9,10 +9,42 @@ from typing import Any
 
 import httpx
 
-from lge.search.base import Place, Result, SearchBlocked
+from lge.search import meter
+from lge.search.base import Place, Result, SearchBlocked, SearchRefused
 
 SEARCH_URL = "https://google.serper.dev/search"
 PLACES_URL = "https://google.serper.dev/places"
+
+
+def serper_post(client: httpx.Client, url: str, body: dict[str, Any]) -> dict[str, Any]:
+    """One Serper call, the same rules for search, places and reviews.
+
+    The key travels in a header, never the URL, so a log line that prints
+    the URL prints nothing secret. 429 is a moment's rate limit
+    (SearchBlocked: wait once, then cool off); 401/403 and a 400 that says
+    the balance is spent are for good (SearchRefused: cool off at once);
+    5xx is a transport-class failure the pacer may retry; anything else is
+    one failed query. The `credits` Serper reports go to the meter."""
+    resp = client.post(url, json=body)
+    text = resp.text[:200]
+    if resp.status_code == 429:
+        raise SearchBlocked("serper answered 429 (rate limit)")
+    if resp.status_code in (401, 403):
+        raise SearchRefused(f"serper refused the key ({resp.status_code})")
+    if resp.status_code in (400, 402) and "credit" in text.lower():
+        raise SearchRefused(f"serper has no credit left ({resp.status_code}: {text})")
+    if resp.status_code >= 500:
+        raise RuntimeError(f"serper answered {resp.status_code} (server error, 503-class)")
+    if resp.status_code != 200:
+        raise RuntimeError(f"serper answered {resp.status_code}: {text}")
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise RuntimeError(f"serper answered 200 with a body that is not JSON: {text}") from exc
+    if not isinstance(data, dict):
+        raise RuntimeError("serper answered 200 with a body that is not an object")
+    meter.record("serper", data.get("credits", 1))
+    return data
 
 
 class SerperEngine:
@@ -28,16 +60,7 @@ class SerperEngine:
         )
 
     def _post(self, url: str, body: dict[str, Any]) -> dict[str, Any]:
-        resp = self._client.post(url, json=body)
-        if resp.status_code == 429:
-            raise SearchBlocked("serper answered 429 (rate limit)")
-        if resp.status_code in (401, 403):
-            raise RuntimeError(f"serper refused the key ({resp.status_code})")
-        if resp.status_code >= 500:
-            raise RuntimeError(f"serper answered {resp.status_code} (server error, 503-class)")
-        if resp.status_code != 200:
-            raise RuntimeError(f"serper answered {resp.status_code}: {resp.text[:200]}")
-        return resp.json()
+        return serper_post(self._client, url, body)
 
     def search(self, query: str, max_results: int, page: int = 1) -> list[Result]:
         data = self._post(
